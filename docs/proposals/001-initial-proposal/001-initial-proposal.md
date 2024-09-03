@@ -1,5 +1,11 @@
 
 # LLM Instance Gateway
+
+## Proposal Status
+ ***Reviewed***
+
+## Table of Contents
+
 <!-- toc -->
 
 -   [Summary](#summary)
