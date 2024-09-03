@@ -1,0 +1,1 @@
+TO-DO: describe the model server protocol here that should be implemented if a model server would like to integrate with LLM Instance Gateway
