@@ -51,7 +51,7 @@ accelerators.
 -   Fast reconfiguration - New use cases (including LoRA adapters or client
     configuration) can be rolled out / back in seconds to clients without waiting for 
     a new model server to start.
--  Efficient accelerator sharing - Use cases can use less than an accelerator
+-   Efficient accelerator sharing - Use cases can use less than an accelerator
     or temporarily burst without needing to start a new model server leading to
     fewer wasted accelerators and better pooling of shared capacity.
 -   Operational resilience - Use cases share available accelerators fairly and
@@ -60,7 +60,7 @@ accelerators.
     LoRA adapters on a wide range of Kubernetes environments into model servers.
 -   Composability - Approach should be composable with:
     - K8s Gateway API
--  Other gateway features and projects, including high level LLM gateways  
+-   Other gateway features and projects, including high level LLM gateways  
     - existing deployment tools like kserve or kaito
     - different model servers
 
