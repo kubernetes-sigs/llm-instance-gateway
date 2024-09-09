@@ -28,7 +28,7 @@
 
 ## Summary
 
-This proposal presents 2 new CRD objects to express the needs of the LLM Instance Gateway. **BackendPool** and **LLMUseCase** (names up for debate). The BackendPool is the logical grouping of compute, owned by the Inference Platform Admin persona. While the LLMUseCase is used to define objectives, the LoRA Adapter(s) used by the Use Case, and is owned by the LLM Use Case Owner.
+This proposal presents 2 new CRD objects to express the needs of the LLM Instance Gateway. **BackendPool** and **LLMUseCase** (names up for debate). The BackendPool is the logical grouping of compute, owned by the Inference Platform Admin persona. While the LLMUseCase defines the serving objectives of a specific model or LoRA adapter, and is owned by the LLM Use Case Owner.
 
 ## Goals
 
@@ -58,9 +58,7 @@ The Inference Platform Admin creates and manages the infrastructure necessary to
 
 #### LLM Use Case Owner
 
-Owns... An LLM based... Use Case...
-
-Okay, seriously. An LLM Use Case Owner persona owns and manages 1 or many Generative AI Workloads (LLM focused *currently*). This includes:
+An LLM Use Case Owner persona owns and manages 1 or many Generative AI Workloads (LLM focused *currently*). This includes:
 - Defining SLO
 - Deploying LoRA Adapters (or other fine-tune)
 - Managing rollout of adapters
@@ -96,8 +94,8 @@ Additionally, any Pod that seeks to join a BackendPool would need to support a p
 
 An LLMUseCase allows the UseCaseOwner to define:
 - Which LoRA adapter(s) to consume 
-  - LLMUseCase allows for traffic splitting between adapters _in the same pool_ to allow for new LoRA adapter versions to be easily rolled out 
-- SLO objectives for the UseCAse
+  - LLMUseCase allows for traffic splitting between adapters _in the same backendpool_ to allow for new LoRA adapter versions to be easily rolled out 
+- SLO objectives for the UseCase
 - The Pools this UseCase is relevant to 
 
 ### Spec
@@ -148,6 +146,7 @@ type LLMUseCaseSpec struct {
 // LLMUseCaseRule represents a mapping from a LLMUseCase to a backend pool and adapters/models in that pool.
 type LLMUseCaseRule struct {
         // The name used in the `model` param of incoming requests
+        // https://platform.openai.com/docs/api-reference/making-requests
         ModelName string
         // Optional
         Objective *Objective
@@ -156,9 +155,9 @@ type LLMUseCaseRule struct {
         // as valid on a pool. 
         // NOTE: Allowing multiple pools is a configuration convenience.
         PoolRef []corev1.ObjectReference
-        // Optional.
-	    // Allow multiple versions of a model for traffic splitting. 
-	    // If not specified, the target model name is defaulted to the 
+        // Optional
+        // Allow multiple versions of a model for traffic splitting.
+        // If not specified, the target model name is defaulted to the
         // modelName parameter.
         TargetModels []common.TargetModel
 }
@@ -166,11 +165,10 @@ type LLMUseCaseRule struct {
 
 // TargetModel represents a deployed model or a LoRA adapter.
 type TargetModel struct {
-        // The name of the adapter expected by the ModelServer.
+        // The name of the adapter as expected by the ModelServer.
         TargetModelName string
         // Weight is used to determine the percentage of traffic that should be 
-        // sent to this target model when
-        // multiple versions of the models are specified.
+        // sent to this target model when multiple versions of the model are specified.
         Weight int
 }
 
@@ -223,11 +221,13 @@ The functionality of the Kubernetes Gateway is unchanged with this proposal, all
 
 Our alternatives hinge on some key decisions:
 - Allowing HTTPRoute to treat the BackendPool as the backendRef
+  - Whereas the alternatives might have the LLMUseCase as the backend ref
 - Creating a separate layer of abstraction, instead of extending HTTPRoute
+  - Explained in more detail in the LLMRoute section
 
 #### LLMUseCase as a backend ref
 
-We toyed with the idea of allowing an LLMUsecase be the target of an HTTPRouteRules backend ref. However, doing so would require the Kubernetes Gateway to be able to interpret body level parameters, and require that the HTTPRoute also specify the backend the UseCase is intended to run on. All of which would require substantial work on the Kubernetes Gateway, while not providing much flexibility.
+We toyed with the idea of allowing an LLMUsecase be the target of an HTTPRouteRules backend ref. However, doing so would require the Kubernetes Gateway to be able to interpret body level parameters (assuming OpenAI protocol continues to require the model param in the body), and require that the HTTPRoute also specify the backend the UseCase is intended to run on. Since we our primary proposal already specifies the backend, packing this functionality would require substantial work on the Kubernetes Gateway, while not providing much flexibility.
 
 #### LLMRoute
 
@@ -245,10 +245,10 @@ Our original idea was to define all UseCase config at the Kubernetes Gateway lay
 
 ## Open Questions
 
-- Reasonable defaults
+- Reasonable defaults (how do we behave in the absence of user-specified values in optional fields)
   - Should use cases be required? Or can a customer simply create a pool, and direct requests to the pool, and expect even fairness/priority across the different LoRA adapters that are requested?
     - If so? How should we handle the mix between explicit and implicit use cases? Are implicit usecases just default everything? (and inherently lower prio).
     - NOTE: Current thinking is this is yes we should allow non-use case defined requests, but is a security risk if on by default. So pools should opt-in
 - Configuration control
   - How many routing decisions should we make on behalf of the user vs allow for configuration?
-     - Do we decide that SLO adherence is stricter than Fariness adherence? Do we allow for configuration of such tooling? (would be expressed in the BackendPool API)
+     - Do we decide that SLO adherence is stricter than Fairness adherence? Do we allow for configuration of such tooling? (would be expressed in the BackendPool API)
