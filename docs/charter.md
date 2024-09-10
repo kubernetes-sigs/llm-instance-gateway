@@ -1,1 +1,0 @@
-TODO: describe LLM Instance Gateway charter. And determine if this repo is the best place for this charter
