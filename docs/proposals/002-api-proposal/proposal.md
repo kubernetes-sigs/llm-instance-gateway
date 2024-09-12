@@ -77,6 +77,8 @@ The [PoC](https://youtu.be/NUBZg_uqqXk?si=v681EeYdGUGEVqQQ&t=1458) was focused o
 
 ### BackendPool
 
+*** FOR MVP THE BACKEND IS PROPOSED TO BE IMPLICIT ***
+
 The BackendPool at its core is a logical grouping of compute, expressed in the form of Pods (typically model servers), akin to a K8s Service. The BackendPool would deploy its own routing, and offer administrative configuration to the Platform Admin. 
 
  It is expected for the BackendPool to:
@@ -100,67 +102,44 @@ An LLMUseCase allows the UseCaseOwner to define:
 
 ### Spec
 
-**BackendPool**
-```golang
-// A grouping of model serving instances that are expected to serve the same model(s) and speak the same API protocol
-// The LLMBackendPool is also the scope for enforcing priority and fairness across different use cases.
-// When used with the Gateway API, the LLMBackendPool can serve as the BackendRefs of an HTTPRoute.
-// Generally the LLMBackendPool is owned by the "Inference Platform Admin" persona.
-type LLMBackendPool struct {
-        metav1.ObjectMeta
-        metav1.TypeMeta
-        Spec LLMBackendSpec
-}
-
-type LLMBackendPoolSpec struct {
-        // Pod selector, similar to k8s Service.
-        Selector map[string]string `json:"selector,omitempty"`
-        // Allows names within the `model` param that don't have an explicitly defined UseCase to pass through. Defaults to `false`.
-        AllowUndefinedModels bool
-        // Admin-defined minimum objective value that can be requested, will cause an error in LLMUseCase if limit is broken.
-        MinTPOT float32
-}
-```
-
-
 **LLMUseCase**
 ```golang
-// LLMUseCase represents a use case of an LLM, which is multiplexed onto one or more LLMBackendPools.
-// It allows mapping a use case to backend pools, and models or adapters that backend model servers understand.
-// The LLMUseCase defines request routing behavior within an LLMBackendPool.
-// Generally the LLMUseCase is owned by the "LLM Use Case Owner" persona, which can be teams in an organization.
-type LLMUseCase struct {
+// LLMUseCaseSet represents a set of LLM use cases that are multiplexed onto one or more backend pools.
+// This is generally owned by the "LLM Use Case Owner" persona, which can be teams in an organization.
+type LLMUseCaseSet struct {
         metav1.ObjectMeta
         metav1.TypeMeta
 
-        Spec LLMUseCaseSpec
+        Spec LLMUseCaseSetSpec
 }
 
-type LLMUseCaseSpec struct {
-        // Map use case to one or more backend pools.
-        // In the most common case, this should be a single backend pool.
-        // Multiple backend pools can be used for traffic splitting while migrating to a new backend pool.
-        Rules   []LLMUseCaseRule
+type LLMUseCaseSetSpec struct {
+        // Defines the use cases in the set.
+        UseCases   []LLMUseCase
+        // Reference to the backend pools that the use cases registers to.
+        PoolRef []corev1.ObjectReference
 }
 
-// LLMUseCaseRule represents a mapping from a LLMUseCase to a backend pool and adapters/models in that pool.
-type LLMUseCaseRule struct {
-        // The name used in the `model` param of incoming requests
-        // https://platform.openai.com/docs/api-reference/making-requests
+// LLMUseCase defines the policies for routing the traffic of a use case, this includes performance objectives 
+// and traffic splitting between different versions of the model.
+type LLMUseCase struct {
+        // The name of the model as the users set in the "model" parameter in the requests.
+        // The model name should be unique among the use cases that reference the same backend pool.
+        // This is the parameter that will be used to match the request with. In the future, we may
+        // allow to match on other request parameters. The other approach to support matching on 
+        // on other request parameters is to use a different ModelName f HTTPFilter 
         ModelName string
         // Optional
+        // Use cases with an objective have higher priority than use cases without.
+        // IMPORTANT: By specifying an objective, this places the UseCase in a higher priority class than UseCases without a defined priority class. 
+        // In the face of resource-scarcity. Higher priority requests will be preserved, and lower priority class requests will be rejected.
         Objective *Objective
-        // Required.
-        // Reference to an LLMBackendPool. This allows registering a use case
-        // as valid on a pool. 
-        // NOTE: Allowing multiple pools is a configuration convenience.
-        PoolRef []corev1.ObjectReference
-        // Optional
-        // Allow multiple versions of a model for traffic splitting.
-        // If not specified, the target model name is defaulted to the
-        // modelName parameter.
+        // Optional.
+	// Allow multiple versions of a model for traffic splitting. 
+	// If not specified, the target model name is defaulted to the modelName parameter.
         TargetModels []common.TargetModel
 }
+
 
 
 // TargetModel represents a deployed model or a LoRA adapter.
@@ -172,18 +151,18 @@ type TargetModel struct {
         Weight int
 }
 
-// Objective defines the performance targets of a LLM use case.
-// NOTE: Objectives are best effort
+// Objective captures the latency SLO of a LLM use case.
+// In MVP, meeting the SLO is on a best effort basis.
+// Future: Extend the API for different behaviors of meeting the SLO.
+// The gateway will perform best-effort load balancing, and work with other components (e.g., autoscaler) to meet the
+// objectives. 
 type Objective struct {
-        // Only one target can be set.
-        TPOT    []LatencyTarget
-        FairnessWeight int
-}
-
-
-type LatencyTarget struct {
-        Percentile float64       `json:"percentile,omitempty"`
-        Target       time.Duration `json:"target,omitempty"`
+        // The AverageLatencyPerOutputToken is calculated as the e2e request latency divided by output token 
+        // length. Note that this is different from what is known as TPOT (time per output token) which only 
+        // takes decode time into account.
+        // The P95 is calculated over a fixed time window defined at the operator level.
+        DesiredAveragePerOutputTokenLatencyAtP95OverMultipleRequests
+    *time.Duration
 }
 ```
 
