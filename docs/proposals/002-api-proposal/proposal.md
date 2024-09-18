@@ -72,12 +72,11 @@ The API design is based on these axioms:
 - Simple use cases should be simple to define (or are implicitly defined via reasonable defaults)
 - This solution should be composable with other Gateway solutions and flexible to fit customer needs
 - The MVP will heavily assume requests are done using the OpenAI spec, but open to extension in the future
+- The Gateway should route in a way that does not generate a queue of requests at the model server level
 
 The [PoC](https://youtu.be/NUBZg_uqqXk?si=v681EeYdGUGEVqQQ&t=1458) was focused on lower-level scheduling. And the API follows that similar logic, which lead to the proposal of the **BackendPool**.
 
 ### BackendPool
-
-*** FOR MVP THE BACKEND IS PROPOSED TO BE IMPLICIT ***
 
 The BackendPool at its core is a logical grouping of compute, expressed in the form of Pods (typically model servers), akin to a K8s Service. The BackendPool would deploy its own routing, and offer administrative configuration to the Platform Admin. 
 
@@ -213,13 +212,20 @@ We toyed with the idea of allowing an LLMUsecase be the target of an HTTPRouteRu
 Our original idea was to define all UseCase config at the Kubernetes Gateway layer, and have no BackendPool. This is inherently challenging, as LLMRoute would become a superset of HTTPRoute, or the Gateway would become bespoke, and work only for the LLMRoute use case.
 
 ## FAQ
-- Why 2 layers of weighting? (HttpRoute & UseCase)
+- **Why 2 layers of weighting?** (HttpRoute & UseCase)
   - Feasibly done - No extension of HttpRoute. Just works, as BackendPool operates like a service.
   - Complexity is only expressed during transition states (model version upgrade)
   - Keeps Pools self contained - multiple K8s gateways can direct traffic to the same pool without needing to re-express Pool-level behavior
-- What is a backend pool attempting to define?
+- **What is a BEP attempting to define?**
   - BackendPool groups resources that should be shared over the UseCases that are affiliated with the pool
   - Best practice would also suggest keeping the same base model for all ModelServers in the pool, but that is not enforced
+- **Can a UseCase reference multiple BEPs?**
+- **How is this deployed?**
+  - We will follow [common patterns](https://gateway.envoyproxy.io/docs/tasks/quickstart/#installation) to install the CRDs & Controllers
+- **Are all controllers necessary for this solution going to be provided by Instance Gateway(this repo)?**
+  - Yes
+
+
 
 
 ## Open Questions
