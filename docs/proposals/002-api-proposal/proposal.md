@@ -30,6 +30,8 @@
 
 This proposal presents 2 new CRD objects to express the needs of the LLM Instance Gateway. **BackendPool** and **LLMUseCase** (names up for debate). The BackendPool is the logical grouping of compute, owned by the Inference Platform Admin persona. While the LLMUseCase defines the serving objectives of a specific model or LoRA adapter, and is owned by the LLM Use Case Owner.
 
+**NOTE: Some routing terms are defined in the [glossary](./glossary.md) file, to more deeply describe how we will handle behaviors like priority and fairness**
+
 ## Goals
 
 - Drive concensus on direction of LLM Instance Gateway Solution
@@ -60,7 +62,11 @@ The Inference Platform Admin creates and manages the infrastructure necessary to
 
 An LLM Use Case Owner persona owns and manages 1 or many Generative AI Workloads (LLM focused *currently*). This includes:
 - Defining SLO
-- Deploying LoRA Adapters (or other fine-tune)
+- Managing fine-tunes
+  - LoRA Adapters
+  - System Prompts
+  - Prompt Cache
+  - etc.
 - Managing rollout of adapters
 
 ### Axioms 
@@ -114,6 +120,9 @@ type LLMUseCaseSet struct {
 
 type LLMUseCaseSetSpec struct {
         // Defines the use cases in the set.
+        // UseCases can be in 2 priority classes, CRITICAL and NONCRITICAL. 
+        // Priority class is implicit, and by specifying an Objective,
+        // places the UseCase in the CRITICAL priority class.
         UseCases   []LLMUseCase
         // Reference to the backend pools that the use cases registers to.
         PoolRef []corev1.ObjectReference

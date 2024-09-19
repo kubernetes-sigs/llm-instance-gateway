@@ -3,10 +3,10 @@
 This is a glossary that attempts to more thoroughly emplain terms used within the api proposal, in an effort to give context to API decisions.
 
 <!-- toc -->
--   [API Terms](#api)
+- [API Terms](#api)
     - [BackendPool](#backendpool)
     - [UseCase](#UseCase)
--   [Capacity Constrained Routing](#capacity-constrained-routing)
+- [Capacity Constrained Routing](#capacity-constrained-routing)
     -   [Priority](#priority)
     -   [Fairness](#fairness)
 - [General Routing](#general-routing)
