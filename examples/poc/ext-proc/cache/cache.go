@@ -85,7 +85,3 @@ type PodCache struct {
 	PodIPMap map[string]string
 	IpPodMap map[string]string
 }
-
-func SetPodCache(cache *freecache.Cache, pods []string) {
-	cacheKey := fmt.Sprintf("")
-}
