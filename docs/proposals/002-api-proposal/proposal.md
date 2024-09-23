@@ -17,7 +17,7 @@
         -   [LLM Use Case Owner](#llm-use-case-owner)
     -   [Axioms](#axioms)
     -   [BackendPool](#backendpool)
-    -   [LLMUseCase](#llmusecase)
+    -   [ModelGroup](#modelgroup)
     -   [Spec](#spec)
     -   [Diagrams](#diagrams)
     -   [Alternatives](#alternatives)
@@ -28,7 +28,7 @@
 
 ## Summary
 
-This proposal presents 2 new CRD objects to express the needs of the LLM Instance Gateway. **BackendPool** and **LLMUseCase** (names up for debate). The BackendPool is the logical grouping of compute, owned by the Inference Platform Admin persona. While the LLMUseCase defines the serving objectives of a specific model or LoRA adapter, and is owned by the LLM Use Case Owner.
+This proposal presents 2 new CRD objects to express the needs of the LLM Instance Gateway. **BackendPool** and **ModelGroup** (names up for debate). The BackendPool is the logical grouping of compute, owned by the Inference Platform Admin persona. While the ModelGroup defines the serving objectives of a specific model or LoRA adapter, and is owned by the LLM Use Case Owner.
 
 **NOTE: Some routing terms are defined in the [glossary](./glossary.md) file, to more deeply describe how we will handle behaviors like priority and fairness**
 
@@ -97,40 +97,40 @@ It is _not_ expected for the BackendPool to:
 
 Additionally, any Pod that seeks to join a BackendPool would need to support a protocol, defined by LLM Instance Gateway, to ensure the Pool has adequate information to intelligently route requests.
 
-### LLMUseCase
+### ModelGroup
 
-An LLMUseCase allows the UseCaseOwner to define:
+A ModelGroup allows the UseCaseOwner to define:
 - Which LoRA adapter(s) to consume 
-  - LLMUseCase allows for traffic splitting between adapters _in the same backendpool_ to allow for new LoRA adapter versions to be easily rolled out 
+  - ModelGroup allows for traffic splitting between adapters _in the same BackendPool_ to allow for new LoRA adapter versions to be easily rolled out 
 - SLO objectives for the UseCase
 - The Pools this UseCase is relevant to 
 
 ### Spec
 
-**LLMUseCase**
+**ModelGroup**
 ```golang
-// LLMUseCaseSet represents a set of LLM use cases that are multiplexed onto one or more backend pools.
+// ModelGroupSet represents a set of LLM use cases that are multiplexed onto one or more backend pools.
 // This is generally owned by the "LLM Use Case Owner" persona, which can be teams in an organization.
-type LLMUseCaseSet struct {
+type ModelGroupSet struct {
         metav1.ObjectMeta
         metav1.TypeMeta
 
-        Spec LLMUseCaseSetSpec
+        Spec ModelGroupSetSpec
 }
 
-type LLMUseCaseSetSpec struct {
+type ModelGroupSetSpec struct {
         // Defines the use cases in the set.
         // UseCases can be in 2 priority classes, CRITICAL and NONCRITICAL. 
         // Priority class is implicit, and by specifying an Objective,
         // places the UseCase in the CRITICAL priority class.
-        UseCases   []LLMUseCase
+        UseCases   []ModelGroup
         // Reference to the backend pools that the use cases registers to.
         PoolRef []corev1.ObjectReference
 }
 
-// LLMUseCase defines the policies for routing the traffic of a use case, this includes performance objectives 
+// ModelGroup defines the policies for routing the traffic of a use case, this includes performance objectives 
 // and traffic splitting between different versions of the model.
-type LLMUseCase struct {
+type ModelGroup struct {
         // The name of the model as the users set in the "model" parameter in the requests.
         // The model name should be unique among the use cases that reference the same backend pool.
         // This is the parameter that will be used to match the request with. In the future, we may
@@ -208,13 +208,13 @@ The functionality of the Kubernetes Gateway is unchanged with this proposal, all
 
 Our alternatives hinge on some key decisions:
 - Allowing HTTPRoute to treat the BackendPool as the backendRef
-  - Whereas the alternatives might have the LLMUseCase as the backend ref
+  - Whereas the alternatives might have the ModelGroup as the backend ref
 - Creating a separate layer of abstraction, instead of extending HTTPRoute
   - Explained in more detail in the LLMRoute section
 
-#### LLMUseCase as a backend ref
+#### ModelGroup as a backend ref
 
-We toyed with the idea of allowing an LLMUsecase be the target of an HTTPRouteRules backend ref. However, doing so would require the Kubernetes Gateway to be able to interpret body level parameters (assuming OpenAI protocol continues to require the model param in the body), and require that the HTTPRoute also specify the backend the UseCase is intended to run on. Since we our primary proposal already specifies the backend, packing this functionality would require substantial work on the Kubernetes Gateway, while not providing much flexibility.
+We toyed with the idea of allowing an ModelGroup be the target of an HTTPRouteRules backend ref. However, doing so would require the Kubernetes Gateway to be able to interpret body level parameters (assuming OpenAI protocol continues to require the model param in the body), and require that the HTTPRoute also specify the backend the UseCase is intended to run on. Since we our primary proposal already specifies the backend, packing this functionality would require substantial work on the Kubernetes Gateway, while not providing much flexibility.
 
 #### LLMRoute
 
