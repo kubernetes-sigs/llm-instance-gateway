@@ -110,8 +110,13 @@ A ModelGroup allows the UseCaseOwner to define:
 **ModelGroup**
 ```golang
 // ModelGroup represents a set of LLM use cases that are multiplexed onto one 
-// or more backend pools. This is generally owned by the "LLM Use Case Owner"
-// persona, which can be teams in an organization. We allow a user who
+// or more backend pools. This resource is managed by the "Model Use Case Owner"
+// persona. The model use case owner a team that trains, verifies, and
+// leverages a large language model from a model frontend, drives the lifecycle
+// and rollout of new versions of those models, and defines the specific
+// performance and latency goals for the model. These model use cases are
+// expected to operate within a BackendPool sharing compute capacity with other
+// ModelUseCases, defined by the Inference Platform Admin. We allow a user who
 // has multiple UseCases across multiple pools (with the same config) to
 // specify the configuration exactly once, and deploy to many pools 
 // simultaneously. Enabling a simpler config and single source of truth
