@@ -112,9 +112,13 @@ A ModelGroup allows the UseCaseOwner to define:
 // ModelGroup represents a set of LLM use cases that are multiplexed onto one 
 // or more backend pools. This is generally owned by the "LLM Use Case Owner"
 // persona, which can be teams in an organization. Plural ModelUseCases are
-// allowed as a configuration convenience to the user. ModelUseCase names are
-// unique for a given BackendPool, if the name is reused, an error will be 
-// shown on the status of a ModelGroup that attempted to reuse. 
+// allowed as a configuration convenience to the user. Allowing a user who
+// has multiple usecases across multiple pools (with the same config) to
+// specify the configuration exactly once, and deploy to many pools 
+// simultaneously, allowing for a simple config and single source of truth
+// for a given user. ModelUseCase names are unique for a given BackendPool,
+// if the name is reused, an error will be  shown on the status of a 
+// ModelGroup that attempted to reuse. 
 type ModelGroup struct {
         metav1.ObjectMeta
         metav1.TypeMeta
