@@ -109,28 +109,31 @@ A ModelGroup allows the UseCaseOwner to define:
 
 **ModelGroup**
 ```golang
-// ModelGroupSet represents a set of LLM use cases that are multiplexed onto one or more backend pools.
+// ModelGroup represents a set of LLM use cases that are multiplexed onto one or more backend pools.
 // This is generally owned by the "LLM Use Case Owner" persona, which can be teams in an organization.
-type ModelGroupSet struct {
+// Plural ModelUseCases are allowed as a configuration convenience to the user. ModelUseCase names are
+// unique for a given BackendPool, if the name is reused, an error will be shown on the status of a
+// ModelGroup that attempted to reuse. 
+type ModelGroup struct {
         metav1.ObjectMeta
         metav1.TypeMeta
 
-        Spec ModelGroupSetSpec
+        Spec ModelGroupSpec
 }
 
-type ModelGroupSetSpec struct {
+type ModelGroupSpec struct {
         // Defines the use cases in the set.
         // UseCases can be in 2 priority classes, CRITICAL and NONCRITICAL. 
         // Priority class is implicit, and by specifying an Objective,
         // places the UseCase in the CRITICAL priority class.
-        UseCases   []ModelGroup
+        UseCases   []ModelUseCases
         // Reference to the backend pools that the use cases registers to.
         PoolRef []corev1.ObjectReference
 }
 
 // ModelGroup defines the policies for routing the traffic of a use case, this includes performance objectives 
 // and traffic splitting between different versions of the model.
-type ModelGroup struct {
+type ModelUseCases struct {
         // The name of the model as the users set in the "model" parameter in the requests.
         // The model name should be unique among the use cases that reference the same backend pool.
         // This is the parameter that will be used to match the request with. In the future, we may
