@@ -111,14 +111,15 @@ A ModelGroup allows the UseCaseOwner to define:
 ```golang
 // ModelGroup represents a set of LLM use cases that are multiplexed onto one 
 // or more backend pools. This is generally owned by the "LLM Use Case Owner"
-// persona, which can be teams in an organization. Plural ModelUseCases are
-// allowed as a configuration convenience to the user. Allowing a user who
-// has multiple usecases across multiple pools (with the same config) to
+// persona, which can be teams in an organization. We allow a user who
+// has multiple UseCases across multiple pools (with the same config) to
 // specify the configuration exactly once, and deploy to many pools 
-// simultaneously, allowing for a simple config and single source of truth
+// simultaneously. Enabling a simpler config and single source of truth
 // for a given user. ModelUseCase names are unique for a given BackendPool,
 // if the name is reused, an error will be  shown on the status of a 
-// ModelGroup that attempted to reuse. 
+// ModelGroup that attempted to reuse. The oldest ModelUseCase, based on
+// creation timestamp, will be selected to remain valid. In the event of a race
+// condition, one will be selected at random. 
 type ModelGroup struct {
         metav1.ObjectMeta
         metav1.TypeMeta
@@ -158,7 +159,13 @@ type ModelUseCases struct {
 
 
 
-// TargetModel represents a deployed model or a LoRA adapter.
+// TargetModel represents a deployed model or a LoRA adapter. The
+// TargetModelName is expected to match the name of the LoRA adapter
+// (or base model) as it is registered within the model server. Inference
+// Gateway assumes that the model exists on the model server and is the
+// responsibility of the user to validate a correct match. Should a model fail
+// to exist at request time, the error is processed by the Instance Gateway,
+// and then emitted on the appropriate ModelGroup object.
 type TargetModel struct {
         // The name of the adapter as expected by the ModelServer.
         TargetModelName string
@@ -180,6 +187,51 @@ type Objective struct {
         DesiredAveragePerOutputTokenLatencyAtP95OverMultipleRequests
     *time.Duration
 }
+```
+
+### Yaml Examples
+
+#### BackendPool(s)
+Here we create 2 BEPs that subscribe to services to collect the appropriate pods
+```yaml
+apiVersion: inference.x-k8s.io/v1alpha1
+kind: BackendPool
+metadata:
+  name: llama-2-pool
+  services: 
+  - llama-2-vllm
+---
+apiVersion: inference.x-k8s.io/v1alpha1
+kind: BackendPool
+metadata:
+  name: gemini-pool
+  services: 
+  - gemini-jetstream-tpu-v5e
+  - gemini-vllm-a100
+```
+
+#### Model Group
+
+Here we consume both pools with a single ModelGroup, while also specifying 2 useCases. Where `sql-code-assist` is both the name of the ModelUseCase, and the name of the LoRA adapter on the model server. And `npc-bot` has a layer of indirection for those names, as well as a specified objective.
+```yaml
+apiVersion: inference.x-k8s.io/v1alpha1
+kind: ModelGroup
+metadata:
+  name: my-model-group
+spec:
+  useCases:
+  - modelName: sql-code-assist
+  - modelName: npc-bot
+    objective: 
+      desiredAveragePerOutputTokenLatencyAtP95OverMultipleRequests: 50ms
+    targetModels:
+      targetModelName: npc-bot-v1
+        weight: 50
+      targetModelName: npc-bot-v2
+        weight: 50 	
+  poolRef: 
+   - name: llama-2-pool
+   - name: gemini-pool
 ```
 
 ### Diagrams
