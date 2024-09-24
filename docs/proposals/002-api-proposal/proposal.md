@@ -134,9 +134,9 @@ type ModelGroup struct {
 
 type ModelGroupSpec struct {
         // Defines the use cases in the set.
-        // UseCases can be in 2 priority classes, CRITICAL and NONCRITICAL. 
+        // UseCases can be in 2 priority classes, Critical and Noncritical. 
         // Priority class is implicit, and by specifying an Objective,
-        // places the UseCase in the CRITICAL priority class.
+        // places the UseCase in the Critical priority class.
         UseCases   []ModelUseCases
         // Reference to the backend pools that the use cases registers to.
         PoolRef []corev1.ObjectReference
