@@ -135,8 +135,8 @@ type ModelGroup struct {
 type ModelGroupSpec struct {
         // Defines the use cases in the set.
         // UseCases can be in 2 priority classes, Critical and Noncritical. 
-        // Priority class is implicit, and by specifying an Objective,
-        // places the UseCase in the Critical priority class.
+        // Priority class is implicitly set to Critical by specifying an Objective.
+        // Otherwise the UseCase is considered Noncritical.
         UseCases   []ModelUseCases
         // Reference to the backend pools that the use cases registers to.
         PoolRef []corev1.ObjectReference
@@ -254,7 +254,7 @@ The flow can be described as:
 - `interestingName` is currently undergoing a change of LoRA adapters from `creativeNameGen-v3` (20% traffic split) to `veryCreativeNameGen` (80% traffic split)
 - `veryCreativeNameGen` is selected as the LoRA adapter, and replaces `interestingName` in the body of the request (mutated by ext-proc) 
 - the request is then efficiently scheduled onto one of the valid Pods
-- metrics are sent back to the BEP, aggregated and re-emitted via sidecar (following the metric standardization)
+- Prometheus metrics are sent back to the BEP, aggregated and re-emitted via sidecar (following the metric standardization)
 
 How Multiple BackendPools might integrate together:
 

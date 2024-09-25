@@ -44,7 +44,7 @@ The primary difference is that non-critical UseCase requests will be rejected in
 
 Example: 
 
-Your current request load is using 80 Arbitrary Compute Units(ACU) of your pools total of 100ACU capacity. 40ACU are critical workload requests, 45 are non-critical. If you were to lose 30 ACU due to an unforseen outage. Priority would dictate that of the 10 surplus ACU to be rejected the entirety of them would be from the non-critical requests. 
+Your current request load is using 80 Arbitrary Compute Units(ACU) of your pools total of 100ACU capacity. 40ACU are critical workload requests, 40 are non-critical. If you were to lose 30 ACU due to an unforseen outage. Priority would dictate that of the 10 surplus ACU to be rejected, the entirety of them would be from the _non-critical_ requests. 
 
 ## Fairness
 
