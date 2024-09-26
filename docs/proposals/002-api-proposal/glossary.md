@@ -22,7 +22,7 @@ This is a very brief description of terms used to describe API objects, included
 ### BackendPool
 A grouping of model servers that serve the same set of fine-tunes (LoRA as a primary example). 
 
-Shortened to: `BEP`
+Shortened to: `BP`
 
 ### UseCase
 An LLM workload that is defined and runs on a BackendPool with other use cases.
@@ -70,7 +70,7 @@ The TTL we are currently assuming is: `5 min`
 
 - Service A has been meeting its SLO 98% of the requests made in the time window, and Service B has met the SLO 94% of the time.
 
-- A request for both Service A and Service B come in at the same time, and there is only capacity to start a single new request in the BEP, this capacity would meet the SLO for both services. The other request would be queued (potentially causing that request to not meet SLO).
+- A request for both Service A and Service B come in at the same time, and there is only capacity to start a single new request in the BP, this capacity would meet the SLO for both services. The other request would be queued (potentially causing that request to not meet SLO).
 
 - To fairly share these resources. Service B *must* be selected to begin the request immediately as Service A has had its SLO met a larger percentage of the time.
 
@@ -88,7 +88,7 @@ Data collected from the model servers and data collected from the request is use
 ## Lora Affinity
 
 ### Summary
-LoRA Affinity describes the routing strategy displayed in the [demo](https://youtu.be/NUBZg_uqqXk?si=v681EeYdGUGEVqQQ&t=1458), to better utilize Model Servers within the BEP.
+LoRA Affinity describes the routing strategy displayed in the [demo](https://youtu.be/NUBZg_uqqXk?si=v681EeYdGUGEVqQQ&t=1458), to better utilize Model Servers within the BP.
 
 ### Description
 Model Servers that support multi-LoRA handle requests in a FCFS basis. By utilizing the data provided by the model server (the state of loaded LoRA adapters), a routing system can route requests for a given LoRA adapter, to a model server that already has that adapter loaded, to create larger batches than a naive route, which better utilizes the model server hardware. 
