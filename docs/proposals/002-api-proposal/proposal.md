@@ -217,7 +217,7 @@ metadata:
 
 #### Model Group
 
-Here we consume both pools with a single ModelGroup, while also specifying 2 useCases. Where `sql-code-assist` is both the name of the ModelUseCase, and the name of the LoRA adapter on the model server. And `npc-bot` has a layer of indirection for those names, as well as a specified objective.
+Here we consume both pools with a single ModelGroup, while also specifying 2 useCases. Where `sql-code-assist` is both the name of the ModelUseCase, and the name of the LoRA adapter on the model server. And `npc-bot` has a layer of indirection for those names, as well as a specified objective. Both `sql-code-assist` and `npc-bot` have available LoRA adapters on both BackendPools and routing to each BackendPool happens earlier(at the K8s Gateway). So traffic splitting between separate pools happens at the K8s Gateway.
 ```yaml
 apiVersion: inference.x-k8s.io/v1alpha1
 kind: ModelGroup
