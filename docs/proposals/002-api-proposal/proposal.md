@@ -194,6 +194,32 @@ type Objective struct {
 }
 ```
 
+**BackendPool**
+```golang
+// The BackendPool is a construct for pooling compute (often model servers) to
+// serve large models, that have the ability to share capacity across multiple
+// use cases (such as through prompt engineering, LoRA adapters, etc).
+// BackendPools have a dependency on a Gateway that is compatible with ext-proc
+// (External Processing). When a new BP object is created, a new ext proc
+// deployment is created. BackendPools require at minimum a single UseCase to
+// be subscribed to them to accept traffic, any traffic with a model not
+// definied within a UseCase will be rejected.
+type BackendPool struct {
+        metav1.ObjectMeta
+        metav1.TypeMeta
+
+        Spec BackendPoolSpec
+}
+
+type BackendPoolSpec struct {
+        // Select the distinct services to include in the backend pool. These
+        // services should be consumed by only the backendpool they are part
+        // of. Should this behavior be breached, routing behavior is not
+        // guaranteed.
+        ServiceRef []corev1.ObjectReference
+}
+```
+
 ### Yaml Examples
 
 #### BackendPool(s)
