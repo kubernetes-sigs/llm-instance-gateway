@@ -4,7 +4,6 @@ metadata:
   name: vllm-lora
   namespace: default
 spec:
-  clusterIP: None
   selector:
     app: vllm
   ports:
