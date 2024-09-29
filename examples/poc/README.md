@@ -17,7 +17,7 @@ This project sets up an Envoy gateway with a custom external processing which im
 ### Steps
 
 1. **Deploy Sample vLLM Application**
-   NOTE: Create a HuggingFace API token and store it in a secret named `hf-token` with key hf_api_token`. This is configured in the `HUGGING_FACE_HUB_TOKEN` and `HF_TOKEN` environment variables in `./manifests/samples/vllm-lora-deployment.yaml`.
+   NOTE: Create a HuggingFace API token and store it in a secret named `hf-token` with key `token`. This is configured in the `HUGGING_FACE_HUB_TOKEN` and `HF_TOKEN` environment variables in `./manifests/samples/vllm-lora-deployment.yaml`.
 
    ```bash
    kubectl apply -f ./manifests/samples/vllm-lora-deployment.yaml
