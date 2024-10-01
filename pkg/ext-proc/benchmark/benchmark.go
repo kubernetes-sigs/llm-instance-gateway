@@ -24,19 +24,19 @@ import (
 )
 
 var (
-	svrAddr       = flag.String("server_address", "localhost:9002", "Address of the ext proc server")
-	totalRequests = flag.Int("total_requests", 100000, "number of requests to be sent for load test")
+	svrAddr         = flag.String("server_address", "localhost:9002", "Address of the ext proc server")
+	totalRequests   = flag.Int("total_requests", 100000, "number of requests to be sent for load test")
+	targetPodHeader = flag.String("targetPodHeader", "target-pod", "the header key for the target pod address to instruct Envoy to send the request to. This must match Envoy configuration.")
 
 	// Flags when running a local ext proc server.
 	numFakePods            = flag.Int("num_fake_pods", 200, "number of fake pods when running a local ext proc server")
 	numModelsPerPod        = flag.Int("num_models_per_pod", 5, "number of fake models per pod when running a local ext proc server")
-	localServer            = flag.Bool("local_server", false, "whether to start a local ext proc server")
+	localServer            = flag.Bool("local_server", true, "whether to start a local ext proc server")
 	refreshPodsInterval    = flag.Duration("refreshPodsInterval", 10*time.Second, "interval to refresh pods")
 	refreshMetricsInterval = flag.Duration("refreshMetricsInterval", 50*time.Millisecond, "interval to refresh metrics")
 )
 
 const (
-	TTL  = int64(7)
 	port = 9002
 )
 
@@ -110,7 +110,7 @@ func startExtProc() {
 	if err := pp.Init(*refreshPodsInterval, *refreshMetricsInterval); err != nil {
 		klog.Fatalf("failed to initialize: %v", err)
 	}
-	extProcPb.RegisterExternalProcessorServer(s, handlers.NewServer(pp, scheduling.NewScheduler(pp)))
+	extProcPb.RegisterExternalProcessorServer(s, handlers.NewServer(pp, scheduling.NewScheduler(pp), *targetPodHeader))
 
 	klog.Infof("Starting gRPC server on port :%v", port)
 	reflection.Register(s)

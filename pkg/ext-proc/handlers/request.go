@@ -12,10 +12,6 @@ import (
 	"ext-proc/scheduling"
 )
 
-const (
-	targetPodHeader = "target-pod"
-)
-
 // HandleRequestBody handles body of the request to the backend server, such as parsing the "model"
 // parameter.
 // Envoy sends the request body to ext proc before sending the request to the backend server.
@@ -73,7 +69,7 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 		},
 		{
 			Header: &configPb.HeaderValue{
-				Key:      targetPodHeader,
+				Key:      s.targetPodHeader,
 				RawValue: []byte(targetPod.Address),
 			},
 		},

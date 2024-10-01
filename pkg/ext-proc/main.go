@@ -27,8 +27,9 @@ type extProcServer struct{}
 type server struct{}
 
 var (
-	port       = flag.Int("port", 9002, "gRPC port")
-	podIPsFlag = flag.String("podIPs", "", "Comma-separated list of pod IPs")
+	port            = flag.Int("port", 9002, "gRPC port")
+	targetPodHeader = flag.String("targetPodHeader", "target-pod", "the header key for the target pod address to instruct Envoy to send the request to. This must match Envoy configuration.")
+	podIPsFlag      = flag.String("podIPs", "", "Comma-separated list of pod IPs")
 
 	refreshPodsInterval    = flag.Duration("refreshPodsInterval", 10*time.Second, "interval to refresh pods")
 	refreshMetricsInterval = flag.Duration("refreshMetricsInterval", 50*time.Millisecond, "interval to refresh metrics")
@@ -78,7 +79,7 @@ func main() {
 	if err := pp.Init(*refreshPodsInterval, *refreshMetricsInterval); err != nil {
 		klog.Fatalf("failed to initialize: %v", err)
 	}
-	extProcPb.RegisterExternalProcessorServer(s, handlers.NewServer(pp, scheduling.NewScheduler(pp)))
+	extProcPb.RegisterExternalProcessorServer(s, handlers.NewServer(pp, scheduling.NewScheduler(pp), *targetPodHeader))
 	healthPb.RegisterHealthServer(s, &healthServer{})
 
 	klog.Infof("Starting gRPC server on port :%v", *port)

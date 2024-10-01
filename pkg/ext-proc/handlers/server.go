@@ -12,10 +12,11 @@ import (
 	"ext-proc/scheduling"
 )
 
-func NewServer(pp PodProvider, scheduler Scheduler) *Server {
+func NewServer(pp PodProvider, scheduler Scheduler, targetPodHeader string) *Server {
 	return &Server{
-		scheduler:   scheduler,
-		podProvider: pp,
+		scheduler:       scheduler,
+		podProvider:     pp,
+		targetPodHeader: targetPodHeader,
 	}
 }
 
@@ -24,6 +25,9 @@ func NewServer(pp PodProvider, scheduler Scheduler) *Server {
 type Server struct {
 	scheduler   Scheduler
 	podProvider PodProvider
+	// The key of the header to specify the target pod address. This value needs to match Envoy
+	// configuration.
+	targetPodHeader string
 }
 
 type Scheduler interface {
