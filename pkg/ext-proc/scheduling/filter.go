@@ -28,6 +28,9 @@ type filter struct {
 	nextOnFailure *filter
 	// nextOnSuccessOrFailure is a convenience field to configure the next filter regardless of the
 	// success or failure of the current filter.
+	// NOTE: When using nextOnSuccessOrFailure, both nextOnSuccess and nextOnFailure SHOULD be nil.
+	// However if that's not the case, nextOnSuccess and nextOnFailure will be used, instead of
+	// nextOnSuccessOrFailure,  in the success and failure scenarios, respectively.
 	nextOnSuccessOrFailure *filter
 }
 
@@ -55,14 +58,14 @@ func (f *filter) Filter(b *LLMRequest, pods []*backend.PodMetrics) ([]*backend.P
 		}
 		// On success, pass the filtered result to the next filter.
 		return next.Filter(b, filtered)
-	} else {
-		klog.V(2).Infof("onFailure %v -> %v", f.name, next.Name())
-		if f.nextOnFailure != nil {
-			next = f.nextOnFailure
-		}
-		// On failure, pass the initial set of pods to the next filter.
-		return next.Filter(b, pods)
 	}
+
+	klog.V(2).Infof("onFailure %v -> %v", f.name, next.Name())
+	if f.nextOnFailure != nil {
+		next = f.nextOnFailure
+	}
+	// On failure, pass the initial set of pods to the next filter.
+	return next.Filter(b, pods)
 }
 
 // filterFunc filters a set of input pods to a subset.

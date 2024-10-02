@@ -14,6 +14,8 @@ type PodMetricsClientImpl struct {
 
 // FetchMetrics fetches metrics from a given pod.
 func (p *PodMetricsClientImpl) FetchMetrics(pod Pod) (map[string]*dto.MetricFamily, error) {
+	// Currently the metrics endpoint is hard-coded.
+	// TODO: Consider making this configurable.
 	url := fmt.Sprintf("http://%s/metrics", pod.Address)
 	resp, err := http.Get(url)
 	if err != nil {
