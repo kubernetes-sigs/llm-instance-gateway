@@ -1,11 +1,11 @@
 # Glossary
 
-This is a glossary that attempts to more thoroughly emplain terms used within the api proposal, in an effort to give context to API decisions.
+This is a glossary that attempts to more thoroughly explain terms used within the api proposal, in an effort to give context to API decisions.
 
 <!-- toc -->
 - [API Terms](#api)
-    - [BackendPool](#backendpool)
-    - [UseCase](#UseCase)
+    - [LLMServerPool](#llmserverpool)
+    - [LLMService](#llmservice)
 - [Capacity Constrained Routing](#capacity-constrained-routing)
     -   [Priority](#priority)
     -   [Fairness](#fairness)
@@ -19,20 +19,20 @@ This is a glossary that attempts to more thoroughly emplain terms used within th
 ## API
 This is a very brief description of terms used to describe API objects, included for completeness.
 
-### BackendPool
+### LLMServerPool
 A grouping of model servers that serve the same set of fine-tunes (LoRA as a primary example). 
 
-Shortened to: `BP`
+Shortened to: `LSP`
 
-### UseCase
-An LLM workload that is defined and runs on a BackendPool with other use cases.
+### LLMService
+An LLM workload that is defined and runs on a LLMServerPool with other use cases.
 
 # Capacity Constrained Routing
 
 ## Priority
 
 ### Summary
-Priority specifies the importance of a UseCase relative to other usecases within a BackendPool. 
+Priority specifies the importance of a LLMService relative to other services within a LLMServerPool. 
 
 ### Description
 
@@ -40,7 +40,7 @@ For our purposes, priority can be thought of in two classes:
 - Critical
 - Non-Critical
 
-The primary difference is that non-critical UseCase requests will be rejected in favor of Critical UseCases the face of resource scarcity. 
+The primary difference is that non-critical LLMService requests will be rejected in favor of Critical LLMServices the face of resource scarcity. 
 
 Example: 
 
@@ -49,7 +49,7 @@ Your current request load is using 80 Arbitrary Compute Units(ACU) of your pools
 ## Fairness
 
 ### Summary
-Fairness specifies how resources are shared among different UseCases, in a way that is most acceptable to the user.
+Fairness specifies how resources are shared among different LLMServices, in a way that is most acceptable to the user.
 
 ### Description
 
@@ -70,7 +70,7 @@ The TTL we are currently assuming is: `5 min`
 
 - Service A has been meeting its SLO 98% of the requests made in the time window, and Service B has met the SLO 94% of the time.
 
-- A request for both Service A and Service B come in at the same time, and there is only capacity to start a single new request in the BP, this capacity would meet the SLO for both services. The other request would be queued (potentially causing that request to not meet SLO).
+- A request for both Service A and Service B come in at the same time, and there is only capacity to start a single new request in the LSP, this capacity would meet the SLO for both services. The other request would be queued (potentially causing that request to not meet SLO).
 
 - To fairly share these resources. Service B *must* be selected to begin the request immediately as Service A has had its SLO met a larger percentage of the time.
 
@@ -80,7 +80,7 @@ Different from the previous definitons, these terms are used to describe methods
 ## Latency Based Routing
 
 ### Summary
-Latency Based Routing uses data to ensure UseCases meet their specified SLO.
+Latency Based Routing uses data to ensure LLMServices meet their specified SLO.
 
 ### Description
 Data collected from the model servers and data collected from the request is used to predict the time a request will take on a *specific* model server, and route in a way that will best satisfy the SLO of the incoming requests.
@@ -88,7 +88,7 @@ Data collected from the model servers and data collected from the request is use
 ## Lora Affinity
 
 ### Summary
-LoRA Affinity describes the routing strategy displayed in the [demo](https://youtu.be/NUBZg_uqqXk?si=v681EeYdGUGEVqQQ&t=1458), to better utilize Model Servers within the BP.
+LoRA Affinity describes the routing strategy displayed in the [demo](https://youtu.be/NUBZg_uqqXk?si=v681EeYdGUGEVqQQ&t=1458), to better utilize Model Servers within the LSP.
 
 ### Description
 Model Servers that support multi-LoRA handle requests in a FCFS basis. By utilizing the data provided by the model server (the state of loaded LoRA adapters), a routing system can route requests for a given LoRA adapter, to a model server that already has that adapter loaded, to create larger batches than a naive route, which better utilizes the model server hardware. 
