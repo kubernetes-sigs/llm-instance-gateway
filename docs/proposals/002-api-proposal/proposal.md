@@ -14,7 +14,7 @@
 -   [Proposal](#proposal)
     -   [Personas](#personas)
         -   [Inference Platform Admin](#inference-platform-admin)
-        -   [LLM Use Case Owner](#llm-use-case-owner)
+        -   [LLM Service Owner](#llm-use-case-owner)
     -   [Axioms](#axioms)
     -   [LLMServerPool](#llmServerPool)
     -   [LLMService](#LLMService)
@@ -28,7 +28,7 @@
 
 ## Summary
 
-This proposal presents 2 new CRD objects to express the needs of the LLM Instance Gateway. **LLMServerPool** and **LLMService** (names up for debate). The LLMServerPool is the logical grouping of compute, owned by the Inference Platform Admin persona. While the LLMService defines the serving objectives of a specific model or LoRA adapter, and is owned by the LLM Use Case Owner.
+This proposal presents 2 new CRD objects to express the needs of the LLM Instance Gateway. **LLMServerPool** and **LLMService** (names up for debate). The LLMServerPool is the logical grouping of compute, owned by the Inference Platform Admin persona. While the LLMService defines the serving objectives of a specific model or LoRA adapter, and is owned by the LLM Service Owner.
 
 **NOTE: Some routing terms are defined in the [glossary](./glossary.md) file, to more deeply describe how we will handle behaviors like priority and fairness**
 
@@ -58,9 +58,9 @@ The Inference Platform Admin creates and manages the infrastructure necessary to
   - Gateway configuration
   - etc
 
-#### LLM Use Case Owner
+#### LLM Service Owner
 
-An LLM Use Case Owner persona owns and manages 1 or many Generative AI Workloads (LLM focused *currently*). This includes:
+An LLM Service Owner persona owns and manages 1 or many Generative AI Workloads (LLM focused *currently*). This includes:
 - Defining SLO
 - Managing fine-tunes
   - LoRA Adapters
@@ -75,7 +75,7 @@ The API design is based on these axioms:
 
 - Pools of shared compute should be *discrete* for scheduling to properly work
 - Pod-level scheduling should not be handled by a high-level gateway 
-- Simple use cases should be simple to define (or are implicitly defined via reasonable defaults)
+- Simple services should be simple to define (or are implicitly defined via reasonable defaults)
 - This solution should be composable with other Gateway solutions and flexible to fit customer needs
 - The MVP will heavily assume requests are done using the OpenAI spec, but open to extension in the future
 - The Gateway should route in a way that does not generate a queue of requests at the model server level
@@ -87,7 +87,7 @@ The [PoC](https://youtu.be/NUBZg_uqqXk?si=v681EeYdGUGEVqQQ&t=1458) was focused o
 The LLMServerPool at its core is a logical grouping of compute, expressed in the form of Pods (typically model servers), akin to a K8s Service. The LLMServerPool would deploy its own routing, and offer administrative configuration to the Platform Admin. 
 
  It is expected for the LLMServerPool to:
- - Enforce fair consumption of resources across competing use cases
+ - Enforce fair consumption of resources across competing services
  - Efficiently route requests across shared compute (as displayed by the PoC)
  
 It is _not_ expected for the LLMServerPool to:
@@ -109,12 +109,12 @@ A LLMService allows the LLMServiceOwner to define:
 
 **LLMService**
 ```golang
-// LLMService represents a set of LLM use cases that are multiplexed onto one 
+// LLMService represents a set of LLM services that are multiplexed onto one 
 // or more backend pools. This resource is managed by the "LLM Service Owner"
-// persona. The model use case owner a team that trains, verifies, and
+// persona. The Service Owner persona is: a team that trains, verifies, and
 // leverages a large language model from a model frontend, drives the lifecycle
 // and rollout of new versions of those models, and defines the specific
-// performance and latency goals for the model. These model use cases are
+// performance and latency goals for the model. These services are
 // expected to operate within a LLMServerPool sharing compute capacity with other
 // LLMServices, defined by the Inference Platform Admin. We allow a user who
 // has multiple LLMServices across multiple pools (with the same config) to
@@ -133,33 +133,38 @@ type LLMService struct {
 }
 
 type LLMServiceSpec struct {
-        // Defines the use cases in the set.
-        // LLMServices can be in 2 priority classes, Critical and Noncritical. 
+        // Defines the distinct services.
+        // Model can be in 2 priority classes, Critical and Noncritical. 
         // Priority class is implicitly set to Critical by specifying an Objective.
-        // Otherwise the LLMService is considered Noncritical.
-        LLMServices   []ModelLLMServices
-        // Reference to the backend pools that the use cases registers to.
+        // Otherwise the Model is considered Noncritical.
+        Models []Model
+        // Reference to the backend pools that the services registers to.
         PoolRef []corev1.ObjectReference
 }
 
-// LLMService defines the policies for routing the traffic of a use case, this includes performance objectives 
+// Model defines the policies for routing the traffic of a use case, this includes performance objectives 
 // and traffic splitting between different versions of the model.
-type ModelLLMServices struct {
+type Model struct {
         // The name of the model as the users set in the "model" parameter in the requests.
-        // The model name should be unique among the use cases that reference the same backend pool.
+        // The model name should be unique among the services that reference the same backend pool.
         // This is the parameter that will be used to match the request with. In the future, we may
         // allow to match on other request parameters. The other approach to support matching on 
-        // on other request parameters is to use a different ModelName f HTTPFilter 
+        // on other request parameters is to use a different ModelName per HTTPFilter.
+        // Due to these properties. ModelNames must be unique across an LSP.
+        // ModelNames can be reserved without implementing an actual model in the pool.
+        // This can be done by specifying a target model and setting the weight to zero,
+        // an error will be returned specifying that no valid target model is found.
         ModelName string
         // Optional
-        // Use cases with an objective have higher priority than use cases without.
+        // Use cases with an objective have higher priority than services without.
         // IMPORTANT: By specifying an objective, this places the LLMService in a higher priority class than LLMServices without a defined priority class. 
         // In the face of resource-scarcity. Higher priority requests will be preserved, and lower priority class requests will be rejected.
         Objective *Objective
         // Optional.
-	// Allow multiple versions of a model for traffic splitting. 
-	// If not specified, the target model name is defaulted to the modelName parameter.
-        TargetModels []common.TargetModel
+	      // Allow multiple versions of a model for traffic splitting. 
+	      // If not specified, the target model name is defaulted to the modelName parameter.
+        // modelName is often in reference to a LoRA adapter.
+        TargetModels []TargetModel
 }
 
 
@@ -198,7 +203,7 @@ type Objective struct {
 ```golang
 // The LLMServerPool is a construct for pooling compute (often model servers) to
 // serve large models, that have the ability to share capacity across multiple
-// use cases (such as through prompt engineering, LoRA adapters, etc).
+// services (such as through prompt engineering, LoRA adapters, etc).
 // LLMServerPools have a dependency on a Gateway that is compatible with ext-proc
 // (External Processing). When a new LSP object is created, a new ext proc
 // deployment is created. LLMServerPools require at minimum a single LLMService to
@@ -273,12 +278,12 @@ Below is a detailed view of the LLMServerPool
 
 ![LLMServerPool](./images/lsp.svg)
 
-This diagram lightly follows the example request for a model `interestingName`. 
+This diagram lightly follows the example request for a model `name-generator`. 
 The flow can be described as:
 - The request comes in to our routing solution(Ext-Proc)
 - ExtProc looks up the LLMServices affiliated with this pool `examplePool`
-- `interestingName` is currently undergoing a change of LoRA adapters from `creativeNameGen-v3` (20% traffic split) to `veryCreativeNameGen` (80% traffic split)
-- `veryCreativeNameGen` is selected as the LoRA adapter, and replaces `interestingName` in the body of the request (mutated by ext-proc) 
+- `name-generator` is currently undergoing a change of LoRA adapters from `name-generator-v3` (20% traffic split) to `name-generator-v2` (80% traffic split)
+- `name-generator-v2` is selected as the LoRA adapter, and replaces `name-generator` in the body of the request (mutated by ext-proc) 
 - the request is then efficiently scheduled onto one of the valid Pods
 - Prometheus metrics are sent back to the LSP, aggregated and re-emitted via sidecar (following the metric standardization)
 
@@ -331,8 +336,8 @@ Our original idea was to define all LLMService config at the Kubernetes Gateway 
 ## Open Questions
 
 - Reasonable defaults (how do we behave in the absence of user-specified values in optional fields)
-  - Should use cases be required? Or can a customer simply create a pool, and direct requests to the pool, and expect even fairness/priority across the different LoRA adapters that are requested?
-    - If so? How should we handle the mix between explicit and implicit use cases? Are implicit LLMServices just default everything? (and inherently lower prio).
+  - Should services be required? Or can a customer simply create a pool, and direct requests to the pool, and expect even fairness/priority across the different LoRA adapters that are requested?
+    - If so? How should we handle the mix between explicit and implicit services? Are implicit LLMServices just default everything? (and inherently lower prio).
     - NOTE: Current thinking is this is yes we should allow non-use case defined requests, but is a security risk if on by default. So pools should opt-in
 - Configuration control
   - How many routing decisions should we make on behalf of the user vs allow for configuration?
