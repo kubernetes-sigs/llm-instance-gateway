@@ -50,8 +50,8 @@ func main() {
 	klog.InitFlags(nil)
 	flag.Parse()
 
-	// Parse pod IPs.
-	// TODO: Remove this once dynamic pod listing is implemented.
+	// This is the list of addresses of backend pods.
+	// TODO (https://github.com/kubernetes-sigs/llm-instance-gateway/issues/12): Remove this once dynamic pod listing is implemented.
 	if *podIPsFlag == "" {
 		klog.Fatal("No pods or pod IPs provided. Use the -pods and -podIPs flags to specify comma-separated lists of pod addresses and pod IPs.")
 	}

@@ -20,6 +20,7 @@ func (s *Server) HandleResponseHeaders(reqCtx *RequestContext, req *extProcPb.Pr
 						SetHeaders: []*configPb.HeaderValueOption{
 							{
 								Header: &configPb.HeaderValue{
+									// This is for debugging purpose only.
 									Key:      "x-went-into-resp-headers",
 									RawValue: []byte("true"),
 								},

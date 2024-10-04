@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	configPb "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
-	filterPb "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/ext_proc/v3"
 	extProcPb "github.com/envoyproxy/go-control-plane/envoy/service/ext_proc/v3"
 	klog "k8s.io/klog/v2"
 
@@ -63,12 +62,6 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 	headers := []*configPb.HeaderValueOption{
 		{
 			Header: &configPb.HeaderValue{
-				Key:      "x-went-into-req-body",
-				RawValue: []byte("true"),
-			},
-		},
-		{
-			Header: &configPb.HeaderValue{
 				Key:      s.targetPodHeader,
 				RawValue: []byte(targetPod.Address),
 			},
@@ -105,30 +98,16 @@ func HandleRequestHeaders(reqCtx *RequestContext, req *extProcPb.ProcessingReque
 	h := r.(*extProcPb.ProcessingRequest_RequestHeaders)
 	klog.V(2).Infof("Headers: %+v\n", h)
 
-	var resp *extProcPb.ProcessingResponse
-	bodyMode := filterPb.ProcessingMode_BUFFERED
-
-	resp = &extProcPb.ProcessingResponse{
+	resp := &extProcPb.ProcessingResponse{
 		Response: &extProcPb.ProcessingResponse_RequestHeaders{
 			RequestHeaders: &extProcPb.HeadersResponse{
 				Response: &extProcPb.CommonResponse{
-					HeaderMutation: &extProcPb.HeaderMutation{
-						SetHeaders: []*configPb.HeaderValueOption{
-							{
-								Header: &configPb.HeaderValue{
-									Key:      "x-went-into-req-headers",
-									RawValue: []byte("true"),
-								},
-							},
-						},
-					},
+					// Set `clear_route_cache = true` to force Envoy to recompute the target cluster
+					// based on the new "target-pod" header.
+					// See https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/ext_proc/v3/external_processor.proto#service-ext-proc-v3-commonresponse.
 					ClearRouteCache: true,
 				},
 			},
-		},
-		ModeOverride: &filterPb.ProcessingMode{
-			ResponseHeaderMode: filterPb.ProcessingMode_SEND,
-			RequestBodyMode:    bodyMode,
 		},
 	}
 
