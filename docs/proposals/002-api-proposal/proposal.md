@@ -169,7 +169,7 @@ type Model struct {
 
 
 // TargetModel represents a deployed model or a LoRA adapter. The
-// TargetModelName is expected to match the name of the LoRA adapter
+// Name field is expected to match the name of the LoRA adapter
 // (or base model) as it is registered within the model server. Inference
 // Gateway assumes that the model exists on the model server and is the
 // responsibility of the user to validate a correct match. Should a model fail
@@ -177,7 +177,7 @@ type Model struct {
 // and then emitted on the appropriate LLMService object.
 type TargetModel struct {
         // The name of the adapter as expected by the ModelServer.
-        TargetModelName string
+        Name string
         // Weight is used to determine the percentage of traffic that should be 
         // sent to this target model when multiple versions of the model are specified.
         Weight int
