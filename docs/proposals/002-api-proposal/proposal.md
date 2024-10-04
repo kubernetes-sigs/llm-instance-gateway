@@ -14,7 +14,7 @@
 -   [Proposal](#proposal)
     -   [Personas](#personas)
         -   [Inference Platform Admin](#inference-platform-admin)
-        -   [LLM Service Owner](#llm-use-case-owner)
+        -   [LLM Service Owner](#llm-service-owner)
     -   [Axioms](#axioms)
     -   [LLMServerPool](#llmServerPool)
     -   [LLMService](#LLMService)
@@ -99,7 +99,7 @@ Additionally, any Pod that seeks to join a LLMServerPool would need to support a
 
 ### LLMService
 
-A LLMService allows the LLMServiceOwner to define:
+A LLMService allows the LLM Service Owner to define:
 - Which LoRA adapter(s) to consume 
   - LLMService allows for traffic splitting between adapters _in the same LLMServerPool_ to allow for new LoRA adapter versions to be easily rolled out 
 - SLO objectives for the LLMService
@@ -156,7 +156,7 @@ type Model struct {
         // an error will be returned specifying that no valid target model is found.
         ModelName string
         // Optional
-        // Use cases with an objective have higher priority than services without.
+        // LLM Services with an objective have higher priority than services without.
         // IMPORTANT: By specifying an objective, this places the LLMService in a higher priority class than LLMServices without a defined priority class. 
         // In the face of resource-scarcity. Higher priority requests will be preserved, and lower priority class requests will be rejected.
         Objective *Objective
@@ -184,7 +184,7 @@ type TargetModel struct {
         Weight int
 }
 
-// Objective captures the latency SLO of a LLM use case.
+// Objective captures the latency SLO of a LLM service.
 // In MVP, meeting the SLO is on a best effort basis.
 // Future: Extend the API for different behaviors of meeting the SLO.
 // The gateway will perform best-effort load balancing, and work with other components (e.g., autoscaler) to meet the
