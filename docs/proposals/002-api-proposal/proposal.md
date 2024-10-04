@@ -146,15 +146,14 @@ type LLMServiceSpec struct {
 // and traffic splitting between different versions of the model.
 type Model struct {
         // The name of the model as the users set in the "model" parameter in the requests.
-        // The model name should be unique among the services that reference the same backend pool.
+        // The name should be unique among the services that reference the same backend pool.
         // This is the parameter that will be used to match the request with. In the future, we may
         // allow to match on other request parameters. The other approach to support matching on 
         // on other request parameters is to use a different ModelName per HTTPFilter.
-        // Due to these properties. ModelNames must be unique across an LSP.
-        // ModelNames can be reserved without implementing an actual model in the pool.
+        // Names can be reserved without implementing an actual model in the pool.
         // This can be done by specifying a target model and setting the weight to zero,
         // an error will be returned specifying that no valid target model is found.
-        ModelName string
+        Name string
         // Optional
         // LLM Services with an objective have higher priority than services without.
         // IMPORTANT: By specifying an objective, this places the LLMService in a higher priority class than LLMServices without a defined priority class. 
