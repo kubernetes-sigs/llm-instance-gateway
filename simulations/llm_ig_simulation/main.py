@@ -7,8 +7,8 @@ from loadbalancer import LoadBalancer
 
 def main():
     parser = argparse.ArgumentParser(description="Simulate LLM load balancing with configurable parameters.")
-    parser.add_argument("--rates_lo", nargs='+', type=int, default=[30, ], help="List of low rates.")
-    parser.add_argument("--rates_hi", nargs='+', type=int, default=[30,], help="List of high rates.")
+    parser.add_argument("--rates_lo", nargs='+', type=int, default=[35, 30, 25, 20, 15, 10, 5, 1], help="List of low rates.")
+    parser.add_argument("--rates_hi", nargs='+', type=int, default=[35, 30, 25, 20, 15, 10, 5, 1], help="List of high rates.")
     parser.add_argument("--no_of_messages", type=int, default=2500, help="Number of messages to simulate.")
     parser.add_argument("--mean_request_size_1", type=int, default=202, help="Mean request size for set 1.")
     parser.add_argument("--std_request_size_1", type=int, default=20, help="Standard deviation of request size for set 1.")
@@ -24,6 +24,9 @@ def main():
     
     parser.add_argument('--prefix-latency-lo', nargs='+', type=float, help='List of prefix of target latencies for low priority requests.')
     parser.add_argument('--prefix-latency-hi', nargs='+', type=float, help='List of prefix of target latencies for high priority requests.')
+    
+    
+    parser.add_argument('--number-of-servers',  type=int, default=6, help='List of target latencies for high priority requests.')
     
     args = parser.parse_args()
 
@@ -51,6 +54,8 @@ def main():
     
     prefix_latency_list_lo = args.prefix_latency_lo if args.prefix_latency_lo else ['lo']
     prefix_latency_list_hi = args.prefix_latency_hi if args.prefix_latency_hi else ['hi']
+    
+    number_of_servers = args.number_of_servers
 
     # Define a structure to store results for all routing types
     results = {
@@ -110,7 +115,7 @@ def main():
               'tol_lat_time_lo': [], 'tol_lat_time_hi': []},
 }
 
-    all_routing_types = ["least", ]
+    all_routing_types = ["least", "smart", "random" ]
     prompt_output_tuple = None
 
 # Iterate over routing types
@@ -125,7 +130,6 @@ def main():
 
             # Simpy environment and LLM actors setup
             env = simpy.Environment()
-            number_of_servers =6
             list_of_llmactors = [LLMActor(env, 1, id) for id in range(number_of_servers)]
             lb = LoadBalancer(env, number_of_servers=number_of_servers, list_of_llmactors=list_of_llmactors, req_dict_prefill=req_dict_prefill, req_dict=req_dict, messages_remaining_cnt=no_of_messages*2)
             lb.queueing_perc = queueing_perc

@@ -49,7 +49,7 @@ class LoadBalancer:
         items = llmactor.decode_store.items if include_running_requests else llmactor.decoded_store.items
     
         for item in items:
-            if include_running_requests or self.env.now - item.arrival_time > TTL:
+            if self.env.now - item.arrival_time > TTL:
                 continue  # Skip long-running requests
         
             tokens_in_kv_cache_at_start_of_decode = item.tokens_in_kv_cache_at_start_of_decode or 0
@@ -325,14 +325,14 @@ class LoadBalancer:
           return target_pod, latency_esimated
 
 
-    def queueing_signal(self, use_overall = True) -> bool:
-      if not use_overall:
+    def queueing_signal(self, routing_type = "smart") -> bool:
+      if routing_type == "smart":
         return self.check_saturations(use_pseudo_kv_cache=True, max_saturation= self.queueing_perc) or self.all_servers_queued()
       else :
         return self.get_overall_pending_tokens_perc() > self.queueing_perc or self.all_servers_queued()
 
-    def dequeueing_signal(self, use_overall = True) -> bool:
-      if not use_overall:
+    def dequeueing_signal(self, routing_type = "smart") -> bool:
+      if routing_type == "smart":
         return self.check_saturations(use_pseudo_kv_cache=True, max_saturation= self.queueing_perc)  == False and  self.all_servers_queued() == False
       else :
         return self.get_overall_pending_tokens_perc() < self.queueing_perc and self.all_servers_queued() == False
@@ -357,11 +357,10 @@ class LoadBalancer:
 
     def dequeue_process(self, routing_type, drop_late_requests = False):
         while True:
-            if not self.check_if_queues_empty() and self.dequeueing_signal():
+            if not self.check_if_queues_empty() and self.dequeueing_signal(routing_type):
                 # Get the request with the highest SLO violation
                 req = self.dequeue()
                 if   req:
-                  #if self.env.now - req.arrival_time > req.target_latency:
                   if (drop_late_requests == False) or (self.env.now - req.arrival_time < 100*req.target_latency): #ad-hoc
                     target_pod, estimated_latency = self.find_target_pod(routing_type, req.input_size, req.output_size, req.target_latency, req.lora)
                     req.target_pod = target_pod.id
@@ -467,7 +466,7 @@ class LoadBalancer:
 
     def generate_request_inference_gateway(
         self, rate, lora_requested, target_latency_list, prefix_latency_list, 
-        routing_type="random", prompt_output_tuple=None, mean_request_size=None, 
+        routing_type, prompt_output_tuple=None, mean_request_size=None, 
         std_request_size=None, mean_output_size=None, std_output_size=None, 
         estimated_output_size=None):
       """
@@ -495,7 +494,7 @@ class LoadBalancer:
         cnt += 1
         self.messages_remaining_cnt -= 1
 
-        if self.should_enqueue_request():
+        if self.should_enqueue_request(routing_type):
             self.enqueue_request(new_req, lora_requested, target_latency)
         else:
             self.route_request(new_req, routing_type, input_size, output_size, target_latency, lora_requested, estimated_output_size)
@@ -517,8 +516,8 @@ class LoadBalancer:
       new_req.target_latency = target_latency
       return new_req
 
-    def should_enqueue_request(self):
-      return self.queueing_signal() or not self.check_if_queues_empty()
+    def should_enqueue_request(self, routing_type):
+      return self.queueing_signal(routing_type) or not self.check_if_queues_empty()
 
     def enqueue_request(self, new_req, lora_requested, target_latency):
       if lora_requested:
