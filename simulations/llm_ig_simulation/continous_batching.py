@@ -15,10 +15,11 @@ def can_prefill_items(llmactor, env,  ):
     while llmactor.get_recompute_queue_size() > 0:
         oldest_item = llmactor.recompute_store.items[0].item
         oldest_item_len = oldest_item.input_size + oldest_item.output_size - oldest_item.output_size_remaining
+        oldest_item_input_len = oldest_item.input_size 
 
         if any([
             llmactor.get_decode_queue_size() + num_new_seq + 1 > MAX_NUM_SEQ,
-            prefill_batch_size + oldest_item_len > MAX_NUM_BATCH_TOKENS,
+            prefill_batch_size + oldest_item_input_len > MAX_NUM_BATCH_TOKENS,
             (prefill_batch_size + num_new_seq + llmactor.get_num_tokens_in_decode()) / (llmactor.max_num_tokens_allowed + 0.0) >= MAX_GPU_MEMORY_PERC_BEFORE_RECOMPUTE
         ]):
             break
@@ -28,10 +29,11 @@ def can_prefill_items(llmactor, env,  ):
 
         oldest_item = llmactor.prefill_store.items[0]
         oldest_item_len = oldest_item.input_size + oldest_item.output_size - oldest_item.output_size_remaining
+        oldest_item_input_len = oldest_item.input_size 
 
         if any([
             llmactor.get_decode_queue_size() + num_new_seq + 1 > MAX_NUM_SEQ,
-            prefill_batch_size + oldest_item_len > MAX_NUM_BATCH_TOKENS,
+            prefill_batch_size + oldest_item_input_len > MAX_NUM_BATCH_TOKENS,
             (prefill_batch_size + num_new_seq + llmactor.get_num_tokens_in_decode()) / (llmactor.max_num_tokens_allowed + 0.0) >= MAX_GPU_MEMORY_PERC_BEFORE_RECOMPUTE
         ]):
             break
@@ -50,10 +52,11 @@ def fetch_prefill_items(llmactor, env,  ):
     while llmactor.get_recompute_queue_size() > 0:
         oldest_item = llmactor.recompute_store.items[0].item
         oldest_item_len = oldest_item.input_size + oldest_item.output_size - oldest_item.output_size_remaining
+        oldest_item_input_len = oldest_item.input_size 
 
         if any([
             llmactor.get_decode_queue_size() + num_new_seq + 1 > MAX_NUM_SEQ,
-            prefill_batch_size + oldest_item_len > MAX_NUM_BATCH_TOKENS,
+            prefill_batch_size + oldest_item_input_len > MAX_NUM_BATCH_TOKENS,
             (prefill_batch_size + num_new_seq + llmactor.get_num_tokens_in_decode()) / (llmactor.max_num_tokens_allowed + 0.0) >= MAX_GPU_MEMORY_PERC_BEFORE_RECOMPUTE
         ]):
             break
@@ -66,10 +69,11 @@ def fetch_prefill_items(llmactor, env,  ):
     while llmactor.get_prefill_queue_size() > 0:
         oldest_item = llmactor.prefill_store.items[0]
         oldest_item_len = oldest_item.input_size + oldest_item.output_size - oldest_item.output_size_remaining
+        oldest_item_input_len = oldest_item.input_size 
 
         if any([
             llmactor.get_decode_queue_size() + num_new_seq + 1 > MAX_NUM_SEQ,
-            prefill_batch_size + oldest_item_len > MAX_NUM_BATCH_TOKENS,
+            prefill_batch_size + oldest_item_input_len > MAX_NUM_BATCH_TOKENS,
             (prefill_batch_size + num_new_seq + llmactor.get_num_tokens_in_decode()) / (llmactor.max_num_tokens_allowed + 0.0) >= MAX_GPU_MEMORY_PERC_BEFORE_RECOMPUTE
         ]):
             break

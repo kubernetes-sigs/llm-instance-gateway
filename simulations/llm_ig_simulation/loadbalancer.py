@@ -96,6 +96,12 @@ class LoadBalancer:
             llmactor.get_min_expected_num_tokens_in_kvcache_after_prefill() / llmactor.max_num_tokens_allowed >= max_saturation
             for llmactor in self.list_of_llmactors
         )
+    def get_actual_tokens_perc(self, llmactor: LLMActor) -> float:
+        actual_tokens = sum(
+            item.output_size + item.input_size - item.output_size_remaining
+            for item in llmactor.decode_store.items
+        )
+        return actual_tokens / llmactor.max_num_tokens_allowed
 
     def get_pending_tokens_perc(self, llmactor: LLMActor) -> float:
         pending_tokens = sum(
@@ -112,6 +118,14 @@ class LoadBalancer:
         )
         total_max_tokens = sum(llmactor.max_num_tokens_allowed for llmactor in self.list_of_llmactors)
         return total_pending_tokens / total_max_tokens if total_max_tokens else 0
+      
+    def get_overall_actual_tokens_perc(self) -> float:
+        total_actual_tokens = sum(
+            self.get_actual_tokens_perc(llmactor) * llmactor.max_num_tokens_allowed
+            for llmactor in self.list_of_llmactors
+        )
+        total_max_tokens = sum(llmactor.max_num_tokens_allowed for llmactor in self.list_of_llmactors)
+        return total_actual_tokens / total_max_tokens if total_max_tokens else 0
 
     def get_lora_affinity(self, lora_requested: str) -> List[LLMActor]:
         if not lora_requested:
@@ -194,11 +208,20 @@ class LoadBalancer:
             pending_token_perc = self.get_pending_tokens_perc(llmactor)
             prefill_queue_size = llmactor.get_prefill_queue_size()
 
-            # get matching pods
-            if estimated_latency_per_output_token < buffer*target_latency and pending_token_perc > max_pending_token_below_target_perc and expected_kvcache_usage_after_prefill < max_tokens_in_kv_before_eviction and  prefill_queue_size < self.max_prefill_queue_size:
+            # Get matching pods
+            if (estimated_latency_per_output_token < buffer * target_latency and 
+              pending_token_perc > max_pending_token_below_target_perc and 
+              expected_kvcache_usage_after_prefill < max_tokens_in_kv_before_eviction and 
+              prefill_queue_size < self.max_prefill_queue_size):
+              
               max_pending_token_below_target_perc = pending_token_perc
               all_candiated_pods_based_on_maximum_pending_req = [i]
-            elif estimated_latency_per_output_token <  buffer*target_latency and pending_token_perc == max_pending_token_below_target_perc:
+              
+            elif (estimated_latency_per_output_token < buffer * target_latency and 
+                pending_token_perc == max_pending_token_below_target_perc and 
+                expected_kvcache_usage_after_prefill < max_tokens_in_kv_before_eviction and 
+                prefill_queue_size < self.max_prefill_queue_size):
+              
               all_candiated_pods_based_on_maximum_pending_req.append(i)
 
 
@@ -366,6 +389,8 @@ class LoadBalancer:
                     req.target_pod = target_pod.id
                     req.estimated_latency = estimated_latency
                     req.queue_size_before_prefill = target_pod.get_prefill_queue_size()
+                    req.pending_tokens_at_arrival_perc = self.get_pending_tokens_perc(target_pod)
+                    req.actual_tokens_at_arrival_perc = self.get_actual_tokens_perc(target_pod)
 
 
                     # Send it to the appropriate pod for processing
@@ -517,6 +542,8 @@ class LoadBalancer:
       return new_req
 
     def should_enqueue_request(self, routing_type):
+      if self.queueing_perc == np.inf:
+        return False
       return self.queueing_signal(routing_type) or not self.check_if_queues_empty()
 
     def enqueue_request(self, new_req, lora_requested, target_latency):
@@ -537,6 +564,8 @@ class LoadBalancer:
         new_req.target_pod = target_pod.id
         new_req.estimated_latency = estimated_latency
         new_req.queue_size_before_prefill = target_pod.get_prefill_queue_size()
+        new_req.pending_tokens_at_arrival_perc = self.get_pending_tokens_perc(target_pod)
+        new_req.actual_tokens_at_arrival_perc = self.get_actual_tokens_perc(target_pod)
 
         if lora_requested:
             new_req.lora = lora_requested

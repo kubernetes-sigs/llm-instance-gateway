@@ -25,6 +25,9 @@ class Request:
         self.estimated_latency = 0
 
         self.lora = lora
+        
+        self.pending_tokens_at_arrival_perc = 0
+        self.actual_tokens_at_arrival_perc = 0
 
 
 
