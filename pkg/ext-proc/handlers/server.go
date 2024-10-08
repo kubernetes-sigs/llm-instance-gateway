@@ -41,7 +41,7 @@ type PodProvider interface {
 }
 
 func (s *Server) Process(srv extProcPb.ExternalProcessor_ProcessServer) error {
-	klog.V(2).Info("Processing")
+	klog.V(3).Info("Processing")
 	ctx := srv.Context()
 	// Create request context to share states during life time of an HTTP request.
 	// See https://github.com/envoyproxy/envoy/issues/17540.
@@ -59,6 +59,9 @@ func (s *Server) Process(srv extProcPb.ExternalProcessor_ProcessServer) error {
 			return nil
 		}
 		if err != nil {
+			// This error occurs very frequently, though it doesn't seem to have any impact.
+			// TODO Figure out if we can remove this noise.
+			klog.V(3).Infof("cannot receive stream request: %v", err)
 			return status.Errorf(codes.Unknown, "cannot receive stream request: %v", err)
 		}
 
@@ -66,15 +69,15 @@ func (s *Server) Process(srv extProcPb.ExternalProcessor_ProcessServer) error {
 		switch v := req.Request.(type) {
 		case *extProcPb.ProcessingRequest_RequestHeaders:
 			resp = HandleRequestHeaders(reqCtx, req)
-			klog.V(2).Infof("Request context after HandleRequestHeaders: %v", reqCtx)
+			klog.V(3).Infof("Request context after HandleRequestHeaders: %v", reqCtx)
 		case *extProcPb.ProcessingRequest_RequestBody:
 			resp, err = s.HandleRequestBody(reqCtx, req)
-			klog.V(2).Infof("Request context after HandleRequestBody: %v", reqCtx)
+			klog.V(3).Infof("Request context after HandleRequestBody: %v", reqCtx)
 		case *extProcPb.ProcessingRequest_ResponseHeaders:
 			resp, err = s.HandleResponseHeaders(reqCtx, req)
-			klog.V(2).Infof("Request context after HandleResponseHeaders: %v", reqCtx)
+			klog.V(3).Infof("Request context after HandleResponseHeaders: %v", reqCtx)
 		default:
-			klog.Infof("Unknown Request type %+v", v)
+			klog.Errorf("Unknown Request type %+v", v)
 			return status.Error(codes.Unknown, "unknown request type")
 		}
 
@@ -83,9 +86,9 @@ func (s *Server) Process(srv extProcPb.ExternalProcessor_ProcessServer) error {
 			return status.Errorf(codes.Unknown, "failed to handle request: %v", err)
 		}
 
-		klog.V(2).Infof("response: %v", resp)
+		klog.V(3).Infof("response: %v", resp)
 		if err := srv.Send(resp); err != nil {
-			klog.Infof("send error %v", err)
+			klog.Errorf("send error %v", err)
 			return status.Errorf(codes.Unknown, "failed to send response back to Envoy: %v", err)
 		}
 	}

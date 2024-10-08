@@ -15,7 +15,7 @@ import (
 // parameter.
 // Envoy sends the request body to ext proc before sending the request to the backend server.
 func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.ProcessingRequest) (*extProcPb.ProcessingResponse, error) {
-	klog.V(2).Infof("Handling request body")
+	klog.V(3).Infof("Handling request body")
 
 	// Unmarshal request body (must be JSON).
 	v := req.Request.(*extProcPb.ProcessingRequest_RequestBody)
@@ -24,14 +24,14 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 		klog.Errorf("Error unmarshaling request body: %v", err)
 		return nil, fmt.Errorf("error unmarshaling request body: %v", err)
 	}
-	klog.V(2).Infof("Request body: %v", rb)
+	klog.V(3).Infof("Request body: %v", rb)
 
 	// Resolve target models.
 	model, ok := rb["model"].(string)
 	if !ok {
 		return nil, fmt.Errorf("model not found in request")
 	}
-	klog.V(2).Infof("Model requested: %v", model)
+	klog.V(3).Infof("Model requested: %v", model)
 	llmReq := &scheduling.LLMRequest{
 		Model: model,
 		// For now use the model as the target model.
@@ -47,13 +47,13 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 		klog.Errorf("Error marshaling request body: %v", err)
 		return nil, fmt.Errorf("error marshaling request body: %v", err)
 	}
-	klog.V(2).Infof("Updated body: %v", updatedBody)
+	klog.V(3).Infof("Updated body: %v", updatedBody)
 
 	targetPod, err := s.scheduler.Schedule(llmReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find target pod: %v", err)
 	}
-	klog.V(2).Infof("Selected target model %v in target pod: %v\n", llmReq.ResolvedTargetModel, targetPod)
+	klog.V(3).Infof("Selected target model %v in target pod: %v\n", llmReq.ResolvedTargetModel, targetPod)
 
 	reqCtx.Model = llmReq.Model
 	reqCtx.TargetPod = targetPod
@@ -69,7 +69,7 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 	}
 	// Print headers for debugging
 	for _, header := range headers {
-		klog.V(2).Infof("[request_body] Header Key: %s, Header Value: %s\n", header.Header.Key, header.Header.RawValue)
+		klog.V(3).Infof("[request_body] Header Key: %s, Header Value: %s\n", header.Header.Key, header.Header.RawValue)
 	}
 
 	resp := &extProcPb.ProcessingResponse{
@@ -93,10 +93,10 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 }
 
 func HandleRequestHeaders(reqCtx *RequestContext, req *extProcPb.ProcessingRequest) *extProcPb.ProcessingResponse {
-	klog.V(2).Info("--- In RequestHeaders processing ...")
+	klog.V(3).Info("--- In RequestHeaders processing ...")
 	r := req.Request
 	h := r.(*extProcPb.ProcessingRequest_RequestHeaders)
-	klog.V(2).Infof("Headers: %+v\n", h)
+	klog.V(3).Infof("Headers: %+v\n", h)
 
 	resp := &extProcPb.ProcessingResponse{
 		Response: &extProcPb.ProcessingResponse_RequestHeaders{
