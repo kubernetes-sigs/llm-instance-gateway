@@ -10,7 +10,28 @@ spec:
     kind: EnvoyProxy
     name: llm-route-envoy-config
     namespace: default
-
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyExtensionPolicy
+metadata:
+  name: ext-proc-policy
+  namespace: default
+spec:
+  extProc:
+    - backendRefs:
+      - group: ""
+        kind: Service
+        name: grpc-server-service
+        port: 9002
+      processingMode:
+        request:
+          body: Buffered
+        response:
+      messageTimeout: 5s
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: inference-gateway
 ---
 apiVersion: apps/v1
 kind: Deployment

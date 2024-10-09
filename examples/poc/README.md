@@ -25,7 +25,7 @@ This project sets up an Envoy gateway with a custom external processing which im
    ```
 
 2. **Install GatewayClass with Ext Proc**
-   A custom GatewayClass `llm-gateway` which is configured with the llm routing ext proc will be installed into the `llm-gateway` namespace. It's configured to listen on port 8081 for traffic through ext-proc (in addition to the default 8080), see the `EnvoyProxy` configuration in `installation.yaml`. When you create Gateways, make sure the `llm-gateway` GatewayClass is used.
+   A custom GatewayClass `llm-gateway` which is configured with the llm routing ext proc will be installed. It's configured to listen on port 8081 for traffic through ext-proc (in addition to the default 8080), see the `EnvoyExtensionPolicy` configuration in `installation.yaml`. When you create Gateways, make sure the `llm-gateway` GatewayClass is used.
 
    NOTE: Ensure the `llm-route-ext-proc` deployment is updated with the pod names and internal IP addresses of the vLLM replicas. This step is crucial for the correct routing of requests based on headers. This won't be needed once we make ext proc dynamically read the pods.
 
