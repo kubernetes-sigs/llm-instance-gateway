@@ -2,15 +2,20 @@ import argparse
 from collections import Counter
 import csv
 from datetime import datetime
+import os
+import string
 import numpy as np
 import simpy
 from llmactor import LLMActor
 from loadbalancer import LoadBalancer
+import sys
 
 def main():
+    
+    
     parser = argparse.ArgumentParser(description="Simulate LLM load balancing with configurable parameters.")
-    parser.add_argument("--rates_lo", nargs='+', type=int, default=[35, 30, 25, 20, 15, 10, 5, 1], help="List of low rates.")
-    parser.add_argument("--rates_hi", nargs='+', type=int, default=[35, 30, 25, 20, 15, 10, 5, 1], help="List of high rates.")
+    parser.add_argument("--rates_lo", nargs='+', type=int, default=[40,35, 30, 25, 20, 15, 10, 5, 1], help="List of low rates.")
+    parser.add_argument("--rates_hi", nargs='+', type=int, default=[40,35, 30, 25, 20, 15, 10, 5, 1 ], help="List of high rates.")
     parser.add_argument("--no_of_messages", type=int, default=2500, help="Number of messages to simulate.")
     parser.add_argument("--mean_request_size_1", type=int, default=202, help="Mean request size for set 1.")
     parser.add_argument("--std_request_size_1", type=int, default=20, help="Standard deviation of request size for set 1.")
@@ -20,7 +25,8 @@ def main():
     parser.add_argument("--std_request_size_2", type=int, default=20, help="Standard deviation of request size for set 2.")
     parser.add_argument("--mean_output_size_2", type=int, default=179, help="Mean output size for set 2.")
     parser.add_argument("--std_output_size_2", type=int, default=17, help="Standard deviation of output size for set 2.")
-    parser.add_argument("--queueing_perc", type=float, default=0.19, help="Queueing percentage.")
+    parser.add_argument("--estimated_output_size", type=str, default="mean", help="how to determine the mean output size.")
+    parser.add_argument("--queueing_perc", type=float, default=np.inf, help="Queueing percentage.")
     parser.add_argument('--target-latency-lo', nargs='+', type=float, help='List of target latencies for low priority requests.')
     parser.add_argument('--target-latency-hi', nargs='+', type=float, help='List of target latencies for high priority requests.')
     
@@ -29,6 +35,8 @@ def main():
     
     
     parser.add_argument('--number-of-servers',  type=int, default=6, help='List of target latencies for high priority requests.')
+    parser.add_argument('--output-file',  type=str, default="result.csv", help='output file name.')
+    parser.add_argument('--routing-type',  type=str, default="random", help='routing type')
     
     args = parser.parse_args()
 
@@ -58,6 +66,9 @@ def main():
     prefix_latency_list_hi = args.prefix_latency_hi if args.prefix_latency_hi else ['hi']
     
     number_of_servers = args.number_of_servers
+    output_file = args.output_file
+    routing_type = args.routing_type
+    estimated_output_size = args.estimated_output_size
 
     # Define a structure to store results for all routing types
     results = {
@@ -71,9 +82,9 @@ def main():
                'recompute_cnt' : [], 'recompute_cnt_hi' : [], 'recompute_cnt_lo' : [],
                'pct_below_latency_target_lo': [], 'pct_below_latency_target_hi': [],  'queue_time_lo': [], 'queue_time_hi': [],
               'tol_lat_time_lo': [], 'tol_lat_time_hi': [], 
-              'avg_prefill_queue_size' = [],
-'avg_pending_tokens_perc' = [],
-'avg_actual_tokens_perc' = []},
+              'avg_prefill_queue_size' : [],
+'avg_pending_tokens_perc' : [],
+'avg_actual_tokens_perc' : [], 'request_count': []},
 
     'smart': {'latency': [], 'latency_lo': [], 'latency_hi': [],
               'estimated_latency': [], 'estimated_latency_lo': [], 'estimated_latency_hi': [],
@@ -87,9 +98,9 @@ def main():
               'pct_below_latency_target_lo': [], 'pct_below_latency_target_hi': [],
                'pct_below_latency_target_lo': [], 'pct_below_latency_target_hi': [], 'queue_time_lo': [], 'queue_time_hi': [],
               'tol_lat_time_lo': [], 'tol_lat_time_hi': [], 
-              'avg_prefill_queue_size' = [],
-'avg_pending_tokens_perc' = [],
-'avg_actual_tokens_perc' = []},
+              'avg_prefill_queue_size' : [],
+'avg_pending_tokens_perc' : [],
+'avg_actual_tokens_perc' : [], 'request_count': []},
 
     'leastlatency': {'latency': [], 'latency_lo': [], 'latency_hi': [],
                 'throughput_prefill': [], 'throughput_decode': [],
@@ -101,9 +112,9 @@ def main():
                 'recompute_cnt' : [], 'recompute_cnt_hi' : [], 'recompute_cnt_lo' : [],
                 'pct_below_latency_target_lo': [], 'pct_below_latency_target_hi': [], 'queue_time_lo': [], 'queue_time_hi': [],
               'tol_lat_time_lo': [], 'tol_lat_time_hi': [], 
-              'avg_prefill_queue_size' = [],
-'avg_pending_tokens_perc' = [],
-'avg_actual_tokens_perc' = []},
+              'avg_prefill_queue_size' : [],
+'avg_pending_tokens_perc' : [],
+'avg_actual_tokens_perc' : [], 'request_count': []},
     'least': {'latency': [], 'latency_lo': [], 'latency_hi': [],
                 'throughput_prefill': [], 'throughput_decode': [],
                 'throughput_prefill_lo': [], 'throughput_decode_lo': [],
@@ -114,9 +125,9 @@ def main():
                 'recompute_cnt' : [], 'recompute_cnt_hi' : [], 'recompute_cnt_lo' : [],
                'pct_below_latency_target_lo': [], 'pct_below_latency_target_hi': [], 'queue_time_lo': [], 'queue_time_hi': [],
               'tol_lat_time_lo': [], 'tol_lat_time_hi': [], 
-              'avg_prefill_queue_size' = [],
-'avg_pending_tokens_perc' = [],
-'avg_actual_tokens_perc' = []},
+              'avg_prefill_queue_size' : [],
+'avg_pending_tokens_perc' : [],
+'avg_actual_tokens_perc' : [], 'request_count': []},
     'random': {'latency': [], 'latency_lo': [], 'latency_hi': [],
                 'throughput_prefill': [], 'throughput_decode': [],
                 'throughput_prefill_lo': [], 'throughput_decode_lo': [],
@@ -127,12 +138,12 @@ def main():
                 'recompute_cnt' : [], 'recompute_cnt_hi' : [], 'recompute_cnt_lo' : [],
                'pct_below_latency_target_lo': [], 'pct_below_latency_target_hi': [], 'queue_time_lo': [], 'queue_time_hi': [],
               'tol_lat_time_lo': [], 'tol_lat_time_hi': [], 
-              'avg_prefill_queue_size' = [],
-'avg_pending_tokens_perc' = [],
-'avg_actual_tokens_perc' = []},
+              'avg_prefill_queue_size' : [],
+'avg_pending_tokens_perc' : [],
+'avg_actual_tokens_perc' : [], 'request_count': []},
 }
 
-    all_routing_types = [ "random",  ]
+    all_routing_types = [ routing_type ]
     prompt_output_tuple = None
 
 # Iterate over routing types
@@ -144,15 +155,23 @@ def main():
             req_dict_prefill = {}
             SIM_DURATION = SIM_DURATIONS[i]
             print(f'Simulate with rate: for lo {rates_lo[i]} and for hi {rates_hi[i]} and routing type: {routing_type}')
-
+            sys.stdout.flush()
             # Simpy environment and LLM actors setup
             env = simpy.Environment()
             list_of_llmactors = [LLMActor(env, 1, id) for id in range(number_of_servers)]
             lb = LoadBalancer(env, number_of_servers=number_of_servers, list_of_llmactors=list_of_llmactors, req_dict_prefill=req_dict_prefill, req_dict=req_dict, messages_remaining_cnt=no_of_messages*2)
             lb.queueing_perc = queueing_perc
 
-            estimated_output_size = mean_output_size_1
-            lb.process(rates_lo[i], lora_requested_lo, target_latency_list_lo, prefix_latency_list_lo, routing_type, prompt_output_tuple, mean_request_size_1, std_request_size_1, mean_output_size_1, std_output_size_1, estimated_output_size)
+            if estimated_output_size == "mean":
+                estimated_output_size_1 = mean_output_size_1
+                estimated_output_size_2 = mean_output_size_2
+            elif estimated_output_size == "p95":
+                estimated_output_size_1 = mean_output_size_1 + 2 * std_output_size_1
+                estimated_output_size_2 = mean_output_size_2 + 2 * std_output_size_2
+            
+
+            lb.process(rates_lo[i], lora_requested_lo, target_latency_list_lo, prefix_latency_list_lo, routing_type, prompt_output_tuple, mean_request_size_1, std_request_size_1, mean_output_size_1, std_output_size_1, estimated_output_size_1)
+            lb.process(rates_hi[i], lora_requested_hi, target_latency_list_hi, prefix_latency_list_hi, routing_type, prompt_output_tuple, mean_request_size_1, std_request_size_1, mean_output_size_1, std_output_size_1, estimated_output_size_2)
             env.run(until=SIM_DURATION)
 
             # Track which pod processed each request (lo and hi)
@@ -268,11 +287,14 @@ def main():
             results[routing_type]['avg_prefill_queue_size'].append(np.mean(prefill_queue_size))
             results[routing_type]['avg_pending_tokens_perc'].append(np.mean(pending_tokens_at_arrival_perc))
             results[routing_type]['avg_actual_tokens_perc'].append(np.mean(actual_tokens_at_arrival_perc))
+            
 
-            l1 = [np.sum(list(dict(x).values())) for x in results[routing_type]['target_pods_lo']]
-            l2 = [np.sum(list(dict(x).values())) for x in results[routing_type]['target_pods_hi']]
+            l1 = [np.sum(list(dict(x).values())) for x in results[routing_type]['target_pods_lo']][-1]
+            l2 = [np.sum(list(dict(x).values())) for x in results[routing_type]['target_pods_hi']][-1]
 
-            print(f'req count {[(l1[i], l2[i]) for i in range(len(l1))]}')
+            print(f'req count {(l1, l2)}')
+            sys.stdout.flush()
+            results[routing_type]['request_count'].append(len(completed_req))
 
             if routing_type == 'smart':
                 results[routing_type]['estimated_latency'].append(estimated_latency_cur)
@@ -288,18 +310,29 @@ def main():
             print(f'QPS: {rates_lo[i]} (lo), {rates_hi[i]} (hi)')
             print(f'% of lo requests below target: {pct_below_target_lo}%')
             print(f'% of hi requests below target: {pct_below_target_hi}%')
+            print(f"prefill_queue_size {np.mean(prefill_queue_size)}")
+            print(f"pending_tokens_perc {np.mean(pending_tokens_at_arrival_perc)}")
+            print(f"actual_tokens_perc {np.mean(actual_tokens_at_arrival_perc)}")
+            sys.stdout.flush()
+            
+            
             
     # Create a timestamp
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     # Create the output file name with the timestamp
-    output_file = f"results_{timestamp}.json"
+    
 
 
 
     # Write results to CSV
+    # Ensure the output directory exists
+    output_dir = os.path.dirname(output_file)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
     with open(output_file, 'w', newline='') as csvfile:
-        fieldnames = ['RoutingType', 'RateIndex', 'Latency', 'Latency_Lo', 'Latency_Hi','Estimated_Latency', 'Estimated_Latency_lo', 'Estimated_Latency_hi', 'avg_prefill_queue_size', 'avg_pending_tokens_perc', 'avg_actual_tokens_perc' ]
+        fieldnames = ['RoutingType', 'RateIndex', 'Latency', 'Latency_Lo', 'Latency_Hi', 'avg_prefill_queue_size', 'avg_pending_tokens_perc', 'avg_actual_tokens_perc' , 'pct_below_latency_target_lo', 'pct_below_latency_target_hi']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
         writer.writeheader()
@@ -313,12 +346,11 @@ def main():
                     'Latency': results[routing_type]['latency'][i],
                     'Latency_Lo': results[routing_type]['latency_lo'][i],
                     'Latency_Hi': results[routing_type]['latency_hi'][i],
-                    'Estimated_Latency': results[routing_type]['estimated_latency'][i],
-                    'Estimated_Latency_Lo': results[routing_type]['estimated_latency_lo'][i],
-                    'Estimated_Latency_Hi': results[routing_type]['estimated_latency_hi'][i],
                     'avg_prefill_queue_size': results[routing_type]['avg_prefill_queue_size'][i],
                     'avg_pending_tokens_perc': results[routing_type]['avg_pending_tokens_perc'][i],
                     'avg_actual_tokens_perc': results[routing_type]['avg_actual_tokens_perc'][i],
+                    'pct_below_latency_target_lo': results[routing_type]['pct_below_latency_target_lo'][i],
+                    'pct_below_latency_target_hi': results[routing_type]['pct_below_latency_target_hi'][i],
                 })
 
     print(f"Results have been saved to {output_file}")

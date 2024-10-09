@@ -18,7 +18,7 @@ class LoadBalancer:
                  list_of_llmactors: List[LLMActor] = None, 
                  messages_remaining_cnt: Optional[int] = None, 
                  req_dict_prefill = {}, req_dict = {},
-                 queueing_perc: float = 0.2):
+                 queueing_perc: float = np.inf):
         self.number_of_servers = number_of_servers
         self.list_of_llmactors = list_of_llmactors or []
         assert len(self.list_of_llmactors) == number_of_servers, "Number of actors must match number of servers"
@@ -350,13 +350,13 @@ class LoadBalancer:
 
     def queueing_signal(self, routing_type = "smart") -> bool:
       if routing_type == "smart":
-        return self.check_saturations(use_pseudo_kv_cache=True, max_saturation= self.queueing_perc) or self.all_servers_queued()
+        return self.check_saturations(use_pseudo_kv_cache=False, max_saturation= self.queueing_perc) or self.all_servers_queued()
       else :
         return self.get_overall_pending_tokens_perc() > self.queueing_perc or self.all_servers_queued()
 
     def dequeueing_signal(self, routing_type = "smart") -> bool:
       if routing_type == "smart":
-        return self.check_saturations(use_pseudo_kv_cache=True, max_saturation= self.queueing_perc)  == False and  self.all_servers_queued() == False
+        return self.check_saturations(use_pseudo_kv_cache=False, max_saturation= self.queueing_perc)  == False and  self.all_servers_queued() == False
       else :
         return self.get_overall_pending_tokens_perc() < self.queueing_perc and self.all_servers_queued() == False
 
@@ -369,6 +369,33 @@ class LoadBalancer:
             return False
         return True
 
+    import random
+
+    def weighted_dequeue(self) -> Optional[Request]:
+      # Get active targets and their latencies
+      active_targets = list(self.getActiveReqTargetLatencyInWindow(np.inf))
+    
+      # Calculate inverse weights based on latencies
+      inverse_weights = {k: 1.0 / k for k in active_targets}
+    
+      # Calculate total weight to normalize
+      total_weight = sum(inverse_weights.values())
+    
+      # Calculate the relative probabilities for each target
+      target_probs = {k: inverse_weights[k] / total_weight for k in active_targets}
+    
+      # Use random.choices to select a target based on probabilities
+      # Attempt to dequeue from the selected target's queue
+      for _ in range(100):  # Try up to the 100 times
+        selected_target = random.choices(list(target_probs.keys()), weights=target_probs.values(), k=1)[0]
+        
+        # Check if the selected target's queue is non-empty
+        if selected_target in self.queues and not self.queues[selected_target].empty():
+            req = self.queues[selected_target].get()
+            return req
+    
+      return None
+    
     def dequeue(self) -> Optional[Request]:
         active_targets = sorted(self.getActiveReqTargetLatencyInWindow(np.inf))
         for k in active_targets:
@@ -376,6 +403,8 @@ class LoadBalancer:
             req = self.queues[k].get()
             return req
         return None
+
+
 
 
     def dequeue_process(self, routing_type, drop_late_requests = False):
@@ -512,7 +541,7 @@ class LoadBalancer:
             prompt_output_tuple, mean_request_size, std_request_size, 
             mean_output_size, std_output_size
         )
-        output_size = min(output_size, MAX_NUM_BATCH_TOKENS)
+        input_size = min(input_size, MAX_NUM_BATCH_TOKENS)
 
         request_id = f"{prefix}: {cnt}"
         new_req = self.create_request(request_id, input_size, output_size, target_latency)
