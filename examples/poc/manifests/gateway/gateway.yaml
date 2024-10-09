@@ -10,3 +10,11 @@ spec:
     - name: http
       protocol: HTTP
       port: 8080
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: llm-gateway
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+---

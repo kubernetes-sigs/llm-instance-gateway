@@ -17,29 +17,41 @@ This project sets up an Envoy gateway with a custom external processing which im
 ### Steps
 
 1. **Deploy Sample vLLM Application**
+
    NOTE: Create a HuggingFace API token and store it in a secret named `hf-token` with key `token`. This is configured in the `HUGGING_FACE_HUB_TOKEN` and `HF_TOKEN` environment variables in `./manifests/samples/vllm-lora-deployment.yaml`.
 
    ```bash
-   kubectl apply -f ./manifests/samples/vllm-lora-deployment.yaml
-   kubectl apply -f ./manifests/samples/vllm-lora-service.yaml
+   kubectl apply -f ./manifests/vllm/vllm-lora-deployment.yaml
+   kubectl apply -f ./manifests/vllm/vllm-lora-service.yaml
    ```
 
-2. **Install GatewayClass with Ext Proc**
-   A custom GatewayClass `llm-gateway` which is configured with the llm routing ext proc will be installed. It's configured to listen on port 8081 for traffic through ext-proc (in addition to the default 8080), see the `EnvoyExtensionPolicy` configuration in `installation.yaml`. When you create Gateways, make sure the `llm-gateway` GatewayClass is used.
+1. **Update Envoy Gateway Config to enable Patch Policy**
 
-   NOTE: Ensure the `llm-route-ext-proc` deployment is updated with the pod names and internal IP addresses of the vLLM replicas. This step is crucial for the correct routing of requests based on headers. This won't be needed once we make ext proc dynamically read the pods.
+   Our custom LLM Gateway ext-proc is patched into the existing envoy gateway via `EnvoyPatchPolicy`. To enable this feature, we must extend the Envoy Gateway config map. To do this, simply run:
+   ```bash
+   kubectl apply -f ./manifests/gateway/enable_patch_policy.yaml
+   kubectl rollout restart deployment envoy-gateway -n envoy-gateway-system
+
+   ```
+   Additionally, if you would like the enable the admin interface, you can uncomment the admin lines and run this again.
+
+
+1. **Deploy Gateway**
 
    ```bash
-   kubectl apply -f ./manifests/installation.yaml
+   kubectl apply -f ./manifests/gateway/gateway.yaml
    ```
 
-3. **Deploy Gateway**
+1. **Deploy Ext-Proc**
 
    ```bash
-   kubectl apply -f ./manifests/samples/gateway.yaml
+   kubectl apply -f ./manifests/gateway/ext_proc.yaml
+   kubectl apply -f ./manifests/gateway/patch_policy.yaml
    ```
+   **NOTE**: Ensure the `instance-gateway-ext-proc` deployment is updated with the pod names and internal IP addresses of the vLLM replicas. This step is crucial for the correct routing of requests based on headers. This won't be needed once we make ext proc dynamically read the pods.
 
-4. **Try it out**
+1. **Try it out**
+
    Wait until the gateway is ready.
 
    ```bash
