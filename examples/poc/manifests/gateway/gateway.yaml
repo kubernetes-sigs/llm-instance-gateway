@@ -3,18 +3,21 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: llm-gateway
+  name: <GATEWAY-NAME>
 spec:
-  gatewayClassName: llm-gateway
+  gatewayClassName: <GATEWAY-NAME>
   listeners:
     - name: http
       protocol: HTTP
       port: 8080
+    - name: llm-gw
+      protocol: HTTP
+      port: 8081
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
-  name: llm-gateway
+  name: <GATEWAY-NAME>
 spec:
   controllerName: gateway.envoyproxy.io/gatewayclass-controller
 ---
