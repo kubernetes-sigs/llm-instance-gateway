@@ -30,11 +30,12 @@ func (p *Provider) refreshMetricsOnce() error {
 	defer func() {
 		d := time.Now().Sub(start)
 		// TODO: add a metric instead of logging
-		klog.V(3).Infof("Refreshed metrics in %v", d)
+		klog.V(4).Infof("Refreshed metrics in %v", d)
 	}()
 	var wg sync.WaitGroup
 	var errs error
 	processOnePod := func(key, value any) bool {
+		klog.V(4).Infof("Processing pod %v and metric %v", key, value)
 		pod := key.(Pod)
 		metrics := value.(*PodMetrics)
 		wg.Add(1)
@@ -46,7 +47,7 @@ func (p *Provider) refreshMetricsOnce() error {
 				return
 			}
 			updated, err := promToPodMetrics(metricFamilies, metrics)
-			klog.V(3).Infof("Updated metrics for pod %s: %v", pod, updated.Metrics)
+			klog.V(4).Infof("Updated metrics for pod %s: %v", pod, updated.Metrics)
 			if err != nil {
 				multierr.Append(errs, fmt.Errorf("failed to get all pod metrics updated from prometheus: %v", err))
 			}
@@ -67,17 +68,17 @@ func promToPodMetrics(metricFamilies map[string]*dto.MetricFamily, existing *Pod
 	updated := existing.Clone()
 	runningQueueSize, _, err := getLatestMetric(metricFamilies, RunningQueueSizeMetricName)
 	multierr.Append(errs, err)
-	if err != nil {
-		updated.RunningQueueSize = int(runningQueueSize.GetCounter().GetValue())
+	if err == nil {
+		updated.RunningQueueSize = int(runningQueueSize.GetGauge().GetValue())
 	}
 	waitingQueueSize, _, err := getLatestMetric(metricFamilies, WaitingQueueSizeMetricName)
 	multierr.Append(errs, err)
-	if err != nil {
+	if err == nil {
 		updated.WaitingQueueSize = int(waitingQueueSize.GetGauge().GetValue())
 	}
 	cachePercent, _, err := getLatestMetric(metricFamilies, KVCacheUsagePercentMetricName)
 	multierr.Append(errs, err)
-	if err != nil {
+	if err == nil {
 		updated.KVCacheUsagePercent = cachePercent.GetGauge().GetValue()
 	}
 	/* TODO: uncomment once this is available in vllm.
@@ -126,10 +127,11 @@ func getLatestMetric(metricFamilies map[string]*dto.MetricFamily, metricName str
 	var latestTs int64
 	var latest *dto.Metric
 	for _, m := range mf.GetMetric() {
-		if m.GetTimestampMs() > latestTs {
+		if m.GetTimestampMs() >= latestTs {
 			latestTs = m.GetTimestampMs()
 			latest = m
 		}
 	}
+	klog.V(4).Infof("Got metric value %+v for metric %v", latest, metricName)
 	return latest, time.Unix(0, latestTs*1000), nil
 }

@@ -8,9 +8,9 @@ import (
 
 // HandleResponseHeaders processes response headers from the backend model server.
 func (s *Server) HandleResponseHeaders(reqCtx *RequestContext, req *extProcPb.ProcessingRequest) (*extProcPb.ProcessingResponse, error) {
-	klog.V(2).Info("Processing ResponseHeaders")
+	klog.V(3).Info("Processing ResponseHeaders")
 	h := req.Request.(*extProcPb.ProcessingRequest_ResponseHeaders)
-	klog.V(2).Infof("Headers before: %+v\n", h)
+	klog.V(3).Infof("Headers before: %+v\n", h)
 
 	resp := &extProcPb.ProcessingResponse{
 		Response: &extProcPb.ProcessingResponse_ResponseHeaders{
