@@ -2,6 +2,7 @@
 package scheduling
 
 import (
+	"fmt"
 	"math/rand"
 
 	klog "k8s.io/klog/v2"
@@ -44,10 +45,10 @@ type PodMetricsProvider interface {
 
 // Schedule finds the target pod based on metrics and the requested lora adapter.
 func (s *Scheduler) Schedule(b *LLMRequest) (targetPod *backend.Pod, err error) {
-	klog.V(2).Infof("request: %v; metrics: %+v", b, s.podMetricsProvider.AllPodMetrics())
+	klog.V(3).Infof("request: %v; metrics: %+v", b, s.podMetricsProvider.AllPodMetrics())
 	pods, err := s.filter.Filter(b, s.podMetricsProvider.AllPodMetrics())
 	if err != nil || len(pods) == 0 {
-		klog.Errorf("Failed to apply filter, this should never happen: %v", err)
+		return nil, fmt.Errorf("failed to apply filter, resulted %v pods, this should never happen: %v", len(pods), err)
 	}
 	i := rand.Intn(len(pods))
 	return &pods[i].Pod, nil
