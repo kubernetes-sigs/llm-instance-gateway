@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: instance-gateway-ext-proc
-        image: ghcr.io/tomatillo-and-multiverse/ext-proc:demo
+        image: <BUILT-IMAGE>
         args:
         #TODO: specify label selector and dynamically update pods
         - -pods
