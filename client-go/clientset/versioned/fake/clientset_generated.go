@@ -18,10 +18,10 @@ limitations under the License.
 package fake
 
 import (
-	applyconfiguration "inferences.k8s.io/llm-instance-gateway/client-go/applyconfiguration"
-	clientset "inferences.k8s.io/llm-instance-gateway/client-go/clientset/versioned"
-	apiv1alpha1 "inferences.k8s.io/llm-instance-gateway/client-go/clientset/versioned/typed/api/v1alpha1"
-	fakeapiv1alpha1 "inferences.k8s.io/llm-instance-gateway/client-go/clientset/versioned/typed/api/v1alpha1/fake"
+	applyconfiguration "inference.k8s.io/llm-instance-gateway/client-go/applyconfiguration"
+	clientset "inference.k8s.io/llm-instance-gateway/client-go/clientset/versioned"
+	apiv1alpha1 "inference.k8s.io/llm-instance-gateway/client-go/clientset/versioned/typed/api/v1alpha1"
+	fakeapiv1alpha1 "inference.k8s.io/llm-instance-gateway/client-go/clientset/versioned/typed/api/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"

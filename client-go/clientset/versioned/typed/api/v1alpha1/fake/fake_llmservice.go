@@ -23,7 +23,7 @@ import (
 	fmt "fmt"
 
 	v1alpha1 "inference.k8s.io/llm-instance-gateway/api/v1alpha1"
-	apiv1alpha1 "inferences.k8s.io/llm-instance-gateway/client-go/applyconfiguration/api/v1alpha1"
+	apiv1alpha1 "inference.k8s.io/llm-instance-gateway/client-go/applyconfiguration/api/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	types "k8s.io/apimachinery/pkg/types"

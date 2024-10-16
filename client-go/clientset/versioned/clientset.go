@@ -21,7 +21,7 @@ import (
 	fmt "fmt"
 	http "net/http"
 
-	apiv1alpha1 "inferences.k8s.io/llm-instance-gateway/client-go/clientset/versioned/typed/api/v1alpha1"
+	apiv1alpha1 "inference.k8s.io/llm-instance-gateway/client-go/clientset/versioned/typed/api/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"

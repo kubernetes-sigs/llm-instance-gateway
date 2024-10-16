@@ -19,8 +19,8 @@ package applyconfiguration
 
 import (
 	v1alpha1 "inference.k8s.io/llm-instance-gateway/api/v1alpha1"
-	apiv1alpha1 "inferences.k8s.io/llm-instance-gateway/client-go/applyconfiguration/api/v1alpha1"
-	internal "inferences.k8s.io/llm-instance-gateway/client-go/applyconfiguration/internal"
+	apiv1alpha1 "inference.k8s.io/llm-instance-gateway/client-go/applyconfiguration/api/v1alpha1"
+	internal "inference.k8s.io/llm-instance-gateway/client-go/applyconfiguration/internal"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	testing "k8s.io/client-go/testing"

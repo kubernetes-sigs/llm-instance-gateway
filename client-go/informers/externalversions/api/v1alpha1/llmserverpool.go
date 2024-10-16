@@ -22,9 +22,9 @@ import (
 	time "time"
 
 	llminstancegatewayapiv1alpha1 "inference.k8s.io/llm-instance-gateway/api/v1alpha1"
-	versioned "inferences.k8s.io/llm-instance-gateway/client-go/clientset/versioned"
-	internalinterfaces "inferences.k8s.io/llm-instance-gateway/client-go/informers/externalversions/internalinterfaces"
-	apiv1alpha1 "inferences.k8s.io/llm-instance-gateway/client-go/listers/api/v1alpha1"
+	versioned "inference.k8s.io/llm-instance-gateway/client-go/clientset/versioned"
+	internalinterfaces "inference.k8s.io/llm-instance-gateway/client-go/informers/externalversions/internalinterfaces"
+	apiv1alpha1 "inference.k8s.io/llm-instance-gateway/client-go/listers/api/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"

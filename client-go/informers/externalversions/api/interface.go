@@ -18,8 +18,8 @@ limitations under the License.
 package api
 
 import (
-	v1alpha1 "inferences.k8s.io/llm-instance-gateway/client-go/informers/externalversions/api/v1alpha1"
-	internalinterfaces "inferences.k8s.io/llm-instance-gateway/client-go/informers/externalversions/internalinterfaces"
+	v1alpha1 "inference.k8s.io/llm-instance-gateway/client-go/informers/externalversions/api/v1alpha1"
+	internalinterfaces "inference.k8s.io/llm-instance-gateway/client-go/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to each of this group's versions.

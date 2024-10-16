@@ -21,7 +21,7 @@ import (
 	http "net/http"
 
 	apiv1alpha1 "inference.k8s.io/llm-instance-gateway/api/v1alpha1"
-	scheme "inferences.k8s.io/llm-instance-gateway/client-go/clientset/versioned/scheme"
+	scheme "inference.k8s.io/llm-instance-gateway/client-go/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 

@@ -21,8 +21,8 @@ import (
 	context "context"
 
 	apiv1alpha1 "inference.k8s.io/llm-instance-gateway/api/v1alpha1"
-	applyconfigurationapiv1alpha1 "inferences.k8s.io/llm-instance-gateway/client-go/applyconfiguration/api/v1alpha1"
-	scheme "inferences.k8s.io/llm-instance-gateway/client-go/clientset/versioned/scheme"
+	applyconfigurationapiv1alpha1 "inference.k8s.io/llm-instance-gateway/client-go/applyconfiguration/api/v1alpha1"
+	scheme "inference.k8s.io/llm-instance-gateway/client-go/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
