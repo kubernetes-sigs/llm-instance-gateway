@@ -45,6 +45,7 @@ type LLMServerPoolStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +genclient
 
 // LLMServerPool is the Schema for the llmserverpools API
 type LLMServerPool struct {

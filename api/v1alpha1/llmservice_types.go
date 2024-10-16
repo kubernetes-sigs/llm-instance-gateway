@@ -111,6 +111,7 @@ type LLMServiceStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +genclient
 
 // LLMService is the Schema for the llmservices API
 type LLMService struct {

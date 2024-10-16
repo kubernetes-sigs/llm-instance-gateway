@@ -35,7 +35,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	gatewayv1alpha1 "inference.k8s.io/api/v1alpha1"
+	gatewayv1alpha1 "inference.k8s.io/llm-instance-gateway/api/v1alpha1"
 	// +kubebuilder:scaffold:imports
 )
 
