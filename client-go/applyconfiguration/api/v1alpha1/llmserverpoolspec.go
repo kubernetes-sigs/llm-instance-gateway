@@ -17,14 +17,10 @@ limitations under the License.
 
 package v1alpha1
 
-import (
-	v1 "k8s.io/api/core/v1"
-)
-
 // LLMServerPoolSpecApplyConfiguration represents a declarative configuration of the LLMServerPoolSpec type for use
 // with apply.
 type LLMServerPoolSpecApplyConfiguration struct {
-	ServiceRefs []v1.ObjectReference `json:"serviceRefs,omitempty"`
+	ModelServerSelector map[string]string `json:"modelServerSelector,omitempty"`
 }
 
 // LLMServerPoolSpecApplyConfiguration constructs a declarative configuration of the LLMServerPoolSpec type for use with
@@ -33,12 +29,16 @@ func LLMServerPoolSpec() *LLMServerPoolSpecApplyConfiguration {
 	return &LLMServerPoolSpecApplyConfiguration{}
 }
 
-// WithServiceRefs adds the given value to the ServiceRefs field in the declarative configuration
+// WithModelServerSelector puts the entries into the ModelServerSelector field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
-// If called multiple times, values provided by each call will be appended to the ServiceRefs field.
-func (b *LLMServerPoolSpecApplyConfiguration) WithServiceRefs(values ...v1.ObjectReference) *LLMServerPoolSpecApplyConfiguration {
-	for i := range values {
-		b.ServiceRefs = append(b.ServiceRefs, values[i])
+// If called multiple times, the entries provided by each call will be put on the ModelServerSelector field,
+// overwriting an existing map entries in ModelServerSelector field with the same key.
+func (b *LLMServerPoolSpecApplyConfiguration) WithModelServerSelector(entries map[string]string) *LLMServerPoolSpecApplyConfiguration {
+	if b.ModelServerSelector == nil && len(entries) > 0 {
+		b.ModelServerSelector = make(map[string]string, len(entries))
+	}
+	for k, v := range entries {
+		b.ModelServerSelector[k] = v
 	}
 	return b
 }

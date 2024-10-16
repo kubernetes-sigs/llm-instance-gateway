@@ -18,7 +18,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	apiv1alpha1 "inference.k8s.io/llm-instance-gateway/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
@@ -29,7 +28,7 @@ import (
 type LLMServiceApplyConfiguration struct {
 	v1.TypeMetaApplyConfiguration    `json:",inline"`
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
-	Spec                             *apiv1alpha1.LLMServiceSpec         `json:"spec,omitempty"`
+	Spec                             *LLMServiceSpecApplyConfiguration   `json:"spec,omitempty"`
 	Status                           *LLMServiceStatusApplyConfiguration `json:"status,omitempty"`
 }
 
@@ -205,8 +204,8 @@ func (b *LLMServiceApplyConfiguration) ensureObjectMetaApplyConfigurationExists(
 // WithSpec sets the Spec field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Spec field is set to the value of the last call.
-func (b *LLMServiceApplyConfiguration) WithSpec(value apiv1alpha1.LLMServiceSpec) *LLMServiceApplyConfiguration {
-	b.Spec = &value
+func (b *LLMServiceApplyConfiguration) WithSpec(value *LLMServiceSpecApplyConfiguration) *LLMServiceApplyConfiguration {
+	b.Spec = value
 	return b
 }
 

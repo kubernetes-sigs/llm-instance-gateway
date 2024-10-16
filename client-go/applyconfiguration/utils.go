@@ -39,8 +39,16 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &apiv1alpha1.LLMServerPoolStatusApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("LLMService"):
 		return &apiv1alpha1.LLMServiceApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("LLMServiceSpec"):
+		return &apiv1alpha1.LLMServiceSpecApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("LLMServiceStatus"):
 		return &apiv1alpha1.LLMServiceStatusApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("Model"):
+		return &apiv1alpha1.ModelApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("Objective"):
+		return &apiv1alpha1.ObjectiveApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("TargetModel"):
+		return &apiv1alpha1.TargetModelApplyConfiguration{}
 
 	}
 	return nil

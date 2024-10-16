@@ -17,7 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -26,11 +25,11 @@ import (
 // LLMServerPoolSpec defines the desired state of LLMServerPool
 type LLMServerPoolSpec struct {
 
-	// ServiceRefs select the distinct services to include in the backend pool.
-	// NOTE: These services should be consumed by only the llmServerPool they
-	// are referenced by. Should this behavior be breached, Instance Gateway
-	// behavior is not guaranteed.
-	ServiceRefs []corev1.ObjectReference `json:"serviceRefs,omitempty"`
+	// ModelServerSelector uses label selection to watch model server pods
+	// that should be included in the LLMServerPool. ModelServers should not
+	// be with any other Service or LLMServerPool, that behavior is not supported
+	// and will result in sub-optimal utilization.
+	ModelServerSelector map[string]string `json:"modelServerSelector,omitempty"`
 }
 
 // LLMServerPoolStatus defines the observed state of LLMServerPool

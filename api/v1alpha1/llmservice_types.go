@@ -46,9 +46,9 @@ type LLMServiceSpec struct {
 	// Model can be in 2 priority classes, Critical and Noncritical.
 	// Priority class is implicitly set to Critical by specifying an Objective.
 	// Otherwise the Model is considered Noncritical.
-	Models []Model
+	Models []Model `json:"models,omitempty"`
 	// PoolRef are references to the backend pools that the LLMService registers to.
-	PoolRef []corev1.ObjectReference
+	PoolRef []corev1.ObjectReference `json:"poolRef,omitempty"`
 }
 
 // Model defines the policies for routing the traffic of a use case, this includes performance objectives
@@ -62,17 +62,17 @@ type Model struct {
 	// Names can be reserved without implementing an actual model in the pool.
 	// This can be done by specifying a target model and setting the weight to zero,
 	// an error will be returned specifying that no valid target model is found.
-	Name string
+	Name string `json:"name,omitempty"`
 	// Optional
 	// LLM Services with an objective have higher priority than services without.
 	// IMPORTANT: By specifying an objective, this places the LLMService in a higher priority class than LLMServices without a defined priority class.
 	// In the face of resource-scarcity. Higher priority requests will be preserved, and lower priority class requests will be rejected.
-	Objective *Objective
+	Objective *Objective `json:"objective,omitempty"`
 	// Optional.
 	// Allow multiple versions of a model for traffic splitting.
 	// If not specified, the target model name is defaulted to the modelName parameter.
 	// modelName is often in reference to a LoRA adapter.
-	TargetModels []TargetModel
+	TargetModels []TargetModel `json:"targetModels,omitempty"`
 }
 
 // TargetModel represents a deployed model or a LoRA adapter. The
@@ -84,10 +84,10 @@ type Model struct {
 // and then emitted on the appropriate LLMService object.
 type TargetModel struct {
 	// The name of the adapter as expected by the ModelServer.
-	Name string
+	Name string `json:"name,omitempty"`
 	// Weight is used to determine the percentage of traffic that should be
 	// sent to this target model when multiple versions of the model are specified.
-	Weight int
+	Weight int `json:"weight,omitempty"`
 }
 
 // Objective captures the latency SLO of a LLM service.
@@ -100,7 +100,7 @@ type Objective struct {
 	// length. Note that this is different from what is known as TPOT (time per output token) which only
 	// takes decode time into account.
 	// The P95 is calculated over a fixed time window defined at the operator level.
-	DesiredAveragePerOutputTokenLatencyAtP95OverMultipleRequests *time.Duration
+	DesiredAveragePerOutputTokenLatencyAtP95OverMultipleRequests *time.Duration `json:"desiredAveragePerOutputTokenLatencyAtP95OverMultipleRequests,omitempty"`
 }
 
 // LLMServiceStatus defines the observed state of LLMService
