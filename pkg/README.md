@@ -14,7 +14,7 @@
    kubectl rollout restart deployment envoy-gateway -n envoy-gateway-system
 
    ```
-   Additionally, if you would like the enable the admin interface, you can uncomment the admin lines and run this again.
+   Additionally, if you would like to enable the admin interface, you can uncomment the admin lines and run this again.
 
 
 1. **Deploy Gateway**
