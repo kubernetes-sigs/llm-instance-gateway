@@ -29,7 +29,7 @@ type LLMServerPoolSpec struct {
 	// that should be included in the LLMServerPool. ModelServers should not
 	// be with any other Service or LLMServerPool, that behavior is not supported
 	// and will result in sub-optimal utilization.
-	ModelServerSelector map[string]string `json:"modelServerSelector,omitempty"`
+	ModelServerSelector metav1.LabelSelector `json:"modelServerSelector,omitempty"`
 }
 
 // LLMServerPoolStatus defines the observed state of LLMServerPool
@@ -37,9 +37,6 @@ type LLMServerPoolStatus struct {
 
 	// Conditions track the state of the LLMServerPool.
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
-
-	// ReadyServers are the number of available servers within the LLMServerPool.
-	ReadyServers int32 `json:"readyServers,omitempty"`
 }
 
 // +kubebuilder:object:root=true

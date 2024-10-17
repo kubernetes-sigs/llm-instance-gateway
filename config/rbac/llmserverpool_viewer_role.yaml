@@ -8,7 +8,7 @@ metadata:
   name: llmserverpool-viewer-role
 rules:
 - apiGroups:
-  - gateway.inference.k8s.io
+  - gateway.inference.networking.x-k8s.io
   resources:
   - llmserverpools
   verbs:
@@ -16,7 +16,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - gateway.inference.k8s.io
+  - gateway.inference.networking.x-k8s.io
   resources:
   - llmserverpools/status
   verbs:

@@ -16,7 +16,7 @@ limitations under the License.
 
 // Package v1alpha1 contains API Schema definitions for the gateway v1alpha1 API group
 // +kubebuilder:object:generate=true
-// +groupName=gateway.inference.k8s.io
+// +groupName=gateway.inference.networking.x-k8s.io
 package v1alpha1
 
 import (
@@ -26,7 +26,7 @@ import (
 
 var (
 	// GroupVersion is group version used to register these objects
-	GroupVersion = schema.GroupVersion{Group: "gateway.inference.k8s.io", Version: "v1alpha1"}
+	GroupVersion = schema.GroupVersion{Group: "inference.networking.x-k8s.io", Version: "v1alpha1"}
 
 	// SchemeGroupVersion is alias to GroupVersion for client-go libraries.
 	// It is required by pkg/client/informers/externalversions/...

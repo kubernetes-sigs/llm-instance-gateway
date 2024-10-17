@@ -26,7 +26,7 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // LLMService represents a set of LLM services that are multiplexed onto one
-// or more backend pools. This resource is managed by the "LLM Service Owner"
+// or more LLMServerPools. This resource is managed by the "LLM Service Owner"
 // persona. The Service Owner persona is: a team that trains, verifies, and
 // leverages a large language model from a model frontend, drives the lifecycle
 // and rollout of new versions of those models, and defines the specific

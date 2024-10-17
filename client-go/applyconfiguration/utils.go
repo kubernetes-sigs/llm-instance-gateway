@@ -1,5 +1,5 @@
 /*
-Copyright 2023.
+Copyright 2024.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ limitations under the License.
 package applyconfiguration
 
 import (
-	v1alpha1 "inference.k8s.io/llm-instance-gateway/api/v1alpha1"
-	apiv1alpha1 "inference.k8s.io/llm-instance-gateway/client-go/applyconfiguration/api/v1alpha1"
-	internal "inference.k8s.io/llm-instance-gateway/client-go/applyconfiguration/internal"
+	v1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
+	apiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/client-go/applyconfiguration/api/v1alpha1"
+	internal "inference.networking.x-k8s.io/llm-instance-gateway/client-go/applyconfiguration/internal"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	testing "k8s.io/client-go/testing"
