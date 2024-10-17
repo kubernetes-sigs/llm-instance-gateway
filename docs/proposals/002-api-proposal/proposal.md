@@ -216,11 +216,11 @@ type LLMServerPool struct {
 }
 
 type LLMServerPoolSpec struct {
-        // Select the distinct services to include in the backend pool. These
-        // services should be consumed by only the llmServerPool they are part
-        // of. Should this behavior be breached, routing behavior is not
-        // guaranteed.
-        ServiceRef []corev1.ObjectReference
+        // ModelServerSelector uses label selection to watch model server pods
+        // that should be included in the LLMServerPool. ModelServers should not
+        // be with any other Service or LLMServerPool, that behavior is not supported
+        // and will result in sub-optimal utilization.
+        ModelServerSelector map[string]string `json:"modelServerSelector,omitempty"`
 }
 ```
 

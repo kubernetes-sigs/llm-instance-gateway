@@ -1,0 +1,23 @@
+# permissions for end users to view llmserverpools.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: api
+    app.kubernetes.io/managed-by: kustomize
+  name: llmserverpool-viewer-role
+rules:
+- apiGroups:
+  - gateway.inference.networking.x-k8s.io
+  resources:
+  - llmserverpools
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - gateway.inference.networking.x-k8s.io
+  resources:
+  - llmserverpools/status
+  verbs:
+  - get
