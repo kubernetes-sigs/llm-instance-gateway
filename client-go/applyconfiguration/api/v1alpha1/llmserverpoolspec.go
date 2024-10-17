@@ -1,5 +1,5 @@
 /*
-Copyright 2023.
+Copyright 2024.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,10 +17,14 @@ limitations under the License.
 
 package v1alpha1
 
+import (
+	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
+)
+
 // LLMServerPoolSpecApplyConfiguration represents a declarative configuration of the LLMServerPoolSpec type for use
 // with apply.
 type LLMServerPoolSpecApplyConfiguration struct {
-	ModelServerSelector map[string]string `json:"modelServerSelector,omitempty"`
+	ModelServerSelector *v1.LabelSelectorApplyConfiguration `json:"modelServerSelector,omitempty"`
 }
 
 // LLMServerPoolSpecApplyConfiguration constructs a declarative configuration of the LLMServerPoolSpec type for use with
@@ -29,16 +33,10 @@ func LLMServerPoolSpec() *LLMServerPoolSpecApplyConfiguration {
 	return &LLMServerPoolSpecApplyConfiguration{}
 }
 
-// WithModelServerSelector puts the entries into the ModelServerSelector field in the declarative configuration
-// and returns the receiver, so that objects can be build by chaining "With" function invocations.
-// If called multiple times, the entries provided by each call will be put on the ModelServerSelector field,
-// overwriting an existing map entries in ModelServerSelector field with the same key.
-func (b *LLMServerPoolSpecApplyConfiguration) WithModelServerSelector(entries map[string]string) *LLMServerPoolSpecApplyConfiguration {
-	if b.ModelServerSelector == nil && len(entries) > 0 {
-		b.ModelServerSelector = make(map[string]string, len(entries))
-	}
-	for k, v := range entries {
-		b.ModelServerSelector[k] = v
-	}
+// WithModelServerSelector sets the ModelServerSelector field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ModelServerSelector field is set to the value of the last call.
+func (b *LLMServerPoolSpecApplyConfiguration) WithModelServerSelector(value *v1.LabelSelectorApplyConfiguration) *LLMServerPoolSpecApplyConfiguration {
+	b.ModelServerSelector = value
 	return b
 }

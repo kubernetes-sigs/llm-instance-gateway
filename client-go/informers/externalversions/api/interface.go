@@ -1,5 +1,5 @@
 /*
-Copyright 2023.
+Copyright 2024.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ limitations under the License.
 package api
 
 import (
-	v1alpha1 "inference.k8s.io/llm-instance-gateway/client-go/informers/externalversions/api/v1alpha1"
-	internalinterfaces "inference.k8s.io/llm-instance-gateway/client-go/informers/externalversions/internalinterfaces"
+	v1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/client-go/informers/externalversions/api/v1alpha1"
+	internalinterfaces "inference.networking.x-k8s.io/llm-instance-gateway/client-go/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to each of this group's versions.

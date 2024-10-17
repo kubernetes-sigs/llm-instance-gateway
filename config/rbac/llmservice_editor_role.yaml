@@ -8,7 +8,7 @@ metadata:
   name: llmservice-editor-role
 rules:
 - apiGroups:
-  - gateway.inference.k8s.io
+  - gateway.inference.networking.x-k8s.io
   resources:
   - llmservices
   verbs:
@@ -20,7 +20,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - gateway.inference.k8s.io
+  - gateway.inference.networking.x-k8s.io
   resources:
   - llmservices/status
   verbs:

@@ -1,5 +1,5 @@
 /*
-Copyright 2023.
+Copyright 2024.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,8 +24,7 @@ import (
 // LLMServerPoolStatusApplyConfiguration represents a declarative configuration of the LLMServerPoolStatus type for use
 // with apply.
 type LLMServerPoolStatusApplyConfiguration struct {
-	Conditions   []v1.ConditionApplyConfiguration `json:"conditions,omitempty"`
-	ReadyServers *int32                           `json:"readyServers,omitempty"`
+	Conditions []v1.ConditionApplyConfiguration `json:"conditions,omitempty"`
 }
 
 // LLMServerPoolStatusApplyConfiguration constructs a declarative configuration of the LLMServerPoolStatus type for use with
@@ -44,13 +43,5 @@ func (b *LLMServerPoolStatusApplyConfiguration) WithConditions(values ...*v1.Con
 		}
 		b.Conditions = append(b.Conditions, *values[i])
 	}
-	return b
-}
-
-// WithReadyServers sets the ReadyServers field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the ReadyServers field is set to the value of the last call.
-func (b *LLMServerPoolStatusApplyConfiguration) WithReadyServers(value int32) *LLMServerPoolStatusApplyConfiguration {
-	b.ReadyServers = &value
 	return b
 }

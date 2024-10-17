@@ -1,5 +1,5 @@
 /*
-Copyright 2023.
+Copyright 2024.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ package v1alpha1
 import (
 	context "context"
 
-	apiv1alpha1 "inference.k8s.io/llm-instance-gateway/api/v1alpha1"
-	applyconfigurationapiv1alpha1 "inference.k8s.io/llm-instance-gateway/client-go/applyconfiguration/api/v1alpha1"
-	scheme "inference.k8s.io/llm-instance-gateway/client-go/clientset/versioned/scheme"
+	apiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
+	applyconfigurationapiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/client-go/applyconfiguration/api/v1alpha1"
+	scheme "inference.networking.x-k8s.io/llm-instance-gateway/client-go/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"

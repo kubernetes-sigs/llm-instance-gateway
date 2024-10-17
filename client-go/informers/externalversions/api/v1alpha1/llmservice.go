@@ -1,5 +1,5 @@
 /*
-Copyright 2023.
+Copyright 2024.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@ import (
 	context "context"
 	time "time"
 
-	llminstancegatewayapiv1alpha1 "inference.k8s.io/llm-instance-gateway/api/v1alpha1"
-	versioned "inference.k8s.io/llm-instance-gateway/client-go/clientset/versioned"
-	internalinterfaces "inference.k8s.io/llm-instance-gateway/client-go/informers/externalversions/internalinterfaces"
-	apiv1alpha1 "inference.k8s.io/llm-instance-gateway/client-go/listers/api/v1alpha1"
+	llminstancegatewayapiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
+	versioned "inference.networking.x-k8s.io/llm-instance-gateway/client-go/clientset/versioned"
+	internalinterfaces "inference.networking.x-k8s.io/llm-instance-gateway/client-go/informers/externalversions/internalinterfaces"
+	apiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/client-go/listers/api/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"

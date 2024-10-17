@@ -24,7 +24,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"inference.k8s.io/llm-instance-gateway/test/utils"
+	"inference.networking.x-k8s.io/llm-instance-gateway/test/utils"
 )
 
 const namespace = "api-system"

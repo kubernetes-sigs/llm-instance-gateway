@@ -1,5 +1,5 @@
 /*
-Copyright 2023.
+Copyright 2024.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ package v1alpha1
 import (
 	http "net/http"
 
-	apiv1alpha1 "inference.k8s.io/llm-instance-gateway/api/v1alpha1"
-	scheme "inference.k8s.io/llm-instance-gateway/client-go/clientset/versioned/scheme"
+	apiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
+	scheme "inference.networking.x-k8s.io/llm-instance-gateway/client-go/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 

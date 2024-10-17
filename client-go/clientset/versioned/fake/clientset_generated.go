@@ -1,5 +1,5 @@
 /*
-Copyright 2023.
+Copyright 2024.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ limitations under the License.
 package fake
 
 import (
-	applyconfiguration "inference.k8s.io/llm-instance-gateway/client-go/applyconfiguration"
-	clientset "inference.k8s.io/llm-instance-gateway/client-go/clientset/versioned"
-	apiv1alpha1 "inference.k8s.io/llm-instance-gateway/client-go/clientset/versioned/typed/api/v1alpha1"
-	fakeapiv1alpha1 "inference.k8s.io/llm-instance-gateway/client-go/clientset/versioned/typed/api/v1alpha1/fake"
+	applyconfiguration "inference.networking.x-k8s.io/llm-instance-gateway/client-go/applyconfiguration"
+	clientset "inference.networking.x-k8s.io/llm-instance-gateway/client-go/clientset/versioned"
+	apiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/client-go/clientset/versioned/typed/api/v1alpha1"
+	fakeapiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/client-go/clientset/versioned/typed/api/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"

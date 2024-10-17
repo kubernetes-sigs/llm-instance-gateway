@@ -1,5 +1,5 @@
 /*
-Copyright 2023.
+Copyright 2024.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,9 +22,9 @@ import (
 	sync "sync"
 	time "time"
 
-	versioned "inference.k8s.io/llm-instance-gateway/client-go/clientset/versioned"
-	api "inference.k8s.io/llm-instance-gateway/client-go/informers/externalversions/api"
-	internalinterfaces "inference.k8s.io/llm-instance-gateway/client-go/informers/externalversions/internalinterfaces"
+	versioned "inference.networking.x-k8s.io/llm-instance-gateway/client-go/clientset/versioned"
+	api "inference.networking.x-k8s.io/llm-instance-gateway/client-go/informers/externalversions/api"
+	internalinterfaces "inference.networking.x-k8s.io/llm-instance-gateway/client-go/informers/externalversions/internalinterfaces"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
