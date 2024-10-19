@@ -7,4 +7,5 @@ type LLMRequest struct {
 	TargetModels map[string]int
 	// Resolved target model is the final target model after traffic split.
 	ResolvedTargetModel string
+	Critical            bool
 }

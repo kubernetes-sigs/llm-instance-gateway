@@ -11,7 +11,7 @@ import (
 
 type Filter interface {
 	Name() string
-	Filter(b *LLMRequest, pods []*backend.PodMetrics) ([]*backend.PodMetrics, error)
+	Filter(req *LLMRequest, pods []*backend.PodMetrics) ([]*backend.PodMetrics, error)
 }
 
 // filter applies current filterFunc, and then recursively applies next filters depending success or
@@ -41,42 +41,46 @@ func (f *filter) Name() string {
 	return f.name
 }
 
-func (f *filter) Filter(b *LLMRequest, pods []*backend.PodMetrics) ([]*backend.PodMetrics, error) {
-	if f == nil {
-		klog.V(3).Infof("Running nil filter, returning all input pods by default")
-		return pods, nil
-	}
-	klog.V(3).Infof("Running filter %q on request %v with %v pods", f.name, b, len(pods))
+func (f *filter) Filter(req *LLMRequest, pods []*backend.PodMetrics) ([]*backend.PodMetrics, error) {
+	klog.V(3).Infof("Running filter %q on request %v with %v pods", f.name, req, len(pods))
 
-	filtered, err := f.filter(b, pods)
+	filtered, err := f.filter(req, pods)
 
 	next := f.nextOnSuccessOrFailure
-	if err == nil {
-		klog.V(3).Infof("onSuccess %v -> %v, filtered: %v", f.name, next.Name(), len(filtered))
+	if err == nil && len(filtered) > 0 {
+		if f.nextOnSuccess == nil && f.nextOnSuccessOrFailure == nil {
+			// No succeeding filters to run, return.
+			return filtered, err
+		}
 		if f.nextOnSuccess != nil {
 			next = f.nextOnSuccess
 		}
+		klog.V(3).Infof("onSuccess %q -> %q, filtered: %v", f.name, next.Name(), len(filtered))
 		// On success, pass the filtered result to the next filter.
-		return next.Filter(b, filtered)
+		return next.Filter(req, filtered)
+	} else {
+		if f.nextOnFailure == nil && f.nextOnSuccessOrFailure == nil {
+			// No succeeding filters to run, return.
+			return filtered, err
+		}
+		if f.nextOnFailure != nil {
+			next = f.nextOnFailure
+		}
+		klog.V(3).Infof("onFailure %q -> %q", f.name, next.Name())
+		// On failure, pass the initial set of pods to the next filter.
+		return next.Filter(req, pods)
 	}
-
-	klog.V(3).Infof("onFailure %v -> %v", f.name, next.Name())
-	if f.nextOnFailure != nil {
-		next = f.nextOnFailure
-	}
-	// On failure, pass the initial set of pods to the next filter.
-	return next.Filter(b, pods)
 }
 
 // filterFunc filters a set of input pods to a subset.
-type filterFunc func(b *LLMRequest, pods []*backend.PodMetrics) ([]*backend.PodMetrics, error)
+type filterFunc func(req *LLMRequest, pods []*backend.PodMetrics) ([]*backend.PodMetrics, error)
 
 // toFilterFunc is a helper function to convert a per pod filter func to the FilterFunc.
 func toFilterFunc(pp podPredicate) filterFunc {
-	return func(b *LLMRequest, pods []*backend.PodMetrics) ([]*backend.PodMetrics, error) {
+	return func(req *LLMRequest, pods []*backend.PodMetrics) ([]*backend.PodMetrics, error) {
 		filtered := []*backend.PodMetrics{}
 		for _, pod := range pods {
-			pass := pp(b, pod)
+			pass := pp(req, pod)
 			if pass {
 				filtered = append(filtered, pod)
 			}
@@ -95,7 +99,7 @@ func toFilterFunc(pp podPredicate) filterFunc {
 // the least one as it gives more choices for the next filter, which on aggregate gave better
 // results.
 // TODO: Compare this strategy with other strategies such as top K.
-func leastQueuingFilterFunc(b *LLMRequest, pods []*backend.PodMetrics) ([]*backend.PodMetrics, error) {
+func leastQueuingFilterFunc(req *LLMRequest, pods []*backend.PodMetrics) ([]*backend.PodMetrics, error) {
 	min := math.MaxInt
 	max := 0
 	filtered := []*backend.PodMetrics{}
@@ -123,9 +127,9 @@ func leastQueuingFilterFunc(b *LLMRequest, pods []*backend.PodMetrics) ([]*backe
 // should consider them all instead of the absolute minimum one. This worked better than picking the
 // least one as it gives more choices for the next filter, which on aggregate gave better results.
 // TODO: Compare this strategy with other strategies such as top K.
-func leastKVCacheFilterFunc(b *LLMRequest, pods []*backend.PodMetrics) ([]*backend.PodMetrics, error) {
+func leastKVCacheFilterFunc(req *LLMRequest, pods []*backend.PodMetrics) ([]*backend.PodMetrics, error) {
 	min := math.MaxFloat64
-	max := math.SmallestNonzeroFloat64
+	var max float64 = 0
 	filtered := []*backend.PodMetrics{}
 
 	for _, pod := range pods {
@@ -145,11 +149,52 @@ func leastKVCacheFilterFunc(b *LLMRequest, pods []*backend.PodMetrics) ([]*backe
 	return filtered, nil
 }
 
-// podPredicate is a filter function to check whether a pod is desired.
-type podPredicate func(b *LLMRequest, pod *backend.PodMetrics) bool
+// mostKVCacheFilterFunc is similar to leastKVCacheFilterFunc but prefers pods with higher KV cache.
+func mostKVCacheFilterFunc(req *LLMRequest, pods []*backend.PodMetrics) ([]*backend.PodMetrics, error) {
+	min := math.MaxFloat64
+	var max float64 = 0
+	filtered := []*backend.PodMetrics{}
 
-// loraAffinityPredicate return true if the pod have the requested LoRA adapter loaded.
-func loraAffinityPredicate(b *LLMRequest, pod *backend.PodMetrics) bool {
-	_, ok := pod.CachedModels[b.ResolvedTargetModel]
-	return ok
+	for _, pod := range pods {
+		if pod.KVCacheUsagePercent <= min {
+			min = pod.KVCacheUsagePercent
+		}
+		if pod.KVCacheUsagePercent >= max {
+			max = pod.KVCacheUsagePercent
+		}
+	}
+
+	klog.V(3).Infof("mostKVCacheFilterFunc, max=%v, min=%v", max, min)
+	for _, pod := range pods {
+		klog.V(3).Infof("Evaluating pod %v", pod.KVCacheUsagePercent)
+		if pod.KVCacheUsagePercent <= max && pod.KVCacheUsagePercent >= max-(max-min)/float64(len(pods)) {
+			klog.V(3).Infof("Selected pod %v", pod.KVCacheUsagePercent)
+			filtered = append(filtered, pod)
+		}
+	}
+	return filtered, nil
+}
+
+// podPredicate is a filter function to check whether a pod is desired.
+type podPredicate func(req *LLMRequest, pod *backend.PodMetrics) bool
+
+// We consider serving an adapter low cost it the adapter is active in the model server, or the
+// model server has room to load the adapter
+func lowLoRACostPredicate(req *LLMRequest, pod *backend.PodMetrics) bool {
+	_, ok := pod.ActiveModels[req.ResolvedTargetModel]
+	return ok || len(pod.ActiveModels) < pod.MaxActiveModels
+}
+
+func criticalRequestPredicate(req *LLMRequest, pod *backend.PodMetrics) bool {
+	return req.Critical
+}
+
+func noQueueAndLessThanKVCacheThresholdPredicate(threshold float64) podPredicate {
+	return func(req *LLMRequest, pod *backend.PodMetrics) bool {
+		return pod.WaitingQueueSize <= 0 && pod.KVCacheUsagePercent <= threshold
+	}
+}
+
+func allowAllPredicate(req *LLMRequest, pod *backend.PodMetrics) bool {
+	return true
 }

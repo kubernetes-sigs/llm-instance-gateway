@@ -5,21 +5,71 @@ import (
 	"fmt"
 	"math/rand"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	klog "k8s.io/klog/v2"
 
 	"ext-proc/backend"
 )
 
+const (
+	// TODO Consider making this configurable.
+	kvCacheThreshold = 80
+)
+
 var (
+	allowAllFilter = &filter{
+		name:   "noop",
+		filter: toFilterFunc(allowAllPredicate),
+	}
+
 	defaultFilter = &filter{
+		name:          "critical request",
+		filter:        toFilterFunc(criticalRequestPredicate),
+		nextOnSuccess: criticalRequestFilter,
+		nextOnFailure: sheddableRequestFilter,
+	}
+
+	// The goal for scheduling critical requests is to minimize the latency. The heuristic is to
+	// pick a server with least "load" (KV Cache), which typically yields lower latency.
+	// Heuristics for scheduling critical requests:
+	criticalRequestFilter = &filter{
 		name:   "least queuing",
 		filter: leastQueuingFilterFunc,
 		nextOnSuccessOrFailure: &filter{
-			name:   "lora affinity",
-			filter: toFilterFunc(loraAffinityPredicate),
+			name:   "low cost LoRA",
+			filter: toFilterFunc(lowLoRACostPredicate),
 			nextOnSuccessOrFailure: &filter{
 				name:   "least KV cache percent",
 				filter: leastKVCacheFilterFunc,
+			},
+		},
+	}
+
+	// The goal for scheduling sheddable requests is to optimize for throughput while reducing
+	// queuing, and leave low load (KV cache) servers to serve critical requests.
+	sheddableRequestFilter = &filter{
+		// When there is at least one model server that's not queuing requests, and still has KV
+		// cache below a certain threshold, we consider this model server has capacity to handle
+		// a sheddable request without impacting critical requests.
+		name:   "has capacity for sheddable requests",
+		filter: toFilterFunc(noQueueAndLessThanKVCacheThresholdPredicate(kvCacheThreshold)),
+		nextOnSuccess: &filter{
+			name:   "most KV cache percent",
+			filter: mostKVCacheFilterFunc,
+			nextOnSuccessOrFailure: &filter{
+				name:          "low cost LoRA",
+				filter:        toFilterFunc(lowLoRACostPredicate),
+				nextOnFailure: allowAllFilter,
+			},
+		},
+		// If all pods are queuing or running above the KVCache threshold, we drop the sheddable
+		// request to make room for critical requests.
+		nextOnFailure: &filter{
+			name: "drop request",
+			filter: func(req *LLMRequest, pods []*backend.PodMetrics) ([]*backend.PodMetrics, error) {
+				klog.Infof("Dropping request %v", req)
+				return []*backend.PodMetrics{}, status.Errorf(codes.ResourceExhausted, "dropping request due to limited backend resources")
 			},
 		},
 	}
@@ -44,12 +94,13 @@ type PodMetricsProvider interface {
 }
 
 // Schedule finds the target pod based on metrics and the requested lora adapter.
-func (s *Scheduler) Schedule(b *LLMRequest) (targetPod *backend.Pod, err error) {
-	klog.V(3).Infof("request: %v; metrics: %+v", b, s.podMetricsProvider.AllPodMetrics())
-	pods, err := s.filter.Filter(b, s.podMetricsProvider.AllPodMetrics())
+func (s *Scheduler) Schedule(req *LLMRequest) (targetPod *backend.Pod, err error) {
+	klog.V(3).Infof("request: %v; metrics: %+v", req, s.podMetricsProvider.AllPodMetrics())
+	pods, err := s.filter.Filter(req, s.podMetricsProvider.AllPodMetrics())
 	if err != nil || len(pods) == 0 {
-		return nil, fmt.Errorf("failed to apply filter, resulted %v pods, this should never happen: %v", len(pods), err)
+		return nil, fmt.Errorf("failed to apply filter, resulted %v pods, this should never happen: %w", len(pods), err)
 	}
+	klog.V(3).Infof("Going to randomly select a pod from the candidates: %+v", pods)
 	i := rand.Intn(len(pods))
 	return &pods[i].Pod, nil
 }
