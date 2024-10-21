@@ -64,14 +64,14 @@ func (p *Provider) Init(refreshPodsInterval, refreshMetricsInterval time.Duratio
 		return fmt.Errorf("failed to init metrics: %v", err)
 	}
 
-	klog.V(2).Infof("Initialized pods and metrics: %+v", p.AllPodMetrics())
+	klog.Infof("Initialized pods and metrics: %+v", p.AllPodMetrics())
 
 	// periodically refresh pods
 	go func() {
 		for {
 			time.Sleep(refreshPodsInterval)
 			if err := p.refreshPodsOnce(); err != nil {
-				klog.V(1).Infof("Failed to refresh podslist pods: %v", err)
+				klog.V(4).Infof("Failed to refresh podslist pods: %v", err)
 			}
 		}
 	}()
@@ -81,10 +81,20 @@ func (p *Provider) Init(refreshPodsInterval, refreshMetricsInterval time.Duratio
 		for {
 			time.Sleep(refreshMetricsInterval)
 			if err := p.refreshMetricsOnce(); err != nil {
-				klog.V(1).Infof("Failed to refresh metrics: %v", err)
+				klog.V(4).Infof("Failed to refresh metrics: %v", err)
 			}
 		}
 	}()
+
+	// Periodically print out the pods and metrics for DEBUGGING.
+	if klog.V(2).Enabled() {
+		go func() {
+			for {
+				time.Sleep(5 * time.Second)
+				klog.Infof("===DEBUG: Current Pods and metrics: %+v", p.AllPodMetrics())
+			}
+		}()
+	}
 
 	return nil
 }
