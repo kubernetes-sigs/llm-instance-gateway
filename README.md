@@ -10,6 +10,24 @@ This project is currently in development.
 
 For more rapid testing, our PoC is in the `./examples/` dir.
 
+
+## Getting Started
+
+**Install the CRDs into the cluster:**
+
+```sh
+make install
+```
+
+**Delete the APIs(CRDs) from the cluster:**
+
+```sh
+make uninstall
+```
+
+**Deploying the ext-proc image**
+Refer to this [README](https://github.com/kubernetes-sigs/llm-instance-gateway/blob/main/pkg/README.md) on how to deploy the Ext-Proc image used to support Instance Gateway.
+
 ## Contributing
 
 Our community meeting is weekly at Th 10AM PDT; [zoom link here](https://zoom.us/j/9955436256?pwd=Z2FQWU1jeDZkVC9RRTN4TlZyZTBHZz09).
