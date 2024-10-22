@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	dto "github.com/prometheus/client_model/go"
+	"go.uber.org/multierr"
 	klog "k8s.io/klog/v2"
 )
 
@@ -27,7 +27,7 @@ type Provider struct {
 }
 
 type PodMetricsClient interface {
-	FetchMetrics(pod Pod) (map[string]*dto.MetricFamily, error)
+	FetchMetrics(pod Pod, existing *PodMetrics) (*PodMetrics, error)
 }
 
 type PodLister interface {
@@ -129,4 +129,38 @@ func (p *Provider) refreshPodsOnce() error {
 	}
 	p.podMetrics.Range(mergeFn)
 	return nil
+}
+
+func (p *Provider) refreshMetricsOnce() error {
+	start := time.Now()
+	defer func() {
+		d := time.Since(start)
+		// TODO: add a metric instead of logging
+		klog.V(4).Infof("Refreshed metrics in %v", d)
+	}()
+	var wg sync.WaitGroup
+	var errs error
+	processOnePod := func(key, value any) bool {
+		klog.V(4).Infof("Processing pod %v and metric %v", key, value)
+		pod := key.(Pod)
+		existing := value.(*PodMetrics)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			updated, err := p.pmc.FetchMetrics(pod, existing)
+			if err != nil {
+				multierr.Append(errs, fmt.Errorf("failed to parse metrics from %s: %v", pod, err))
+				return
+			}
+			klog.V(4).Infof("Updated metrics for pod %s: %v", pod, updated.Metrics)
+			if err != nil {
+				multierr.Append(errs, fmt.Errorf("failed to get all pod metrics updated from prometheus: %v", err))
+			}
+			p.UpdatePodMetrics(pod, updated)
+		}()
+		return true
+	}
+	p.podMetrics.Range(processOnePod)
+	wg.Wait()
+	return errs
 }

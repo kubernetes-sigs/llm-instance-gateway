@@ -1,12 +1,15 @@
-package backend
+// Package vllm provides vllm specific pod metrics implementation.
+package vllm
 
 import (
+	"ext-proc/backend"
 	"fmt"
+	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	dto "github.com/prometheus/client_model/go"
+	"github.com/prometheus/common/expfmt"
 	"go.uber.org/multierr"
 	klog "k8s.io/klog/v2"
 )
@@ -25,45 +28,38 @@ const (
 	KvCacheMaxTokenCapacityMetricName = "vllm:gpu_cache_max_token_capacity"
 )
 
-func (p *Provider) refreshMetricsOnce() error {
-	start := time.Now()
-	defer func() {
-		d := time.Now().Sub(start)
-		// TODO: add a metric instead of logging
-		klog.V(4).Infof("Refreshed metrics in %v", d)
-	}()
-	var wg sync.WaitGroup
-	var errs error
-	processOnePod := func(key, value any) bool {
-		klog.V(4).Infof("Processing pod %v and metric %v", key, value)
-		pod := key.(Pod)
-		metrics := value.(*PodMetrics)
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			metricFamilies, err := p.pmc.FetchMetrics(pod)
-			if err != nil {
-				multierr.Append(errs, fmt.Errorf("failed to parse metrics from %s: %v", pod, err))
-				return
-			}
-			updated, err := promToPodMetrics(metricFamilies, metrics)
-			klog.V(4).Infof("Updated metrics for pod %s: %v", pod, updated.Metrics)
-			if err != nil {
-				multierr.Append(errs, fmt.Errorf("failed to get all pod metrics updated from prometheus: %v", err))
-			}
-			p.UpdatePodMetrics(pod, updated)
-		}()
-		return true
+type PodMetricsClientImpl struct {
+}
+
+// FetchMetrics fetches metrics from a given pod.
+func (p *PodMetricsClientImpl) FetchMetrics(pod backend.Pod, existing *backend.PodMetrics) (*backend.PodMetrics, error) {
+	// Currently the metrics endpoint is hard-coded, which works with vLLM.
+	// TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/16): Consume this from LLMServerPool config.
+	url := fmt.Sprintf("http://%s/metrics", pod.Address)
+	resp, err := http.Get(url)
+	if err != nil {
+		klog.Errorf("failed to fetch metrics from %s: %v", pod, err)
+		return nil, fmt.Errorf("failed to fetch metrics from %s: %w", pod, err)
 	}
-	p.podMetrics.Range(processOnePod)
-	wg.Wait()
-	return errs
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		klog.Errorf("unexpected status code from %s: %v", pod, resp.StatusCode)
+		return nil, fmt.Errorf("unexpected status code from %s: %v", pod, resp.StatusCode)
+	}
+
+	parser := expfmt.TextParser{}
+	metricFamilies, err := parser.TextToMetricFamilies(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return promToPodMetrics(metricFamilies, existing)
 }
 
 // promToPodMetrics updates internal pod metrics with scraped prometheus metrics.
 // A combined error is returned if errors occur in one or more metric processing.
 // it returns a new PodMetrics pointer which can be used to atomically update the pod metrics map.
-func promToPodMetrics(metricFamilies map[string]*dto.MetricFamily, existing *PodMetrics) (*PodMetrics, error) {
+func promToPodMetrics(metricFamilies map[string]*dto.MetricFamily, existing *backend.PodMetrics) (*backend.PodMetrics, error) {
 	var errs error
 	updated := existing.Clone()
 	runningQueueSize, _, err := getLatestMetric(metricFamilies, RunningQueueSizeMetricName)

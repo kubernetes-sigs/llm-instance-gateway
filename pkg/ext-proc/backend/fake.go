@@ -1,9 +1,5 @@
 package backend
 
-import (
-	dto "github.com/prometheus/client_model/go"
-)
-
 type FakePodLister struct {
 	Err  error
 	Pods PodSet
@@ -11,10 +7,10 @@ type FakePodLister struct {
 
 type FakePodMetricsClient struct {
 	Err map[Pod]error
-	Res map[Pod]map[string]*dto.MetricFamily
+	Res map[Pod]*PodMetrics
 }
 
-func (f *FakePodMetricsClient) FetchMetrics(pod Pod) (map[string]*dto.MetricFamily, error) {
+func (f *FakePodMetricsClient) FetchMetrics(pod Pod, existing *PodMetrics) (*PodMetrics, error) {
 	if err, ok := f.Err[pod]; ok {
 		return nil, err
 	}

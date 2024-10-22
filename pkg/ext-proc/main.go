@@ -19,12 +19,10 @@ import (
 	klog "k8s.io/klog/v2"
 
 	"ext-proc/backend"
+	"ext-proc/backend/vllm"
 	"ext-proc/handlers"
 	"ext-proc/scheduling"
 )
-
-type extProcServer struct{}
-type server struct{}
 
 var (
 	port            = flag.Int("port", 9002, "gRPC port")
@@ -75,7 +73,7 @@ func main() {
 
 	s := grpc.NewServer()
 
-	pp := backend.NewProvider(&backend.PodMetricsClientImpl{}, &backend.FakePodLister{Pods: pods})
+	pp := backend.NewProvider(&vllm.PodMetricsClientImpl{}, &backend.FakePodLister{Pods: pods})
 	if err := pp.Init(*refreshPodsInterval, *refreshMetricsInterval); err != nil {
 		klog.Fatalf("failed to initialize: %v", err)
 	}

@@ -12,7 +12,6 @@ import (
 	"github.com/bojand/ghz/runner"
 	extProcPb "github.com/envoyproxy/go-control-plane/envoy/service/ext_proc/v3"
 	"github.com/jhump/protoreflect/desc"
-	dto "github.com/prometheus/client_model/go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/proto"
@@ -117,9 +116,9 @@ func startExtProc() {
 	s.Serve(lis)
 }
 
-func fakePods() (backend.PodSet, map[backend.Pod]map[string]*dto.MetricFamily) {
+func fakePods() (backend.PodSet, map[backend.Pod]*backend.PodMetrics) {
 	pods := make(backend.PodSet)
-	metrics := make(map[backend.Pod]map[string]*dto.MetricFamily, *numFakePods)
+	metrics := make(map[backend.Pod]*backend.PodMetrics, *numFakePods)
 	for i := 0; i < *numFakePods; i++ {
 		address := fmt.Sprintf("address-%v", i)
 		pod := backend.Pod{
@@ -135,78 +134,18 @@ func fakePods() (backend.PodSet, map[backend.Pod]map[string]*dto.MetricFamily) {
 }
 
 // fakeMetrics adds numModelsPerPod number of adapters to the pod metrics.
-func fakeMetrics(podNumber int) map[string]*dto.MetricFamily {
-	metrics := make(map[string]*dto.MetricFamily)
-	metrics["vllm:active_lora_adapters"] = &dto.MetricFamily{
-		Metric: []*dto.Metric{},
-	}
-	metrics["vllm:info_active_adapters_info"] = &dto.MetricFamily{
-		Metric: []*dto.Metric{
-			{
-				Label: []*dto.LabelPair{
-					{
-						Name:  ptrString("active_adapters"),
-						Value: ptrString(""),
-					},
-				},
-			},
+func fakeMetrics(podNumber int) *backend.PodMetrics {
+	metrics := &backend.PodMetrics{
+		Metrics: backend.Metrics{
+			CachedModels: make(map[string]int),
 		},
 	}
 	for i := 0; i < *numModelsPerPod; i++ {
-		mn := modelName(podNumber*(*numModelsPerPod) + i)
-		one := &dto.Metric{
-			Label: []*dto.LabelPair{
-				{
-					Name:  ptrString("active_lora_adapters"),
-					Value: ptrString(mn),
-				},
-			},
-			Gauge: &dto.Gauge{Value: ptrFloat64(0)},
-		}
-		metrics["vllm:active_lora_adapters"].Metric = append(metrics["vllm:active_lora_adapters"].Metric, one)
-
-		original := metrics["vllm:info_active_adapters_info"].Metric[0].Label[0].Value
-		metrics["vllm:info_active_adapters_info"].Metric[0].Label[0].Value = ptrString(*original + "," + mn)
-	}
-	metrics[backend.RunningQueueSizeMetricName] = &dto.MetricFamily{
-		Metric: []*dto.Metric{
-			{
-				Gauge: &dto.Gauge{Value: ptrFloat64(0)},
-			},
-		},
-	}
-	metrics[backend.WaitingQueueSizeMetricName] = &dto.MetricFamily{
-		Metric: []*dto.Metric{
-			{
-				Gauge: &dto.Gauge{Value: ptrFloat64(0)},
-			},
-		},
-	}
-	metrics[backend.KVCacheUsagePercentMetricName] = &dto.MetricFamily{
-		Metric: []*dto.Metric{
-			{
-				Gauge: &dto.Gauge{Value: ptrFloat64(0)},
-			},
-		},
-	}
-	metrics[backend.KvCacheMaxTokenCapacityMetricName] = &dto.MetricFamily{
-		Metric: []*dto.Metric{
-			{
-				Gauge: &dto.Gauge{Value: ptrFloat64(0)},
-			},
-		},
+		metrics.CachedModels[modelName(podNumber*(*numModelsPerPod)+i)] = 0
 	}
 	return metrics
 }
 
 func modelName(i int) string {
 	return fmt.Sprintf("adapter-%v", i)
-}
-
-func ptrString(s string) *string {
-	return &s
-}
-
-func ptrFloat64(f float64) *float64 {
-	return &f
 }
