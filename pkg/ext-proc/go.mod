@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/bojand/ghz v0.120.0
 	github.com/envoyproxy/go-control-plane v0.13.0
+	github.com/google/go-cmp v0.6.0
 	github.com/jhump/protoreflect v1.15.1
 	github.com/prometheus/client_model v0.6.1
 	github.com/prometheus/common v0.55.0
