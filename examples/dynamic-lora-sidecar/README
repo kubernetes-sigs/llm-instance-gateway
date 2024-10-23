@@ -95,4 +95,3 @@ The sidecar uses the vLLM server's API to load or unload adapters based on the c
       - name: config-volume
         configMap:
           name: dynamic-lora-config
-    
