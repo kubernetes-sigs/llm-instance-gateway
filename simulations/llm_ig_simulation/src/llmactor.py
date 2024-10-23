@@ -5,7 +5,7 @@ import numpy as np
 class LLMActor(object):
     """This class represents the propagation through an LLM Inference Actor managing multiple stores with Request objects."""
 
-    def __init__(self, env, number_of_actors=1, actorId = 0):
+    def __init__(self, env, number_of_actors=1, actorId=0):
         """Initialize the simulation environment and stores."""
         self.env = env
         self.prefill_store = simpy.Store(env)
@@ -13,13 +13,10 @@ class LLMActor(object):
         self.decoded_store = simpy.Store(env)
         self.recompute_store = simpy.PriorityStore(env)
         self.actor = simpy.Resource(env, capacity=number_of_actors)  # Now dynamically set capacity
-        self.user = simpy.Resource(env, capacity = 1)
+        self.user = simpy.Resource(env, capacity=1)
         self.id = actorId
         self.lora_loaded = set()
         self.max_num_tokens_allowed = MAX_NUM_TOKENS_ALLOWED
-
-
-
 
     def get_num_tokens(self, store, include_remaining=True):
         """Calculate the total number of tokens in a given store, optionally including remaining output tokens."""
@@ -52,16 +49,16 @@ class LLMActor(object):
         return len(store.items)
 
     def get_decode_queue_size(self):
-      return self.get_queue_size(self.decode_store)
+        return self.get_queue_size(self.decode_store)
 
     def get_prefill_queue_size(self):
-      return self.get_queue_size(self.prefill_store)
+        return self.get_queue_size(self.prefill_store)
 
     def get_recompute_queue_size(self):
-      return self.get_queue_size(self.recompute_store)
+        return self.get_queue_size(self.recompute_store)
 
     def get_decoded_queue_size(self):
-      return self.get_queue_size(self.decoded_store)
+        return self.get_queue_size(self.decoded_store)
 
     def get_min_expected_num_tokens_in_kvcache_after_prefill(self):
         """Calculate the minimum expected number of tokens in the key-value cache after prefill."""
@@ -75,6 +72,5 @@ class LLMActor(object):
 
         return num_tokens_decode
 
-
     def get_expected_num_tokens_in_kvcache_after_decode(self):
-          return self.get_decode_queue_size() + self.get_num_tokens_in_decode()
+        return self.get_decode_queue_size() + self.get_num_tokens_in_decode()

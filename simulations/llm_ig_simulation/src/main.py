@@ -316,16 +316,6 @@ def main():
             #print(f"pending_tokens_perc {np.mean(pending_tokens_at_arrival_perc)}")
             #print(f"actual_tokens_perc {np.mean(actual_tokens_at_arrival_perc)}")
             
-            
-            
-    # Create a timestamp
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-
-    # Create the output file name with the timestamp
-    
-
-
-
     # Write results to CSV
     # Ensure the output directory exists
     output_dir = os.path.dirname(output_file)
@@ -370,7 +360,5 @@ def main():
 
     #print(f"Results have been saved to {output_file}")
             
-    
-
 if __name__ == "__main__":
         main()

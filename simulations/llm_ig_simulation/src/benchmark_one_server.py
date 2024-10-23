@@ -1,7 +1,3 @@
-
-        
-        
-        
 import argparse
 from collections import Counter
 import csv
@@ -27,16 +23,13 @@ def main():
     parser.add_argument("--queueing_perc", type=float, default=np.inf, help="Queueing percentage.")
     parser.add_argument('--target-latency-lo', nargs='+', type=float, help='List of target latencies for low priority requests.')
     parser.add_argument('--target-latency-hi', nargs='+', type=float, help='List of target latencies for high priority requests.')
-    
     parser.add_argument('--prefix-latency-lo', nargs='+', type=float, help='List of prefix of target latencies for low priority requests.')
     parser.add_argument('--prefix-latency-hi', nargs='+', type=float, help='List of prefix of target latencies for high priority requests.')
-    
-    
-    parser.add_argument('--number-of-servers',  type=int, default=1, help='List of target latencies for high priority requests.')
+    parser.add_argument('--number-of-servers', type=int, default=1, help='List of target latencies for high priority requests.')
     
     args = parser.parse_args()
 
-     # Use provided arguments or defaults
+    # Use provided arguments or defaults
     rates_lo = args.rates_lo
     rates_hi = args.rates_hi
     no_of_messages = args.no_of_messages
@@ -45,22 +38,17 @@ def main():
     std_request_size_1 = args.std_request_size_1
     mean_output_size_1 = args.mean_output_size_1
     std_output_size_1 = args.std_output_size_1
-
     mean_request_size_2 = args.mean_request_size_2
     std_request_size_2 = args.std_request_size_2
     mean_output_size_2 = args.mean_output_size_2
     std_output_size_2 = args.std_output_size_2
-    
     queueing_perc = args.queueing_perc
     lora_requested_lo = ""
     lora_requested_hi = ""
-    
     target_latency_list_lo = args.target_latency_lo if args.target_latency_lo else [0.025]
     target_latency_list_hi = args.target_latency_hi if args.target_latency_hi else [0.5]
-    
     prefix_latency_list_lo = args.prefix_latency_lo if args.prefix_latency_lo else ['lo']
     prefix_latency_list_hi = args.prefix_latency_hi if args.prefix_latency_hi else ['hi']
-    
     number_of_servers = args.number_of_servers
 
     # Define a structure to store results for all routing types
@@ -163,42 +151,23 @@ def main():
             lb.process(rates_lo[i], lora_requested_lo, target_latency_list_lo, prefix_latency_list_lo, routing_type, prompt_output_tuple, mean_request_size_1, std_request_size_1, mean_output_size_1, std_output_size_1, estimated_output_size)
             env.run(until=SIM_DURATION)
 
-
-
             # Completed requests
             completed_req = list(filter(lambda x: x.output_size_remaining == 0, req_dict.values()))
-
-
             completed_req_sorted = sorted(completed_req, key=lambda x: x.arrival_time)
-
-
             # Exclude the first 10% of requests based on end_decode_time
             exclude_count = int(0 * len(completed_req_sorted))
-
-
             # Filter out the first 10%
             filtered_req = completed_req_sorted[exclude_count:]
 
-
-
             # Calculate ttft, tpot, latency, and throughput
             ttft_cur = np.mean([x.end_prefill_time - x.arrival_time for x in req_dict.values()])
-
-
             tpot_cur = np.mean([(x.end_decode_time - x.start_prefill_time) / (x.output_size - x.output_size_remaining) for x in req_dict.values()])
-
             latency_cur = np.mean([(x.end_decode_time - x.arrival_time) / (x.output_size - x.output_size_remaining) for x in filtered_req])
-
             estimated_latency_cur = np.mean([x.estimated_latency for x in filtered_req])
-
             recompute_cur = np.sum([x.recompute_count for x in filtered_req]) / len(filtered_req)
-
             tt = SIM_DURATION
             throughput_prefill_cur = np.sum([x.input_size for x in filtered_req]) / tt
             throughput_decode_cur = np.sum([max(0, x.output_size - x.output_size_remaining - 1) for x in filtered_req]) / tt
-
-
-
 
             pending_tokens_at_arrival_perc = [x.pending_tokens_at_arrival_perc for x in completed_req]
             actual_tokens_at_arrival_perc = [x.actual_tokens_at_arrival_perc for x in completed_req]
@@ -210,32 +179,20 @@ def main():
             results[routing_type]['throughput_decode'].append(throughput_decode_cur)
             results[routing_type]['ttft'].append(ttft_cur)
             results[routing_type]['tpot'].append(tpot_cur)
-
-
             results[routing_type]['recompute_cnt'].append(recompute_cur)
-
-
-            
             results[routing_type]['avg_prefill_queue_size'].append(np.mean(prefill_queue_size))
             results[routing_type]['avg_pending_tokens_perc'].append(np.mean(pending_tokens_at_arrival_perc))
             results[routing_type]['avg_actual_tokens_perc'].append(np.mean(actual_tokens_at_arrival_perc))
 
-
-
-            
     # Create a timestamp
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-
     # Create the output file name with the timestamp
     output_file = f"results_{timestamp}.csv"
 
-
-
     # Write results to CSV
     with open(output_file, 'w', newline='') as csvfile:
-        fieldnames = ['RoutingType', 'RateIndex', 'Latency', 'avg_prefill_queue_size', 'avg_pending_tokens_perc', 'avg_actual_tokens_perc' ]
+        fieldnames = ['RoutingType', 'RateIndex', 'Latency', 'avg_prefill_queue_size', 'avg_pending_tokens_perc', 'avg_actual_tokens_perc']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-
         writer.writeheader()
         
         # Iterate over routing types and write each entry
@@ -251,8 +208,6 @@ def main():
                 })
 
     print(f"Results have been saved to {output_file}")
-            
-    
 
 if __name__ == "__main__":
-        main()
+    main()
