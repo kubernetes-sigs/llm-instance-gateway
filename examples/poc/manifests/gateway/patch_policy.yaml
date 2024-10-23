@@ -1,0 +1,38 @@
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyPatchPolicy
+metadata:
+  name: custom-response-patch-policy
+  namespace: default
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: <GATEWAY-NAME>
+  type: JSONPatch
+  jsonPatches:
+    # Necessary to create a cluster of the type: ORIGINAL_DST to allow for 
+    # direct pod scheduling. Which is heavily utilized in our scheduling.
+    # Specifically the field `original_dst_lb_config` allows us to enable
+    # `use_http_header` and `http_header_name`. 
+    # Source: https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/cluster/v3/cluster.proto
+    - type: "type.googleapis.com/envoy.config.cluster.v3.Cluster"
+      name: original_destination_cluster
+      operation:
+        op: add
+        path: ""
+        value:
+          name: original_destination_cluster
+          type: ORIGINAL_DST
+          original_dst_lb_config:
+            use_http_header: true
+            http_header_name: "target-pod"
+          connect_timeout: 6s
+          lb_policy: CLUSTER_PROVIDED
+          dns_lookup_family: V4_ONLY
+
+    - type: "type.googleapis.com/envoy.config.route.v3.RouteConfiguration"
+      name: default/<GATEWAY-NAME>/llm-gw
+      operation:
+        op: replace
+        path: "/virtual_hosts/1/routes/0/route/cluster"
+        value: original_destination_cluster
