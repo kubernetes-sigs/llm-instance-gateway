@@ -84,7 +84,7 @@ def main():
               'tol_lat_time_lo': [], 'tol_lat_time_hi': [], 
               'avg_prefill_queue_size' : [],
 'avg_pending_tokens_perc' : [],
-'avg_actual_tokens_perc' : [], 'request_count': []},
+'avg_actual_tokens_perc' : [], 'request_count': [], 'request_count_lo': [], 'request_count_hi': []},
 
     'smart': {'latency': [], 'latency_lo': [], 'latency_hi': [],
               'estimated_latency': [], 'estimated_latency_lo': [], 'estimated_latency_hi': [],
@@ -100,7 +100,7 @@ def main():
               'tol_lat_time_lo': [], 'tol_lat_time_hi': [], 
               'avg_prefill_queue_size' : [],
 'avg_pending_tokens_perc' : [],
-'avg_actual_tokens_perc' : [], 'request_count': []},
+'avg_actual_tokens_perc' : [],  'request_count': [], 'request_count_lo': [], 'request_count_hi': []},
 
     'leastlatency': {'latency': [], 'latency_lo': [], 'latency_hi': [],
                 'throughput_prefill': [], 'throughput_decode': [],
@@ -114,7 +114,7 @@ def main():
               'tol_lat_time_lo': [], 'tol_lat_time_hi': [], 
               'avg_prefill_queue_size' : [],
 'avg_pending_tokens_perc' : [],
-'avg_actual_tokens_perc' : [], 'request_count': []},
+'avg_actual_tokens_perc' : [],  'request_count': [], 'request_count_lo': [], 'request_count_hi': []},
     'least': {'latency': [], 'latency_lo': [], 'latency_hi': [],
                 'throughput_prefill': [], 'throughput_decode': [],
                 'throughput_prefill_lo': [], 'throughput_decode_lo': [],
@@ -127,7 +127,7 @@ def main():
               'tol_lat_time_lo': [], 'tol_lat_time_hi': [], 
               'avg_prefill_queue_size' : [],
 'avg_pending_tokens_perc' : [],
-'avg_actual_tokens_perc' : [], 'request_count': []},
+'avg_actual_tokens_perc' : [],  'request_count': [], 'request_count_lo': [], 'request_count_hi': []},
     'random': {'latency': [], 'latency_lo': [], 'latency_hi': [],
                 'throughput_prefill': [], 'throughput_decode': [],
                 'throughput_prefill_lo': [], 'throughput_decode_lo': [],
@@ -140,7 +140,7 @@ def main():
               'tol_lat_time_lo': [], 'tol_lat_time_hi': [], 
               'avg_prefill_queue_size' : [],
 'avg_pending_tokens_perc' : [],
-'avg_actual_tokens_perc' : [], 'request_count': []},
+'avg_actual_tokens_perc' : [],  'request_count': [], 'request_count_lo': [], 'request_count_hi': []},
 }
 
     all_routing_types = [ routing_type ]
@@ -148,13 +148,13 @@ def main():
 
 # Iterate over routing types
     for routing_type in all_routing_types:
-        print(f'Routing Type: {routing_type}')
+        #print(f'Routing Type: {routing_type}')
 
         for i, _ in enumerate(rates_lo):
             req_dict = {}
             req_dict_prefill = {}
             SIM_DURATION = SIM_DURATIONS[i]
-            print(f'Simulate with rate: for lo {rates_lo[i]} and for hi {rates_hi[i]} and routing type: {routing_type}')
+            #print(f'Simulate with rate: for lo {rates_lo[i]} and for hi {rates_hi[i]} and routing type: {routing_type}')
             sys.stdout.flush()
             # Simpy environment and LLM actors setup
             env = simpy.Environment()
@@ -292,28 +292,29 @@ def main():
             l1 = [np.sum(list(dict(x).values())) for x in results[routing_type]['target_pods_lo']][-1]
             l2 = [np.sum(list(dict(x).values())) for x in results[routing_type]['target_pods_hi']][-1]
 
-            print(f'req count {(l1, l2)}')
+            #print(f'req count {(l1, l2)}')
             sys.stdout.flush()
-            results[routing_type]['request_count'].append(len(completed_req))
+            results[routing_type]['request_count'].append(len(filtered_req))
+            results[routing_type]['request_count_lo'].append(len(filtered_req_lo))
+            results[routing_type]['request_count_hi'].append(len(filtered_req_hi))
 
             if routing_type == 'smart':
                 results[routing_type]['estimated_latency'].append(estimated_latency_cur)
                 results[routing_type]['estimated_latency_lo'].append(estimated_latency_cur_lo)
                 results[routing_type]['estimated_latency_hi'].append(estimated_latency_cur_hi)
-                print(f"lo dist {Counter(target_pods_lo)} latency {latency_cur_lo} estimated_latency_lo {estimated_latency_cur_lo}")
-                print(f"hi dist {Counter(target_pods_hi)}  latency {latency_cur_hi} estimated_latency_hi {estimated_latency_cur_hi}")
-            else:
-                print(f"lo dist {Counter(target_pods_lo)} latency {latency_cur_lo} ")
-                print(f"hi dist {Counter(target_pods_hi)}  latency {latency_cur_hi} ")
+                #print(f"lo dist {Counter(target_pods_lo)} latency {latency_cur_lo} estimated_latency_lo {estimated_latency_cur_lo}")
+                #print(f"hi dist {Counter(target_pods_hi)}  latency {latency_cur_hi} estimated_latency_hi {estimated_latency_cur_hi}")
+            #else:
+                #print(f"lo dist {Counter(target_pods_lo)} latency {latency_cur_lo} ")
+                #print(f"hi dist {Counter(target_pods_hi)}  latency {latency_cur_hi} ")
 
-            # Print the results for this qps
-            print(f'QPS: {rates_lo[i]} (lo), {rates_hi[i]} (hi)')
-            print(f'% of lo requests below target: {pct_below_target_lo}%')
-            print(f'% of hi requests below target: {pct_below_target_hi}%')
-            print(f"prefill_queue_size {np.mean(prefill_queue_size)}")
-            print(f"pending_tokens_perc {np.mean(pending_tokens_at_arrival_perc)}")
-            print(f"actual_tokens_perc {np.mean(actual_tokens_at_arrival_perc)}")
-            sys.stdout.flush()
+            # #print the results for this qps
+            #print(f'QPS: {rates_lo[i]} (lo), {rates_hi[i]} (hi)')
+            #print(f'% of lo requests below target: {pct_below_target_lo}%')
+            #print(f'% of hi requests below target: {pct_below_target_hi}%')
+            #print(f"prefill_queue_size {np.mean(prefill_queue_size)}")
+            #print(f"pending_tokens_perc {np.mean(pending_tokens_at_arrival_perc)}")
+            #print(f"actual_tokens_perc {np.mean(actual_tokens_at_arrival_perc)}")
             
             
             
@@ -331,8 +332,15 @@ def main():
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
+    # Write results to CSV
+    # Ensure the output directory exists
+    output_dir = os.path.dirname(output_file)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # Open the CSV file for writing
     with open(output_file, 'w', newline='') as csvfile:
-        fieldnames = ['RoutingType', 'RateIndex', 'Latency', 'Latency_Lo', 'Latency_Hi', 'avg_prefill_queue_size', 'avg_pending_tokens_perc', 'avg_actual_tokens_perc' , 'pct_below_latency_target_lo', 'pct_below_latency_target_hi']
+        fieldnames = ['Job', 'RoutingType', 'RateIndex', 'Latency', 'Latency_Lo', 'Latency_Hi', 'avg_prefill_queue_size', 'avg_pending_tokens_perc', 'avg_actual_tokens_perc', 'pct_below_latency_target_lo', 'pct_below_latency_target_hi', 'num_req_lo', 'num_req_hi']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
         writer.writeheader()
@@ -341,6 +349,7 @@ def main():
         for routing_type in all_routing_types:
             for i in range(len(rates_lo)):
                 writer.writerow({
+                    'Job' : os.path.basename(output_file),
                     'RoutingType': routing_type,
                     'RateIndex': rates_lo[i],
                     'Latency': results[routing_type]['latency'][i],
@@ -349,11 +358,17 @@ def main():
                     'avg_prefill_queue_size': results[routing_type]['avg_prefill_queue_size'][i],
                     'avg_pending_tokens_perc': results[routing_type]['avg_pending_tokens_perc'][i],
                     'avg_actual_tokens_perc': results[routing_type]['avg_actual_tokens_perc'][i],
-                    'pct_below_latency_target_lo': results[routing_type]['pct_below_latency_target_lo'][i],
-                    'pct_below_latency_target_hi': results[routing_type]['pct_below_latency_target_hi'][i],
+                    'pct_below_latency_target_lo': results[routing_type]['pct_below_latency_target_lo'][i]* results[routing_type]['request_count_lo'][i]/no_of_messages,
+                    'pct_below_latency_target_hi': results[routing_type]['pct_below_latency_target_hi'][i]* results[routing_type]['request_count_hi'][i]/no_of_messages,
+                    'num_req_lo': results[routing_type]['request_count_lo'][i],
+                    'num_req_hi': results[routing_type]['request_count_hi'][i]
                 })
 
-    print(f"Results have been saved to {output_file}")
+    # Print the CSV file to stdout
+    with open(output_file, 'r') as csvfile:
+        sys.stdout.write(csvfile.read())
+
+    #print(f"Results have been saved to {output_file}")
             
     
 

@@ -306,7 +306,7 @@ class LoadBalancer:
         latency_esimated = 0
 
         active_req_target_latency_in_window = self.getActiveReqTargetLatencyInWindow()
-        violations_present = self.getViolationsTargetLatencyInWindow()
+        violations_present , _= self.getViolationsTargetLatencyInWindow()
 
 
 
@@ -370,6 +370,27 @@ class LoadBalancer:
         return True
 
     import random
+    
+    def slo_based_dequeue(self) -> Optional[Request]:
+      # Get active targets and their latencies
+      _, violation_dict = self.getViolationsTargetLatencyInWindow()
+      # get list of active targets in order of violation dict
+  
+      active_targets = sorted(violation_dict.keys(), key=lambda x: violation_dict[x], reverse=True)
+
+      for k in self.queues:
+        if k not in active_targets and not self.queues[k].empty():
+          req = self.queues[k].get()
+          return req
+        
+      for k in active_targets:
+          if k in self.queues and not self.queues[k].empty():
+            req = self.queues[k].get()
+            return req
+      
+      return None
+    
+
 
     def weighted_dequeue(self) -> Optional[Request]:
       # Get active targets and their latencies
@@ -386,7 +407,7 @@ class LoadBalancer:
     
       # Use random.choices to select a target based on probabilities
       # Attempt to dequeue from the selected target's queue
-      for _ in range(100):  # Try up to the 100 times
+      for _ in range(1000):  # Try up to the 100 times
         selected_target = random.choices(list(target_probs.keys()), weights=target_probs.values(), k=1)[0]
         
         # Check if the selected target's queue is non-empty
@@ -411,7 +432,7 @@ class LoadBalancer:
         while True:
             if not self.check_if_queues_empty() and self.dequeueing_signal(routing_type):
                 # Get the request with the highest SLO violation
-                req = self.dequeue()
+                req = self.weighted_dequeue()
                 if   req:
                   if (drop_late_requests == False) or (self.env.now - req.arrival_time < 100*req.target_latency): #ad-hoc
                     target_pod, estimated_latency = self.find_target_pod(routing_type, req.input_size, req.output_size, req.target_latency, req.lora)
@@ -470,7 +491,7 @@ class LoadBalancer:
 
         :param time_windows: Time window in which to check for latency violations.
         :param percentile: The violation threshold percentile.
-        :return: Boolean indicating if violations occurred.
+        :return: Boolean indicating if violations occurred. And %  of violations per target latency.
       """
       didViolate = False
       violation_dict = {}
@@ -493,7 +514,8 @@ class LoadBalancer:
       for target_latency in violation_dict:
         if violation_dict[target_latency]/req_dict[target_latency] > percentile:
           didViolate = True
-      return didViolate
+        violation_dict[target_latency] = violation_dict[target_latency]/req_dict[target_latency]
+      return didViolate, violation_dict
 
 
     def allPodsRunningCritical(self):
