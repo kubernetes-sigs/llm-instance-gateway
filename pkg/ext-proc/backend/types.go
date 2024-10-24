@@ -12,12 +12,14 @@ type Pod struct {
 }
 
 func (p Pod) String() string {
-	return p.Namespace + "." + p.Name
+	return p.Namespace + "/" + p.Name
 }
 
 type Metrics struct {
-	// CachedModels is a set of models(including LoRA adapters) that are currently cached to GPU.
-	CachedModels            map[string]int
+	// ActiveModels is a set of models(including LoRA adapters) that are currently cached to GPU.
+	ActiveModels map[string]int
+	// MaxActiveModels is the maximum number of models that can be loaded to GPU.
+	MaxActiveModels         int
 	RunningQueueSize        int
 	WaitingQueueSize        int
 	KVCacheUsagePercent     float64
@@ -34,14 +36,14 @@ func (pm *PodMetrics) String() string {
 }
 
 func (pm *PodMetrics) Clone() *PodMetrics {
-	cm := make(map[string]int, len(pm.CachedModels))
-	for k, v := range pm.CachedModels {
+	cm := make(map[string]int, len(pm.ActiveModels))
+	for k, v := range pm.ActiveModels {
 		cm[k] = v
 	}
 	clone := &PodMetrics{
 		Pod: pm.Pod,
 		Metrics: Metrics{
-			CachedModels:            cm,
+			ActiveModels:            cm,
 			RunningQueueSize:        pm.RunningQueueSize,
 			WaitingQueueSize:        pm.WaitingQueueSize,
 			KVCacheUsagePercent:     pm.KVCacheUsagePercent,

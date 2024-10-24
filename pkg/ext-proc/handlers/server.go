@@ -4,6 +4,7 @@ import (
 	"io"
 
 	extProcPb "github.com/envoyproxy/go-control-plane/envoy/service/ext_proc/v3"
+	envoyTypePb "github.com/envoyproxy/go-control-plane/envoy/type/v3"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	klog "k8s.io/klog/v2"
@@ -83,13 +84,28 @@ func (s *Server) Process(srv extProcPb.ExternalProcessor_ProcessServer) error {
 
 		if err != nil {
 			klog.Errorf("failed to process request: %v", err)
-			return status.Errorf(codes.Unknown, "failed to handle request: %v", err)
+			switch status.Code(err) {
+			// This code can be returned by scheduler when there is no capacity for sheddable
+			// requests.
+			case codes.ResourceExhausted:
+				resp = &extProcPb.ProcessingResponse{
+					Response: &extProcPb.ProcessingResponse_ImmediateResponse{
+						ImmediateResponse: &extProcPb.ImmediateResponse{
+							Status: &envoyTypePb.HttpStatus{
+								Code: envoyTypePb.StatusCode_TooManyRequests,
+							},
+						},
+					},
+				}
+			default:
+				return status.Errorf(status.Code(err), "failed to handle request: %w", err)
+			}
 		}
 
 		klog.V(3).Infof("response: %v", resp)
 		if err := srv.Send(resp); err != nil {
 			klog.Errorf("send error %v", err)
-			return status.Errorf(codes.Unknown, "failed to send response back to Envoy: %v", err)
+			return status.Errorf(codes.Unknown, "failed to send response back to Envoy: %w", err)
 		}
 	}
 }

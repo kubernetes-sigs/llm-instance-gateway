@@ -85,18 +85,21 @@ func promToPodMetrics(metricFamilies map[string]*dto.MetricFamily, existing *bac
 	}
 	*/
 
+	// TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/22): Read from vLLM metrics once the is available.
+	updated.MaxActiveModels = 4
+
 	// Update active loras
 	mf, ok := metricFamilies[ActiveLoRAAdaptersMetricName]
 	if ok {
 		// IMPORTANT: replace the map entries instead of appending to it.
-		updated.CachedModels = make(map[string]int)
+		updated.ActiveModels = make(map[string]int)
 		for _, metric := range mf.GetMetric() {
 			for _, label := range metric.GetLabel() {
 				if label.GetName() == "active_adapters" {
 					if label.GetValue() != "" {
 						adapterList := strings.Split(label.GetValue(), ",")
 						for _, adapter := range adapterList {
-							updated.CachedModels[adapter] = 0
+							updated.ActiveModels[adapter] = 0
 						}
 					}
 				}

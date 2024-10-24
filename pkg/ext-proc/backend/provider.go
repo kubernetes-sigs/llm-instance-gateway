@@ -113,7 +113,7 @@ func (p *Provider) refreshPodsOnce() error {
 			new := &PodMetrics{
 				Pod: pod,
 				Metrics: Metrics{
-					CachedModels: make(map[string]int),
+					ActiveModels: make(map[string]int),
 				},
 			}
 			p.podMetrics.Store(pod, new)
