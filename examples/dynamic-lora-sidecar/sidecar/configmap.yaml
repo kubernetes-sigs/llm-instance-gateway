@@ -1,0 +1,23 @@
+deployment:
+  host: localhost
+  models:
+  - base-model: meta-llama/Llama-2-7b-hf
+    id: sql-lora-v1
+    source: yard1/llama-2-7b-sql-lora-test
+    status:
+      errors:
+      - ''
+      operation: load
+      timestamp: 2024-10-23 15:43:07 UTC+0000
+    toRemove: false
+  - base-model: meta-llama/Llama-2-7b-hf
+    id: sql-lora-v2
+    source: yard1/llama-2-7b-sql-lora-test
+    status:
+      errors:
+      - already unloaded
+      operation: unload
+      timestamp: 2024-10-23 15:43:07 UTC+0000
+    toRemove: true
+  name: sql-loras-llama
+  port: '8000'
