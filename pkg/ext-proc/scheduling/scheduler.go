@@ -13,27 +13,23 @@ import (
 )
 
 const (
-	// TODO Consider making this configurable.
-	kvCacheThreshold = 80
+	// TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/16) Make this configurable.
+	kvCacheThreshold = 0.8
+	// TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/16) Make this configurable.
+	queueThreshold = 5
 )
 
 var (
-	allowAllFilter = &filter{
-		name:   "noop",
-		filter: toFilterFunc(allowAllPredicate),
-	}
-
 	defaultFilter = &filter{
 		name:          "critical request",
 		filter:        toFilterFunc(criticalRequestPredicate),
-		nextOnSuccess: criticalRequestFilter,
+		nextOnSuccess: lowLatencyFilter,
 		nextOnFailure: sheddableRequestFilter,
 	}
 
-	// The goal for scheduling critical requests is to minimize the latency. The heuristic is to
-	// pick a server with least "load" (KV Cache), which typically yields lower latency.
-	// Heuristics for scheduling critical requests:
-	criticalRequestFilter = &filter{
+	// lowLatencyFilter tries to minimize the latency. The heuristic is to pick a server with lower
+	// cost to load an adapter and has low KV cache, which typically yields lower latency.
+	lowLatencyFilter = &filter{
 		name:   "least queuing",
 		filter: leastQueuingFilterFunc,
 		nextOnSuccessOrFailure: &filter{
@@ -46,23 +42,13 @@ var (
 		},
 	}
 
-	// The goal for scheduling sheddable requests is to optimize for throughput while reducing
-	// queuing, and leave low load (KV cache) servers to serve critical requests.
 	sheddableRequestFilter = &filter{
 		// When there is at least one model server that's not queuing requests, and still has KV
 		// cache below a certain threshold, we consider this model server has capacity to handle
 		// a sheddable request without impacting critical requests.
-		name:   "has capacity for sheddable requests",
-		filter: toFilterFunc(noQueueAndLessThanKVCacheThresholdPredicate(kvCacheThreshold)),
-		nextOnSuccess: &filter{
-			name:   "most KV cache percent",
-			filter: mostKVCacheFilterFunc,
-			nextOnSuccessOrFailure: &filter{
-				name:          "low cost LoRA",
-				filter:        toFilterFunc(lowLoRACostPredicate),
-				nextOnFailure: allowAllFilter,
-			},
-		},
+		name:          "has capacity for sheddable requests",
+		filter:        toFilterFunc(noQueueAndLessThanKVCacheThresholdPredicate(queueThreshold, kvCacheThreshold)),
+		nextOnSuccess: lowLatencyFilter,
 		// If all pods are queuing or running above the KVCache threshold, we drop the sheddable
 		// request to make room for critical requests.
 		nextOnFailure: &filter{

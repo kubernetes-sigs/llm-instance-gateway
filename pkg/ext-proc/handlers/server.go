@@ -85,6 +85,8 @@ func (s *Server) Process(srv extProcPb.ExternalProcessor_ProcessServer) error {
 		if err != nil {
 			klog.Errorf("failed to process request: %v", err)
 			switch status.Code(err) {
+			// This code can be returned by scheduler when there is no capacity for sheddable
+			// requests.
 			case codes.ResourceExhausted:
 				resp = &extProcPb.ProcessingResponse{
 					Response: &extProcPb.ProcessingResponse_ImmediateResponse{

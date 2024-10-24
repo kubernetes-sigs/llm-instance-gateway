@@ -85,7 +85,7 @@ func promToPodMetrics(metricFamilies map[string]*dto.MetricFamily, existing *bac
 	}
 	*/
 
-	// TODO: Read from vLLM metrics once the is available.
+	// TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/22): Read from vLLM metrics once the is available.
 	updated.MaxActiveModels = 4
 
 	// Update active loras

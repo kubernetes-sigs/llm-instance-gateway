@@ -302,42 +302,8 @@ func TestFilterFunc(t *testing.T) {
 			},
 		},
 		{
-			name:   "most kv cache empty input",
-			f:      mostKVCacheFilterFunc,
-			input:  []*backend.PodMetrics{},
-			output: []*backend.PodMetrics{},
-		},
-		{
-			name: "most kv cache",
-			f:    mostKVCacheFilterFunc,
-			input: []*backend.PodMetrics{
-				{
-					Metrics: backend.Metrics{
-						KVCacheUsagePercent: 0,
-					},
-				},
-				{
-					Metrics: backend.Metrics{
-						KVCacheUsagePercent: 0.3,
-					},
-				},
-				{
-					Metrics: backend.Metrics{
-						KVCacheUsagePercent: 1.0,
-					},
-				},
-			},
-			output: []*backend.PodMetrics{
-				{
-					Metrics: backend.Metrics{
-						KVCacheUsagePercent: 1.0,
-					},
-				},
-			},
-		},
-		{
 			name: "noQueueAndLessThanKVCacheThresholdPredicate",
-			f:    toFilterFunc(noQueueAndLessThanKVCacheThresholdPredicate(0.8)),
+			f:    toFilterFunc(noQueueAndLessThanKVCacheThresholdPredicate(0, 0.8)),
 			input: []*backend.PodMetrics{
 				{
 					// This pod should be returned.

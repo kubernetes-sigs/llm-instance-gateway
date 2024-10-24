@@ -149,32 +149,6 @@ func leastKVCacheFilterFunc(req *LLMRequest, pods []*backend.PodMetrics) ([]*bac
 	return filtered, nil
 }
 
-// mostKVCacheFilterFunc is similar to leastKVCacheFilterFunc but prefers pods with higher KV cache.
-func mostKVCacheFilterFunc(req *LLMRequest, pods []*backend.PodMetrics) ([]*backend.PodMetrics, error) {
-	min := math.MaxFloat64
-	var max float64 = 0
-	filtered := []*backend.PodMetrics{}
-
-	for _, pod := range pods {
-		if pod.KVCacheUsagePercent <= min {
-			min = pod.KVCacheUsagePercent
-		}
-		if pod.KVCacheUsagePercent >= max {
-			max = pod.KVCacheUsagePercent
-		}
-	}
-
-	klog.V(3).Infof("mostKVCacheFilterFunc, max=%v, min=%v", max, min)
-	for _, pod := range pods {
-		klog.V(3).Infof("Evaluating pod %v", pod.KVCacheUsagePercent)
-		if pod.KVCacheUsagePercent <= max && pod.KVCacheUsagePercent >= max-(max-min)/float64(len(pods)) {
-			klog.V(3).Infof("Selected pod %v", pod.KVCacheUsagePercent)
-			filtered = append(filtered, pod)
-		}
-	}
-	return filtered, nil
-}
-
 // podPredicate is a filter function to check whether a pod is desired.
 type podPredicate func(req *LLMRequest, pod *backend.PodMetrics) bool
 
@@ -189,12 +163,8 @@ func criticalRequestPredicate(req *LLMRequest, pod *backend.PodMetrics) bool {
 	return req.Critical
 }
 
-func noQueueAndLessThanKVCacheThresholdPredicate(threshold float64) podPredicate {
+func noQueueAndLessThanKVCacheThresholdPredicate(queueThreshold int, kvCacheThreshold float64) podPredicate {
 	return func(req *LLMRequest, pod *backend.PodMetrics) bool {
-		return pod.WaitingQueueSize <= 0 && pod.KVCacheUsagePercent <= threshold
+		return pod.WaitingQueueSize <= queueThreshold && pod.KVCacheUsagePercent <= kvCacheThreshold
 	}
-}
-
-func allowAllPredicate(req *LLMRequest, pod *backend.PodMetrics) bool {
-	return true
 }
