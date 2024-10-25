@@ -1,12 +1,17 @@
 package backend
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
 
 	"go.uber.org/multierr"
 	klog "k8s.io/klog/v2"
+)
+
+const (
+	fetchMetricsTimeout = 5 * time.Second
 )
 
 func NewProvider(pmc PodMetricsClient, pl PodLister) *Provider {
@@ -27,7 +32,7 @@ type Provider struct {
 }
 
 type PodMetricsClient interface {
-	FetchMetrics(pod Pod, existing *PodMetrics) (*PodMetrics, error)
+	FetchMetrics(ctx context.Context, pod Pod, existing *PodMetrics) (*PodMetrics, error)
 }
 
 type PodLister interface {
@@ -60,7 +65,8 @@ func (p *Provider) Init(refreshPodsInterval, refreshMetricsInterval time.Duratio
 	if err := p.refreshPodsOnce(); err != nil {
 		return fmt.Errorf("failed to init pods: %v", err)
 	}
-	if err := p.refreshMetricsOnce(); err != nil {
+	err := p.refreshMetricsOnce()
+	if err != nil {
 		return fmt.Errorf("failed to init metrics: %v", err)
 	}
 
@@ -132,6 +138,8 @@ func (p *Provider) refreshPodsOnce() error {
 }
 
 func (p *Provider) refreshMetricsOnce() error {
+	ctx, cancel := context.WithTimeout(context.Background(), fetchMetricsTimeout)
+	defer cancel()
 	start := time.Now()
 	defer func() {
 		d := time.Since(start)
@@ -139,7 +147,7 @@ func (p *Provider) refreshMetricsOnce() error {
 		klog.V(4).Infof("Refreshed metrics in %v", d)
 	}()
 	var wg sync.WaitGroup
-	var errs error
+	errCh := make(chan error)
 	processOnePod := func(key, value any) bool {
 		klog.V(4).Infof("Processing pod %v and metric %v", key, value)
 		pod := key.(Pod)
@@ -147,20 +155,31 @@ func (p *Provider) refreshMetricsOnce() error {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			updated, err := p.pmc.FetchMetrics(pod, existing)
+			updated, err := p.pmc.FetchMetrics(ctx, pod, existing)
 			if err != nil {
-				multierr.Append(errs, fmt.Errorf("failed to parse metrics from %s: %v", pod, err))
+				errCh <- fmt.Errorf("failed to parse metrics from %s: %v", pod, err)
 				return
 			}
-			klog.V(4).Infof("Updated metrics for pod %s: %v", pod, updated.Metrics)
-			if err != nil {
-				multierr.Append(errs, fmt.Errorf("failed to get all pod metrics updated from prometheus: %v", err))
-			}
 			p.UpdatePodMetrics(pod, updated)
+			klog.V(4).Infof("Updated metrics for pod %s: %v", pod, updated.Metrics)
 		}()
 		return true
 	}
 	p.podMetrics.Range(processOnePod)
-	wg.Wait()
+
+	// Wait for metric collection for all pods to complete and close the error channel in a
+	// goroutine so this is unblocking, allowing the code to proceed to the error collection code
+	// below.
+	// Note we couldn't use a buffered error channel with a size because the size of the podMetrics
+	// sync.Map is unknown beforehand.
+	go func() {
+		wg.Wait()
+		close(errCh)
+	}()
+
+	var errs error
+	for err := range errCh {
+		errs = multierr.Append(errs, err)
+	}
 	return errs
 }
