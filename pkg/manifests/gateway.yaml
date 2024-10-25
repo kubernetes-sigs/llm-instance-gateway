@@ -3,9 +3,9 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: <GATEWAY-NAME>
+  name: llm-inference-gateway
 spec:
-  gatewayClassName: <GATEWAY-NAME>
+  gatewayClassName: llm-inference-gateway
   listeners:
     - name: http
       protocol: HTTP
@@ -17,9 +17,11 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
-  name: <GATEWAY-NAME>
+  name: llm-inference-gateway
 spec:
   controllerName: gateway.envoyproxy.io/gatewayclass-controller
+
+
 ---
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: Backend
@@ -31,6 +33,7 @@ spec:
         # Both these values are arbitrary and unused as the PatchPolicy redirects requests.
         hostname: 'foo.bar.com'
         port: 8080
+
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
@@ -38,10 +41,13 @@ metadata:
   name: llm-route
 spec:
   parentRefs:
-    - name: inference-gateway
+    - name: llm-inference-gateway
       sectionName: llm-gw
   rules:
   - backendRefs:
       - group: gateway.envoyproxy.io
         kind: Backend
         name: backend-dummy
+    timeouts:
+      request: "3599s"
+      backendRequest: "3599s"
