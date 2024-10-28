@@ -38,7 +38,7 @@ metadata:
   name: llm-route
 spec:
   parentRefs:
-    - name: inference-gateway
+    - name: <GATEWAY-NAME>
       sectionName: llm-gw
   rules:
   - backendRefs:
