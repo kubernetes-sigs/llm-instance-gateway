@@ -1,4 +1,4 @@
-module ext-proc
+module ext-proc-poc
 
 go 1.21
 

@@ -7,7 +7,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -16,7 +16,12 @@ import (
 	"google.golang.org/grpc/codes"
 	healthPb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
+	"inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	klog "k8s.io/klog/v2"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	"ext-proc/backend"
 	"ext-proc/backend/vllm"
@@ -25,12 +30,16 @@ import (
 )
 
 var (
-	port            = flag.Int("port", 9002, "gRPC port")
-	targetPodHeader = flag.String("targetPodHeader", "target-pod", "the header key for the target pod address to instruct Envoy to send the request to. This must match Envoy configuration.")
-	podIPsFlag      = flag.String("podIPs", "", "Comma-separated list of pod IPs")
-
+	port                   = flag.Int("port", 9002, "gRPC port")
+	targetPodHeader        = flag.String("targetPodHeader", "target-pod", "the header key for the target pod address to instruct Envoy to send the request to. This must match Envoy configuration.")
+	serverPoolName         = flag.String("serverPoolName", "", "Name of the serverPool this ext-proc is associated with.")
+	serviceName            = flag.String("serviceName", "", "Name of the service that will be used to read the endpointslices from")
+	namespace              = flag.String("namespace", "default", "The Namespace that the server pool should exist in.")
+	zone                   = flag.String("zone", "", "The zone that this instance is created in. Will be passed to the corresponding endpointSlice. ")
+	desiredPort            = flag.String("desiredPort", "8000", "The port that the model server exposes")
 	refreshPodsInterval    = flag.Duration("refreshPodsInterval", 10*time.Second, "interval to refresh pods")
 	refreshMetricsInterval = flag.Duration("refreshMetricsInterval", 50*time.Millisecond, "interval to refresh metrics")
+	scheme                 = runtime.NewScheme()
 )
 
 type healthServer struct{}
@@ -44,26 +53,17 @@ func (s *healthServer) Watch(in *healthPb.HealthCheckRequest, srv healthPb.Healt
 	return status.Error(codes.Unimplemented, "Watch is not implemented")
 }
 
+func init() {
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(v1alpha1.AddToScheme(scheme))
+}
+
 func main() {
+
 	klog.InitFlags(nil)
 	flag.Parse()
 
-	// This is the list of addresses of backend pods.
-	// TODO (https://github.com/kubernetes-sigs/llm-instance-gateway/issues/12): Remove this once dynamic pod listing is implemented.
-	if *podIPsFlag == "" {
-		klog.Fatal("No pods or pod IPs provided. Use the -pods and -podIPs flags to specify comma-separated lists of pod addresses and pod IPs.")
-	}
-	podIPs := strings.Split(*podIPsFlag, ",")
-	klog.Infof("Pods: %v", podIPs)
-	pods := make(backend.PodSet)
-	for _, ip := range podIPs {
-		pod := backend.Pod{
-			Namespace: "default",
-			Name:      ip,
-			Address:   ip,
-		}
-		pods[pod] = true
-	}
+	ctrl.SetLogger(klog.TODO())
 
 	klog.Infof("Listening on %q", fmt.Sprintf(":%d", *port))
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
@@ -71,9 +71,50 @@ func main() {
 		klog.Fatalf("failed to listen: %v", err)
 	}
 
+	datastore := &backend.K8sDatastore{LLMServerPool: &v1alpha1.LLMServerPool{}, Pods: &sync.Map{}, Port: *desiredPort}
+
+	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+		Scheme: scheme,
+	})
+	if err != nil {
+		klog.Error(err, "unable to start manager")
+		os.Exit(1)
+	}
+
+	if err := (&backend.LLMServerPoolReconciler{
+		Datastore:      datastore,
+		Scheme:         mgr.GetScheme(),
+		Client:         mgr.GetClient(),
+		ServerPoolName: *serverPoolName,
+		Namespace:      *namespace,
+		Record:         mgr.GetEventRecorderFor("llmserverpool"),
+	}).SetupWithManager(mgr); err != nil {
+		klog.Error(err, "Error setting up LLMServerPoolReconciler")
+	}
+
+	if err := (&backend.EndpointSliceReconciler{
+		Datastore:      datastore,
+		Scheme:         mgr.GetScheme(),
+		Client:         mgr.GetClient(),
+		Record:         mgr.GetEventRecorderFor("endpointslice"),
+		ServiceName:    *serviceName,
+		Zone:           *zone,
+		ServerPoolName: *serverPoolName,
+	}).SetupWithManager(mgr); err != nil {
+		klog.Error(err, "Error setting up EndpointSliceReconciler")
+	}
+
+	errChan := make(chan error)
+	go func() {
+		if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+			klog.Error(err, "Error running manager")
+			errChan <- err
+		}
+	}()
+
 	s := grpc.NewServer()
 
-	pp := backend.NewProvider(&vllm.PodMetricsClientImpl{}, &backend.FakePodLister{Pods: pods})
+	pp := backend.NewProvider(&vllm.PodMetricsClientImpl{}, datastore)
 	if err := pp.Init(*refreshPodsInterval, *refreshMetricsInterval); err != nil {
 		klog.Fatalf("failed to initialize: %v", err)
 	}
@@ -87,9 +128,15 @@ func main() {
 	signal.Notify(gracefulStop, syscall.SIGTERM)
 	signal.Notify(gracefulStop, syscall.SIGINT)
 	go func() {
-		sig := <-gracefulStop
-		klog.Infof("caught sig: %+v", sig)
-		os.Exit(0)
+		select {
+		case sig := <-gracefulStop:
+			klog.Infof("caught sig: %+v", sig)
+			os.Exit(0)
+		case err := <-errChan:
+			klog.Infof("caught error in controller: %+v", err)
+			os.Exit(0)
+		}
+
 	}()
 
 	s.Serve(lis)
