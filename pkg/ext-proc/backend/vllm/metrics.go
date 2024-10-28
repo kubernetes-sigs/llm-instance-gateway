@@ -2,6 +2,7 @@
 package vllm
 
 import (
+	"context"
 	"ext-proc/backend"
 	"fmt"
 	"net/http"
@@ -15,8 +16,7 @@ import (
 )
 
 const (
-	ActiveLoRAAdaptersMetricName        = "vllm:info_active_adapters_info"
-	LoRAAdapterPendingRequestMetricName = "vllm:active_lora_adapters"
+	ActiveLoRAAdaptersMetricName = "vllm:info_active_adapters_info"
 	// TODO: Replace these with the num_tokens_running/waiting below once we add those to the fork.
 	RunningQueueSizeMetricName = "vllm:num_requests_running"
 	WaitingQueueSizeMetricName = "vllm:num_requests_waiting"
@@ -32,11 +32,15 @@ type PodMetricsClientImpl struct {
 }
 
 // FetchMetrics fetches metrics from a given pod.
-func (p *PodMetricsClientImpl) FetchMetrics(pod backend.Pod, existing *backend.PodMetrics) (*backend.PodMetrics, error) {
+func (p *PodMetricsClientImpl) FetchMetrics(ctx context.Context, pod backend.Pod, existing *backend.PodMetrics) (*backend.PodMetrics, error) {
 	// Currently the metrics endpoint is hard-coded, which works with vLLM.
 	// TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/16): Consume this from LLMServerPool config.
 	url := fmt.Sprintf("http://%s/metrics", pod.Address)
-	resp, err := http.Get(url)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %v", err)
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		klog.Errorf("failed to fetch metrics from %s: %v", pod, err)
 		return nil, fmt.Errorf("failed to fetch metrics from %s: %w", pod, err)
@@ -63,23 +67,23 @@ func promToPodMetrics(metricFamilies map[string]*dto.MetricFamily, existing *bac
 	var errs error
 	updated := existing.Clone()
 	runningQueueSize, _, err := getLatestMetric(metricFamilies, RunningQueueSizeMetricName)
-	multierr.Append(errs, err)
+	errs = multierr.Append(errs, err)
 	if err == nil {
 		updated.RunningQueueSize = int(runningQueueSize.GetGauge().GetValue())
 	}
 	waitingQueueSize, _, err := getLatestMetric(metricFamilies, WaitingQueueSizeMetricName)
-	multierr.Append(errs, err)
+	errs = multierr.Append(errs, err)
 	if err == nil {
 		updated.WaitingQueueSize = int(waitingQueueSize.GetGauge().GetValue())
 	}
 	cachePercent, _, err := getLatestMetric(metricFamilies, KVCacheUsagePercentMetricName)
-	multierr.Append(errs, err)
+	errs = multierr.Append(errs, err)
 	if err == nil {
 		updated.KVCacheUsagePercent = cachePercent.GetGauge().GetValue()
 	}
 	/* TODO: uncomment once this is available in vllm.
 	kvCap, _, err := getGaugeLatestValue(metricFamilies, KvCacheMaxTokenCapacityMetricName)
-	multierr.Append(errs, err)
+	errs = multierr.Append(errs, err)
 	if err != nil {
 		updated.KvCacheMaxTokenCapacity = int(kvCap)
 	}
@@ -107,7 +111,7 @@ func promToPodMetrics(metricFamilies map[string]*dto.MetricFamily, existing *bac
 		}
 	} else {
 		klog.Warningf("metric family %q not found", ActiveLoRAAdaptersMetricName)
-		multierr.Append(errs, fmt.Errorf("metric family %q not found", ActiveLoRAAdaptersMetricName))
+		errs = multierr.Append(errs, fmt.Errorf("metric family %q not found", ActiveLoRAAdaptersMetricName))
 	}
 
 	return updated, errs
