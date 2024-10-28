@@ -34,5 +34,5 @@ spec:
       name: default/<GATEWAY-NAME>/llm-gw
       operation:
         op: replace
-        path: "/virtual_hosts/1/routes/0/route/cluster"
+        path: "/virtual_hosts/0/routes/0/route/cluster"
         value: original_destination_cluster

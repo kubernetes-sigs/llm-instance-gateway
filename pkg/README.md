@@ -10,7 +10,7 @@
 
    Our custom LLM Gateway ext-proc is patched into the existing envoy gateway via `EnvoyPatchPolicy`. To enable this feature, we must extend the Envoy Gateway config map. To do this, simply run:
    ```bash
-   kubectl apply -f ./manifests/gateway/enable_patch_policy.yaml
+   kubectl apply -f ./manifests/enable_patch_policy.yaml
    kubectl rollout restart deployment envoy-gateway -n envoy-gateway-system
 
    ```
@@ -20,14 +20,14 @@
 1. **Deploy Gateway**
 
    ```bash
-   kubectl apply -f ./manifests/gateway/gateway.yaml
+   kubectl apply -f ./manifests/gateway.yaml
    ```
 
 1. **Deploy Ext-Proc**
 
    ```bash
-   kubectl apply -f ./manifests/gateway/ext_proc.yaml
-   kubectl apply -f ./manifests/gateway/patch_policy.yaml
+   kubectl apply -f ./manifests/ext_proc.yaml
+   kubectl apply -f ./manifests/patch_policy.yaml
    ```
    **NOTE**: Ensure the `instance-gateway-ext-proc` deployment is updated with the pod names and internal IP addresses of the vLLM replicas. This step is crucial for the correct routing of requests based on headers. This won't be needed once we make ext proc dynamically read the pods.
 
