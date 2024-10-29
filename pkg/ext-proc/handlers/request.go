@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	configPb "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	extProcPb "github.com/envoyproxy/go-control-plane/envoy/service/ext_proc/v3"
@@ -41,6 +42,7 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 		// TODO: Read from LLMService CRD.
 		Critical: true,
 	}
+	klog.V(3).Infof("LLM Request: %+v", llmReq)
 
 	// Update target models in the body.
 	rb["model"] = llmReq.ResolvedTargetModel
@@ -49,7 +51,7 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 		klog.Errorf("Error marshaling request body: %v", err)
 		return nil, fmt.Errorf("error marshaling request body: %v", err)
 	}
-	klog.V(3).Infof("Updated body: %v", updatedBody)
+	klog.V(3).Infof("Updated body: %v", string(updatedBody))
 
 	targetPod, err := s.scheduler.Schedule(llmReq)
 	if err != nil {
@@ -68,6 +70,14 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 				RawValue: []byte(targetPod.Address),
 			},
 		},
+		// We need to update the content length header if the body is mutated, see Envoy doc:
+		// https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/http/ext_proc/v3/processing_mode.proto#enum-extensions-filters-http-ext-proc-v3-processingmode-bodysendmode
+		{
+			Header: &configPb.HeaderValue{
+				Key:      "Content-Length",
+				RawValue: []byte(strconv.Itoa(len(updatedBody))),
+			},
+		},
 	}
 	// Print headers for debugging
 	for _, header := range headers {
@@ -81,12 +91,11 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 					HeaderMutation: &extProcPb.HeaderMutation{
 						SetHeaders: headers,
 					},
-					// TODO: Enable body mutation
-					// BodyMutation: &extProcPb.BodyMutation{
-					// 	Mutation: &extProcPb.BodyMutation_Body{
-					// 		Body: updatedBody,
-					// 	},
-					// },
+					BodyMutation: &extProcPb.BodyMutation{
+						Mutation: &extProcPb.BodyMutation_Body{
+							Body: updatedBody,
+						},
+					},
 				},
 			},
 		},
