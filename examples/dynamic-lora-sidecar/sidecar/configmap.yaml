@@ -1,4 +1,4 @@
-deployment:
+vLLMLoRAConfig:
   host: localhost
   models:
   - base-model: meta-llama/Llama-2-7b-hf

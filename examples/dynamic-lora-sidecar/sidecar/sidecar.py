@@ -8,6 +8,7 @@ import datetime
 import os
 
 CONFIG_MAP_FILE = os.environ.get('DYNAMIC_LORA_ROLLOUT_CONFIG',"configmap.yaml")
+BASE_FIELD = "vLLMLoRAConfig"
 logging.basicConfig(level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -48,7 +49,7 @@ class LoraReconciler:
 
     def load_configmap(self):
         with open(CONFIG_MAP_FILE, "r") as f:
-            deployment = yaml.safe_load(f)["deployment"]
+            deployment = yaml.safe_load(f)[BASE_FIELD]
             self.deployment_name = deployment.get("name", "")
             lora_adapters = deployment["models"]
             self.host, self.port = (
@@ -88,9 +89,9 @@ class LoraReconciler:
                     "operation": "load",
                     "errors": [e],
                 }
-        self.update_status_config()
+        self.log_status_config()
 
-    def update_status_config(self):
+    def log_status_config(self):
         models = list(self.config_map_adapters.values())
         deployment = {
             "name": self.deployment_name,
@@ -98,15 +99,16 @@ class LoraReconciler:
             "port": self.port,
             "models": models,
         }
-        config = {"deployment":deployment}
-        with open(CONFIG_MAP_FILE, "w") as f:
-            yaml.dump(config, f, indent=2)
+        config = {BASE_FIELD:deployment}
+        yaml_string = yaml.dump(config,indent=2)
+        logging.info(f"current status of lora adapters on model server at {self.host}:{self.port} \n {yaml_string}")
+        
 
     def load_adapter(self, adapter):
         """Sends a request to load the specified model."""
         adapter_id = adapter["id"]
         if adapter_id in self.registered_adapters or adapter.get("toRemove"):
-            return "already loaded"
+            return 
         url = f"http://{self.host}:{self.port}/v1/load_lora_adapter"
         payload = {
             "lora_name": adapter_id,
@@ -127,7 +129,7 @@ class LoraReconciler:
         """Sends a request to unload the specified model."""
         adapter_id = adapter["id"]
         if adapter_id not in self.registered_adapters:
-            return "already unloaded"
+            return 
         url = f"http://{self.host}:{self.port}/v1/unload_lora_adapter"
         payload = {"lora_name": adapter_id}
         try:

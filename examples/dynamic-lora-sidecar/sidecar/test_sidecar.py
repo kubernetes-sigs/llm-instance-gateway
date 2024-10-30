@@ -1,10 +1,10 @@
 import unittest
 from unittest.mock import patch, Mock, mock_open
 import yaml
-from sidecar import LoraReconciler, CONFIG_MAP_FILE
+from sidecar import LoraReconciler, CONFIG_MAP_FILE, BASE_FIELD
 
 TEST_CONFIG_DATA = {
-    "deployment": {
+    "vLLMLoRAConfig": {
         "name": "test-deployment",
         "host": "localhost",
         "port": "8000",
@@ -101,16 +101,10 @@ class LoraReconcilerTest(unittest.TestCase):
 
         # loading a new adapter
         result = self.reconciler.load_adapter(
-            TEST_CONFIG_DATA["deployment"]["models"][0]
+            TEST_CONFIG_DATA[BASE_FIELD]["models"][0]
         )
         self.assertEqual(result, "")
 
-        # loading an already loaded adapter
-        self.reconciler.registered_adapters["lora1"] = {"id": "lora1"}
-        result = self.reconciler.load_adapter(
-            TEST_CONFIG_DATA["deployment"]["models"][0]
-        )
-        self.assertEqual(result, "already loaded")
 
     @patch("sidecar.requests.post")
     def test_unload_adapter(self, mock_post):
@@ -119,15 +113,9 @@ class LoraReconcilerTest(unittest.TestCase):
         # unloading an existing adapter
         self.reconciler.registered_adapters["lora2"] = {"id": "lora2"}
         result = self.reconciler.unload_adapter(
-            TEST_CONFIG_DATA["deployment"]["models"][1]
+            TEST_CONFIG_DATA[BASE_FIELD]["models"][1]
         )
         self.assertEqual(result, None)
-
-        # unloading an already unloaded adapter
-        result = self.reconciler.unload_adapter(
-            TEST_CONFIG_DATA["deployment"]["models"][1]
-        )
-        self.assertEqual(result, "already unloaded")
     
     @patch("builtins.open", new_callable=mock_open, read_data=yaml.dump(TEST_CONFIG_DATA))
     @patch("sidecar.requests.get")
@@ -154,8 +142,6 @@ class LoraReconcilerTest(unittest.TestCase):
         )
         updated_config = self.reconciler.config_map_adapters
         mock_file.return_value.write.side_effect = lambda data: data
-        self.reconciler.update_status_config()
-        mock_file.return_value.write.assert_called()
         self.assertTrue("timestamp" in updated_config["lora1"]["status"])
         self.assertTrue("status" in updated_config["lora2"])
 
