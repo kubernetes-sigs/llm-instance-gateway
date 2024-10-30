@@ -95,3 +95,19 @@ spec:
   - protocol: TCP
     port: 8000
     targetPort: 8000
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dynamic-lora-config
+data:
+  configmap.yaml: |
+      vLLMLoRAConfig:
+        host: localhost
+        models:
+          - base-model: meta-llama/Llama-2-7b-hf
+            id: sql-lora-v1
+            source: yard1/llama-2-7b-sql-lora-test
+        name: sql-lora
