@@ -113,7 +113,7 @@ class LoraReconciler:
         payload = {
             "lora_name": adapter_id,
             "lora_path": adapter["source"],
-            "base_model_name": adapter["base-model"],
+            "base_model_name": adapter.get("base-model",""),
         }
         try:
             response = requests.post(url, json=payload)
