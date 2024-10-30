@@ -52,6 +52,13 @@ spec:
           value: "gs://vertex-model-garden-public-us/llama2/llama2-7b-hf"
         - name: VLLM_ALLOW_RUNTIME_LORA_UPDATING
           value: "true"
+        - name: HF_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: hf-token  # The name of your Kubernetes Secret
+              key: HF_TOKEN   # The specific key within the Secret
+        - name: DYNAMIC_LORA_ROLLOUT_CONFIG
+          value: "/config/configmap.yaml"
         volumeMounts:
         - mountPath: /dev/shm
           name: dshm
@@ -74,7 +81,6 @@ spec:
           name: dynamic-lora-config
       nodeSelector:
         cloud.google.com/gke-accelerator: nvidia-l4
-        cloud.google.com/gke-nodepool: dynamic-lora
 
 ---
 apiVersion: v1
