@@ -38,6 +38,8 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 		// TODO: Once the API is approved, read the "LLMUseCase" configuration and apply traffic split.
 		TargetModels:        map[string]int{model: 100},
 		ResolvedTargetModel: model,
+		// TODO: Read from LLMService CRD.
+		Critical: true,
 	}
 
 	// Update target models in the body.
@@ -51,7 +53,7 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 
 	targetPod, err := s.scheduler.Schedule(llmReq)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find target pod: %v", err)
+		return nil, fmt.Errorf("failed to find target pod: %w", err)
 	}
 	klog.V(3).Infof("Selected target model %v in target pod: %v\n", llmReq.ResolvedTargetModel, targetPod)
 
