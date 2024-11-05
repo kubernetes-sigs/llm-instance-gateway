@@ -92,6 +92,7 @@ class LoraReconciler:
             return False
 
     def wait_server_healthy(self) -> bool:
+        """Wait for server to be healthy"""
         start_time = datetime.datetime.now()
         while datetime.datetime.now() - start_time < self.health_check_timeout:
             if self.check_health():
