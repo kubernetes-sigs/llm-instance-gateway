@@ -55,9 +55,11 @@ class LoraReconciler:
         self.health_check_interval = datetime.timedelta(seconds=15)
 
     def validate_dynamic_lora(self):
+        """Validate if dynamic lora updating is enabled"""
         return os.environ.get(DYNAMIC_LORA_FLAG, False)
 
     def load_configmap(self):
+        """Load configmap into memory"""
         with open(CONFIG_MAP_FILE, "r") as f:
             deployment = yaml.safe_load(f)[BASE_FIELD]
             self.deployment_name = deployment.get("name", "")
