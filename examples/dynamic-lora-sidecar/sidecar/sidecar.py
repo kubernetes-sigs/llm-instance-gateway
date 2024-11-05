@@ -47,12 +47,12 @@ class LoraReconciler:
         self.deployment_name = ""
         self.registered_adapters = {}
         self.config_map_adapters = {}
+        self.health_check_timeout = datetime.timedelta(seconds=150)
+        self.health_check_interval = datetime.timedelta(seconds=15)
         if not self.validate_dynamic_lora():
             logging.fatal(f"{DYNAMIC_LORA_FLAG} set to False")
         self.load_configmap()
         self.get_registered_adapters()
-        self.health_check_timeout = datetime.timedelta(seconds=150)
-        self.health_check_interval = datetime.timedelta(seconds=15)
 
     def validate_dynamic_lora(self):
         """Validate if dynamic lora updating is enabled"""
@@ -76,7 +76,7 @@ class LoraReconciler:
         """Retrieves all loaded models on server"""
         url = f"http://{self.host}:{self.port}/v1/models"
         if not self.wait_server_healthy():
-            logging.error(f"Vllm server at {self.host:self.port} not healthy")
+            logging.error(f"Vllm server at {self.host}:{self.port} not healthy")
         try:
             response = requests.get(url)
             adapters = {adapter["id"]: adapter for adapter in response.json()["data"]}
@@ -98,15 +98,16 @@ class LoraReconciler:
         start_time = datetime.datetime.now()
         while datetime.datetime.now() - start_time < self.health_check_timeout:
             if self.check_health():
-                break
-            time.sleep(self.health_check_interval)
+                return True
+            time.sleep(self.health_check_interval.seconds)
+        return False
 
     def reconcile(self):
         """Reconciles model server with current version of configmap"""
         self.get_registered_adapters()
         self.load_configmap()
         if not self.wait_server_healthy():
-            logging.error(f"Vllm server at {self.host:self.port} not healthy")
+            logging.error(f"Vllm server at {self.host}:{self.port} not healthy")
 
         for adapter_id, lora_adapter in self.config_map_adapters.items():
             logging.info(f"Processing adapter {adapter_id}")
