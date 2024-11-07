@@ -75,7 +75,6 @@ spec:
           volumeMounts:
           - name: config-volume
             mountPath:  /config
-            # subPath: configmap.yaml
       volumes:
       - name: dshm
         emptyDir:

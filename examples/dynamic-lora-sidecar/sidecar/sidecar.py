@@ -7,7 +7,7 @@ import logging
 import datetime
 import os
 
-CONFIG_MAP_FILE = os.environ.get("DYNAMIC_LORA_ROLLOUT_CONFIG", "configmap.yaml")
+CONFIG_MAP_FILE = os.environ.get("DYNAMIC_LORA_ROLLOUT_CONFIG", "/config/configmap.yaml")
 BASE_FIELD = "vLLMLoRAConfig"
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d -  %(message)s",
@@ -165,11 +165,16 @@ class LoraReconciler:
         if not self.is_server_healthy:
             logging.error(f"vllm server at {self.model_server} not healthy")
             return
+        invalid_adapters = ", ".join(str(a.id) for a in self.ensure_exist_adapters & self.ensure_not_exist_adapters)
+        logging.warning(f"skipped adapters found in both `ensureExist` and `ensureNotExist` {invalid_adapters}")
         adapters_to_load = self.ensure_exist_adapters - self.ensure_not_exist_adapters
-        logging.info(f"adapter to load {len(adapters_to_load)}, adapters_to_load")
+        adapters_to_load_id = ", ".join(str(a.id) for a in adapters_to_load)
+        logging.info(f"adapter to load {adapters_to_load_id}")
         for adapter in adapters_to_load:
             self.load_adapter(adapter)
         adapters_to_unload = self.ensure_not_exist_adapters - self.ensure_exist_adapters
+        adapters_to_unload_id = ", ".join(str(a.id) for a in adapters_to_unload)
+        logging.info(f"adapters to unload {adapters_to_unload_id}")
         for adapter in adapters_to_unload:
             self.unload_adapter(adapter)
 
@@ -184,7 +189,7 @@ async def main():
     reconcilerInstance.reconcile()
     # observer = Observer()
     logging.info(f"beginning watching of configmap {CONFIG_MAP_FILE}")
-    async for changes in awatch('/config'):
+    async for _ in awatch('/config/configmap.yaml'):
         logging.info(f"Config '{CONFIG_MAP_FILE}' modified!'" )
         reconcilerInstance.reconcile()
 

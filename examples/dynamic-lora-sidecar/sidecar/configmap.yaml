@@ -7,6 +7,12 @@ vLLMLoRAConfig:
     - base-model: meta-llama/Llama-2-7b-hf
       id: sql-lora-v1
       source: yard1/llama-2-7b-sql-lora-test
+    - base-model: meta-llama/Llama-2-7b-hf
+      id: sql-lora-v5
+      source: yard1/llama-2-7b-sql-lora-test
+    - base-model: meta-llama/Llama-2-7b-hf
+      id: sql-lora-v6
+      source: yard1/llama-2-7b-sql-lora-test
   ensureNotExist:
     models:
     - base-model: meta-llama/Llama-2-7b-hf
