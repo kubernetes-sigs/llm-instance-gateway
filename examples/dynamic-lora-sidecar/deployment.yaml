@@ -56,7 +56,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: hf-token  # The name of your Kubernetes Secret
-              key: HF_TOKEN   # The specific key within the Secret
+              key: token   # The specific key within the Secret
         - name: DYNAMIC_LORA_ROLLOUT_CONFIG
           value: "/config/configmap.yaml"
         volumeMounts:
@@ -64,14 +64,18 @@ spec:
           name: dshm
       initContainers:
         - name: configmap-reader-1
+          tty: true
+          stdin: true 
           image: us-docker.pkg.dev/kunjanp-gke-dev-2/lora-sidecar/sidecar:latest
           restartPolicy: Always
+          imagePullPolicy: Always
           env: 
-            DYNAMIC_LORA_ROLLOUT_CONFIG: "/config/configmap.yaml"
+            - name: DYNAMIC_LORA_ROLLOUT_CONFIG
+              value: "/config/configmap.yaml"
           volumeMounts:
           - name: config-volume
-            mountPath:  /config/configmap.yaml 
-            subPath: configmap.yaml
+            mountPath:  /config
+            # subPath: configmap.yaml
       volumes:
       - name: dshm
         emptyDir:
@@ -106,8 +110,21 @@ data:
   configmap.yaml: |
       vLLMLoRAConfig:
         host: localhost
-        models:
+        name: sql-loras-llama
+        port: '8000'
+        ensureExist:
+          models:
           - base-model: meta-llama/Llama-2-7b-hf
             id: sql-lora-v1
             source: yard1/llama-2-7b-sql-lora-test
-        name: sql-lora
+          - base-model: meta-llama/Llama-2-7b-hf
+            id: sql-lora-v3
+            source: yard1/llama-2-7b-sql-lora-test
+          - base-model: meta-llama/Llama-2-7b-hf
+            id: sql-lora-v4
+            source: yard1/llama-2-7b-sql-lora-test
+        ensureNotExist:
+          models:
+          - base-model: meta-llama/Llama-2-7b-hf
+            id: sql-lora-v2
+            source: yard1/llama-2-7b-sql-lora-test

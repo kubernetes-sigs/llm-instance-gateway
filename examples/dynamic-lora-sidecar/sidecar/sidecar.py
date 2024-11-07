@@ -1,18 +1,20 @@
 import requests
 import yaml
 import time
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
+from watchfiles import awatch
+import asyncio
 import logging
 import datetime
 import os
 
 CONFIG_MAP_FILE = os.environ.get("DYNAMIC_LORA_ROLLOUT_CONFIG", "configmap.yaml")
-DYNAMIC_LORA_FLAG = "VLLM_ALLOW_RUNTIME_LORA_UPDATING"
 BASE_FIELD = "vLLMLoRAConfig"
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d -  %(message)s",
+    datefmt='%Y-%m-%d %H:%M:%S',
+    handlers=[logging.StreamHandler()]
 )
+logging.Formatter.converter = time.localtime 
 
 
 def current_time_human() -> str:
@@ -20,22 +22,18 @@ def current_time_human() -> str:
     return now.strftime("%Y-%m-%d %H:%M:%S %Z%z")
 
 
-class ConfigWatcher(FileSystemEventHandler):
-    def __init__(self, callback):
-        """
-        Watches config
+class LoraAdapter:
+    """Class representation of lora adapters in config"""
+    def __init__(self, id, source="", base_model=""):
+        self.id = id
+        self.source = source
+        self.base_model = base_model
 
-        Args:
-            callback : Callback function taking no parameters and no return values parsed
-        """
-        self.callback = callback
+    def __eq__(self, other):
+        return self.id == other.id
 
-    def on_modified(self, event):
-        if not event.is_directory and event.src_path.endswith(".yaml"):
-            logging.info(
-                f"Config '{event.src_path}' modified! at '{current_time_human()}'"
-            )
-            self.callback()
+    def __hash__(self):
+        return hash(self.id)
 
 
 class LoraReconciler:
@@ -44,161 +42,152 @@ class LoraReconciler:
     """
 
     def __init__(self):
-        self.deployment_name = ""
-        self.registered_adapters = {}
-        self.config_map_adapters = {}
-        self.health_check_timeout = datetime.timedelta(seconds=150)
+        self.health_check_timeout = datetime.timedelta(seconds=300)
         self.health_check_interval = datetime.timedelta(seconds=15)
-        if not self.validate_dynamic_lora():
-            logging.fatal(f"{DYNAMIC_LORA_FLAG} set to False")
-        self.load_configmap()
-        self.get_registered_adapters()
 
-    def validate_dynamic_lora(self):
-        """Validate if dynamic lora updating is enabled"""
-        return os.environ.get(DYNAMIC_LORA_FLAG, False)
-
-    def load_configmap(self):
+    @property
+    def config(self):
         """Load configmap into memory"""
-        with open(CONFIG_MAP_FILE, "r") as f:
-            deployment = yaml.safe_load(f)[BASE_FIELD]
-            self.deployment_name = deployment.get("name", "")
-            lora_adapters = deployment["models"]
-            self.host, self.port = (
-                deployment.get("host") or "localhost",
-                deployment.get("port") or "8000",
-            )
-            self.config_map_adapters = {
-                adapter["id"]: adapter for adapter in lora_adapters
-            }
+        try:
+            with open(CONFIG_MAP_FILE, "r") as f:
+                c = yaml.safe_load(f)
+                if c is None:
+                    c = {}
+                c = c.get("vLLMLoRAConfig",{})
+                config_name = c.get("name","")
+                logging.info(f"loaded vLLMLoRAConfig {config_name} from {CONFIG_MAP_FILE}")
+                return c
+        except Exception as e:
+            logging.error(f"cannot load config {CONFIG_MAP_FILE} {e}")
+            return {}
+    
+    @property
+    def host(self):
+        """Model server host"""
+        return self.config.get("host", "localhost")
 
-    def get_registered_adapters(self):
-        """Retrieves all loaded models on server"""
-        url = f"http://{self.host}:{self.port}/v1/models"
-        if not self.wait_server_healthy():
-            logging.error(f"Vllm server at {self.host}:{self.port} not healthy")
+    @property
+    def port(self):
+        """Model server port"""
+        return self.config.get("port", 8000)
+    
+    @property
+    def model_server(self):
+        """Model server {host}:{port}"""
+        return f"{self.host}:{self.port}"
+
+    @property
+    def ensure_exist_adapters(self):
+        """Lora adapters in config under key `ensureExist` in set"""
+        adapters = self.config.get("ensureExist", {}).get("models", set())
+        return set([LoraAdapter(adapter["id"], adapter["source"], adapter.get("base-model","")) for adapter in adapters])
+
+    @property
+    def ensure_not_exist_adapters(self):
+        """Lora adapters in config under key `ensureNotExist` in set"""
+        adapters = self.config.get("ensureNotExist", {}).get("models", set())
+        return set([LoraAdapter(adapter["id"], adapter["source"], adapter.get("base-model","")) for adapter in adapters])
+
+    @property
+    def registered_adapters(self):
+        """Lora Adapters registered on model server"""
+        url = f"http://{self.model_server}/v1/models"
+        if not self.is_server_healthy:
+            logging.error(f"vllm server at {self.model_server} not healthy")
+            return set()
         try:
             response = requests.get(url)
-            adapters = {adapter["id"]: adapter for adapter in response.json()["data"]}
-            self.registered_adapters = adapters
+            adapters = [
+                LoraAdapter(a.get("id", ""), a.get("")) for a in response.json()["data"]
+            ]
+            return set(adapters)
         except requests.exceptions.RequestException as e:
             logging.error(f"Error communicating with vLLM server: {e}")
+            return set()
 
-    def check_health(self) -> bool:
-        """Checks server health"""
-        url = f"http://{self.host}:{self.port}/health"
-        try:
-            response = requests.get(url)
-            return response.status_code == 200
-        except requests.exceptions.RequestException:
-            return False
-
-    def wait_server_healthy(self) -> bool:
-        """Wait for server to be healthy"""
+    @property
+    def is_server_healthy(self) -> bool:
+        """probe server's health endpoint until timeout or success"""
+        
+        def check_health() -> bool:
+            """Checks server health"""
+            url = f"http://{self.model_server}/health"
+            try:
+                response = requests.get(url)
+                return response.status_code == 200
+            except requests.exceptions.RequestException:
+                return False
+        
         start_time = datetime.datetime.now()
         while datetime.datetime.now() - start_time < self.health_check_timeout:
-            if self.check_health():
+            if check_health():
                 return True
             time.sleep(self.health_check_interval.seconds)
         return False
+    
+    def load_adapter(self, adapter: LoraAdapter):
+        """Sends a request to load the specified model."""
+        if adapter in self.registered_adapters:
+            logging.info(f"{adapter.id} already present on model server {self.model_server}")
+            return
+        url = f"http://{self.model_server}/v1/load_lora_adapter"
+        payload = {
+            "lora_name": adapter.id,
+            "lora_path": adapter.source,
+            "base_model_name": adapter.base_model
+        }
+        try:
+            response = requests.post(url, json=payload)
+            response.raise_for_status()
+            logging.info(f"loaded model {adapter.id}")
+        except requests.exceptions.RequestException as e:
+            logging.error(f"error loading model {adapter.id}: {e}")
+
+    def unload_adapter(self, adapter: LoraAdapter):
+        """Sends a request to unload the specified model."""
+        if adapter not in self.registered_adapters:
+            logging.info(f"{adapter.id} already doesn't exist on model server {self.model_server}")
+            return
+        url = f"http://{self.model_server}/v1/unload_lora_adapter"
+        payload = {"lora_name": adapter.id}
+        try:
+            response = requests.post(url, json=payload)
+            response.raise_for_status()
+            logging.info(f"unloaded model {adapter.id}")
+            return None
+        except requests.exceptions.RequestException as e:
+            logging.error(f"error unloading model {adapter.id}: {e}")
+            return f"error unloading model {adapter.id}: {e}"
 
     def reconcile(self):
         """Reconciles model server with current version of configmap"""
-        self.get_registered_adapters()
-        self.load_configmap()
-        if not self.wait_server_healthy():
-            logging.error(f"Vllm server at {self.host}:{self.port} not healthy")
-
-        for adapter_id, lora_adapter in self.config_map_adapters.items():
-            logging.info(f"Processing adapter {adapter_id}")
-            if lora_adapter.get("toRemove"):
-                e = self.unload_adapter(lora_adapter)
-                lora_adapter["timestamp"] = current_time_human()
-                lora_adapter["status"] = {
-                    "timestamp": current_time_human(),
-                    "operation": "unload",
-                    "errors": [e],
-                }
-            else:
-                e = self.load_adapter(lora_adapter)
-                lora_adapter["status"] = {
-                    "timestamp": current_time_human(),
-                    "operation": "load",
-                    "errors": [e],
-                }
-        self.log_status_config()
-
-    def log_status_config(self):
-        models = list(self.config_map_adapters.values())
-        deployment = {
-            "name": self.deployment_name,
-            "host": self.host,
-            "port": self.port,
-            "models": models,
-        }
-        config = {BASE_FIELD: deployment}
-        yaml_string = yaml.dump(config, indent=2)
-        logging.info(
-            f"current status of lora adapters on model server at {self.host}:{self.port} \n {yaml_string}"
-        )
-
-    def load_adapter(self, adapter):
-        """Sends a request to load the specified model."""
-        adapter_id = adapter["id"]
-        if adapter_id in self.registered_adapters or adapter.get("toRemove"):
+        logging.info(f"reconciling model server {self.model_server} with config stored at {CONFIG_MAP_FILE}")
+        if not self.is_server_healthy:
+            logging.error(f"vllm server at {self.model_server} not healthy")
             return
-        url = f"http://{self.host}:{self.port}/v1/load_lora_adapter"
-        payload = {
-            "lora_name": adapter_id,
-            "lora_path": adapter["source"],
-            "base_model_name": adapter.get("base-model", ""),
-        }
-        try:
-            response = requests.post(url, json=payload)
-            response.raise_for_status()
-            logging.info(f"Loaded model {adapter_id}")
-            self.get_registered_adapters()
-            return ""
-        except requests.exceptions.RequestException as e:
-            logging.error(f"Error loading model {adapter_id}: {e}")
-            return f"Error loading model {adapter_id}: {e}"
-
-    def unload_adapter(self, adapter):
-        """Sends a request to unload the specified model."""
-        adapter_id = adapter["id"]
-        if adapter_id not in self.registered_adapters:
-            return
-        url = f"http://{self.host}:{self.port}/v1/unload_lora_adapter"
-        payload = {"lora_name": adapter_id}
-        try:
-            response = requests.post(url, json=payload)
-            response.raise_for_status()
-            logging.info(f"Unloaded model {adapter_id}")
-            self.get_registered_adapters()
-            return None
-        except requests.exceptions.RequestException as e:
-            logging.error(f"Error unloading model {adapter_id}: {e}")
-            return f"Error unloading model {adapter_id}: {e}"
+        adapters_to_load = self.ensure_exist_adapters - self.ensure_not_exist_adapters
+        logging.info(f"adapter to load {len(adapters_to_load)}, adapters_to_load")
+        for adapter in adapters_to_load:
+            self.load_adapter(adapter)
+        adapters_to_unload = self.ensure_not_exist_adapters - self.ensure_exist_adapters
+        for adapter in adapters_to_unload:
+            self.unload_adapter(adapter)
 
 
-def main():
+
+async def main():
     """Loads the target configuration, compares it with the server's models,
     and loads/unloads models accordingly."""
 
     reconcilerInstance = LoraReconciler()
+    logging.info(f"running reconcile for initial loading of configmap {CONFIG_MAP_FILE}")
     reconcilerInstance.reconcile()
-    observer = Observer()
-    event_handler = ConfigWatcher(reconcilerInstance.reconcile)
-    observer.schedule(event_handler, path=CONFIG_MAP_FILE, recursive=False)
-    observer.start()
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        logging.info("Lora Adapter Dynamic configuration Reconciler stopped")
-        observer.stop()
-    observer.join()
+    # observer = Observer()
+    logging.info(f"beginning watching of configmap {CONFIG_MAP_FILE}")
+    async for changes in awatch('/config'):
+        logging.info(f"Config '{CONFIG_MAP_FILE}' modified!'" )
+        reconcilerInstance.reconcile()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
