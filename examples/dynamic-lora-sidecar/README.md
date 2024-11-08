@@ -44,3 +44,8 @@ The sidecar uses the vLLM server's API to load or unload adapters based on the c
     Do not use subPath, since configmap updates are not reflected in the file
 
 [deployment]: deployment.yaml
+
+## Screenshots
+![lora-adapter-syncer](screenshots/lora-syncer-sidecar.png)
+![config map change](screenshots/configmap-change.png)
+![vllm-logs](screenshots/vllm-logs.png)

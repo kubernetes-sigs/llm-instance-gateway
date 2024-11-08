@@ -55,8 +55,6 @@ class LoraReconciler:
                 if c is None:
                     c = {}
                 c = c.get("vLLMLoRAConfig",{})
-                config_name = c.get("name","")
-                logging.info(f"loaded vLLMLoRAConfig {config_name} from {CONFIG_MAP_FILE}")
                 return c
         except Exception as e:
             logging.error(f"cannot load config {CONFIG_MAP_FILE} {e}")
