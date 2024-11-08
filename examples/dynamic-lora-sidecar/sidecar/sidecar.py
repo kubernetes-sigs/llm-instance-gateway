@@ -2,6 +2,7 @@ import requests
 import yaml
 import time
 from watchfiles import awatch
+from dataclasses import dataclass
 import asyncio
 import logging
 import datetime
@@ -21,7 +22,7 @@ def current_time_human() -> str:
     now = datetime.datetime.now(datetime.timezone.utc).astimezone()
     return now.strftime("%Y-%m-%d %H:%M:%S %Z%z")
 
-
+@dataclass
 class LoraAdapter:
     """Class representation of lora adapters in config"""
     def __init__(self, id, source="", base_model=""):
@@ -187,7 +188,6 @@ async def main():
     reconcilerInstance = LoraReconciler()
     logging.info(f"running reconcile for initial loading of configmap {CONFIG_MAP_FILE}")
     reconcilerInstance.reconcile()
-    # observer = Observer()
     logging.info(f"beginning watching of configmap {CONFIG_MAP_FILE}")
     async for _ in awatch('/config/configmap.yaml'):
         logging.info(f"Config '{CONFIG_MAP_FILE}' modified!'" )

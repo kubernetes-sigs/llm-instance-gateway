@@ -72,7 +72,7 @@ spec:
           env: 
             - name: DYNAMIC_LORA_ROLLOUT_CONFIG
               value: "/config/configmap.yaml"
-          volumeMounts:
+          volumeMounts: # DO NOT USE subPath
           - name: config-volume
             mountPath:  /config
       volumes:
@@ -110,7 +110,7 @@ data:
       vLLMLoRAConfig:
         host: localhost
         name: sql-loras-llama
-        port: '8000'
+        port: 8000
         ensureExist:
           models:
           - base-model: meta-llama/Llama-2-7b-hf

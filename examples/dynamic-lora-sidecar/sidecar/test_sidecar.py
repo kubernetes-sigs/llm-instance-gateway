@@ -1,32 +1,69 @@
 import unittest
-from unittest.mock import patch, Mock, mock_open
+from unittest.mock import patch, Mock, mock_open, call
 import yaml
 import os
-from sidecar import LoraReconciler, CONFIG_MAP_FILE, BASE_FIELD, DYNAMIC_LORA_FLAG
+from sidecar import LoraReconciler, CONFIG_MAP_FILE, BASE_FIELD, LoraAdapter
 
 TEST_CONFIG_DATA = {
-    "vLLMLoRAConfig": {
-        "name": "test-deployment",
+    BASE_FIELD: {
         "host": "localhost",
-        "port": "8000",
-        "models": [
-            {"id": "lora1", "source": "/path/to/lora1", "base-model": "base1"},
-            {
-                "id": "lora2",
-                "source": "/path/to/lora2",
-                "base-model": "base1",
-                "toRemove": True,
-            },
-        ],
+        "name": "sql-loras-llama",
+        "port": 8000,
+        "ensureExist": {
+            "models": [
+                {
+                    "base-model": "meta-llama/Llama-2-7b-hf",
+                    "id": "sql-lora-v1",
+                    "source": "yard1/llama-2-7b-sql-lora-test",
+                },
+                {
+                    "base-model": "meta-llama/Llama-2-7b-hf",
+                    "id": "sql-lora-v3",
+                    "source": "yard1/llama-2-7b-sql-lora-test",
+                },
+                {
+                    "base-model": "meta-llama/Llama-2-7b-hf",
+                    "id": "already_exists",
+                    "source": "yard1/llama-2-7b-sql-lora-test",
+                },
+            ]
+        },
+        "ensureNotExist": {
+            "models": [
+                {
+                    "base-model": "meta-llama/Llama-2-7b-hf",
+                    "id": "sql-lora-v2",
+                    "source": "yard1/llama-2-7b-sql-lora-test",
+                },
+                {
+                    "base-model": "meta-llama/Llama-2-7b-hf",
+                    "id": "sql-lora-v3",
+                    "source": "yard1/llama-2-7b-sql-lora-test",
+                },
+                {
+                    "base-model": "meta-llama/Llama-2-7b-hf",
+                    "id": "to_remove",
+                    "source": "yard1/llama-2-7b-sql-lora-test",
+                },
+            ]
+        },
     }
 }
+EXIST_ADAPTERS = [
+    LoraAdapter(a["id"], a["base-model"], a["source"])
+    for a in TEST_CONFIG_DATA[BASE_FIELD]["ensureExist"]["models"]
+]
 
+NOT_EXIST_ADAPTERS = [
+    LoraAdapter(a["id"], a["base-model"], a["source"])
+    for a in TEST_CONFIG_DATA[BASE_FIELD]["ensureNotExist"]["models"]
+]
 RESPONSES = {
     "v1/models": {
         "object": "list",
         "data": [
             {
-                "id": "base1",
+                "id": "already_exists",
                 "object": "model",
                 "created": 1729693000,
                 "owned_by": "vllm",
@@ -35,7 +72,7 @@ RESPONSES = {
                 "max_model_len": 4096,
             },
             {
-                "id": "lora2",
+                "id": "to_remove",
                 "object": "model",
                 "created": 1729693000,
                 "owned_by": "vllm",
@@ -44,26 +81,6 @@ RESPONSES = {
                 "max_model_len": None,
             },
         ],
-    },
-}
-REGISTERED_ADAPTERS = {
-    "base1": {
-        "created": 1729693000,
-        "id": "base1",
-        "max_model_len": 4096,
-        "object": "model",
-        "owned_by": "vllm",
-        "parent": None,
-        "root": "meta-llama/Llama-2-7b-hf",
-    },
-    "lora2": {
-        "created": 1729693000,
-        "id": "lora2",
-        "max_model_len": None,
-        "object": "model",
-        "owned_by": "vllm",
-        "parent": "base1",
-        "root": "yard1/llama-2-7b-sql-lora-test",
     },
 }
 
@@ -79,48 +96,58 @@ class LoraReconcilerTest(unittest.TestCase):
         "builtins.open", new_callable=mock_open, read_data=yaml.dump(TEST_CONFIG_DATA)
     )
     @patch("sidecar.requests.get")
-    @patch.dict(os.environ, {DYNAMIC_LORA_FLAG: "test_api_key"})
     def setUp(self, mock_get, mock_file):
-        with patch.object(LoraReconciler, "check_health", return_value=True):
+        with patch.object(LoraReconciler, "is_server_healthy", return_value=True):
             mock_response = getMockResponse()
             mock_response.json.return_value = RESPONSES["v1/models"]
             mock_get.return_value = mock_response
             self.reconciler = LoraReconciler()
             self.maxDiff = None
-            mock_file.assert_called_once_with(CONFIG_MAP_FILE, "r")
 
     @patch("sidecar.requests.get")
-    def test_get_registered_adapters(self, mock_get):
-        with patch.object(LoraReconciler, "check_health", return_value=True):
-            mock_response = getMockResponse()
-            mock_response.json.return_value = RESPONSES["v1/models"]
-            mock_get.return_value = mock_response
-
-            self.reconciler.get_registered_adapters()
-            self.assertEqual(REGISTERED_ADAPTERS, self.reconciler.registered_adapters)
-
     @patch("sidecar.requests.post")
-    def test_load_adapter(self, mock_post):
-        with patch.object(LoraReconciler, "check_health", return_value=True):
-            mock_post.return_value = getMockResponse()
+    def test_load_adapter(self, mock_post: Mock, mock_get: Mock):
+        mock_response = getMockResponse()
+        mock_response.json.return_value = RESPONSES["v1/models"]
+        mock_get.return_value = mock_response
+        mock_file = mock_open(read_data=yaml.dump(TEST_CONFIG_DATA))
+        with patch("builtins.open", mock_file):
+            with patch.object(LoraReconciler, "is_server_healthy", return_value=True):
+                mock_post.return_value = getMockResponse()
+                # loading a new adapter
+                adapter = EXIST_ADAPTERS[0]
+                url = "http://localhost:8000/v1/load_lora_adapter"
+                payload = {
+                    "lora_name": adapter.id,
+                    "lora_path": adapter.source,
+                    "base_model_name": adapter.base_model,
+                }
+                self.reconciler.load_adapter(adapter)
+                # adapter 2 already exists `id:already_exists`
+                already_exists = EXIST_ADAPTERS[2]
+                self.reconciler.load_adapter(already_exists)
+                mock_post.assert_called_once_with(url, json=payload)
 
-            # loading a new adapter
-            result = self.reconciler.load_adapter(
-                TEST_CONFIG_DATA[BASE_FIELD]["models"][0]
-            )
-            self.assertEqual(result, "")
-
+    @patch("sidecar.requests.get")
     @patch("sidecar.requests.post")
-    def test_unload_adapter(self, mock_post):
-        with patch.object(LoraReconciler, "check_health", return_value=True):
-            mock_post.return_value = getMockResponse()
-
-            # unloading an existing adapter
-            self.reconciler.registered_adapters["lora2"] = {"id": "lora2"}
-            result = self.reconciler.unload_adapter(
-                TEST_CONFIG_DATA[BASE_FIELD]["models"][1]
-            )
-            self.assertEqual(result, None)
+    def test_unload_adapter(self, mock_post: Mock, mock_get: Mock):
+        mock_response = getMockResponse()
+        mock_response.json.return_value = RESPONSES["v1/models"]
+        mock_get.return_value = mock_response
+        mock_file = mock_open(read_data=yaml.dump(TEST_CONFIG_DATA))
+        with patch("builtins.open", mock_file):
+            with patch.object(LoraReconciler, "is_server_healthy", return_value=True):
+                mock_post.return_value = getMockResponse()
+                # unloading an existing adapter `id:to_remove`
+                adapter = NOT_EXIST_ADAPTERS[2]
+                self.reconciler.unload_adapter(adapter)
+                payload = {"lora_name": adapter.id}
+                adapter = NOT_EXIST_ADAPTERS[0]
+                self.reconciler.unload_adapter(adapter)
+                mock_post.assert_called_once_with(
+                    "http://localhost:8000/v1/unload_lora_adapter",
+                    json=payload,
+                )
 
     @patch(
         "builtins.open", new_callable=mock_open, read_data=yaml.dump(TEST_CONFIG_DATA)
@@ -128,31 +155,32 @@ class LoraReconcilerTest(unittest.TestCase):
     @patch("sidecar.requests.get")
     @patch("sidecar.requests.post")
     def test_reconcile(self, mock_post, mock_get, mock_file):
-        with patch.object(LoraReconciler, "check_health", return_value=True):
-            mock_get_response = getMockResponse()
-            mock_get_response.json.return_value = RESPONSES["v1/models"]
-            mock_get.return_value = mock_get_response
-            mock_post.return_value = getMockResponse()
-
-            self.reconciler = LoraReconciler()
-            self.reconciler.reconcile()
-
-            mock_post.assert_any_call(
-                "http://localhost:8000/v1/load_lora_adapter",
-                json={
-                    "lora_name": "lora1",
-                    "lora_path": "/path/to/lora1",
-                    "base_model_name": "base1",
-                },
-            )
-            mock_post.assert_any_call(
-                "http://localhost:8000/v1/unload_lora_adapter", json={"lora_name": "lora2"}
-            )
-            updated_config = self.reconciler.config_map_adapters
-            mock_file.return_value.write.side_effect = lambda data: data
-            self.assertTrue("timestamp" in updated_config["lora1"]["status"])
-            self.assertTrue("status" in updated_config["lora2"])
-
+        with patch("builtins.open", mock_file):
+            with patch.object(LoraReconciler, "is_server_healthy", return_value=True):
+                with patch.object(
+                    LoraReconciler, "load_adapter", return_value=""
+                ) as mock_load:
+                    with patch.object(
+                        LoraReconciler, "unload_adapter", return_value=""
+                    ) as mock_unload:
+                        mock_get_response = getMockResponse()
+                        mock_get_response.json.return_value = RESPONSES["v1/models"]
+                        mock_get.return_value = mock_get_response
+                        mock_post.return_value = getMockResponse()
+                        self.reconciler = LoraReconciler()
+                        self.reconciler.reconcile()
+                        
+                        # 1 adapter is in both exist and not exist list, only 2 are expected to be loaded
+                        mock_load.assert_has_calls(
+                            calls=[call(EXIST_ADAPTERS[0]), call(EXIST_ADAPTERS[2])]
+                        )
+                        assert mock_load.call_count == 2
+                        
+                        # 1 adapter is in both exist and not exist list, only 2 are expected to be unloaded
+                        mock_unload.assert_has_calls(
+                            calls=[call(NOT_EXIST_ADAPTERS[0]), call(NOT_EXIST_ADAPTERS[2])]
+                        )
+                        assert mock_unload.call_count == 2
 
 if __name__ == "__main__":
     unittest.main()
