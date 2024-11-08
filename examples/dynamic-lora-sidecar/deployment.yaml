@@ -63,7 +63,7 @@ spec:
         - mountPath: /dev/shm
           name: dshm
       initContainers:
-        - name: configmap-reader-1
+        - name: lora-adapter-syncer
           tty: true
           stdin: true 
           image: us-docker.pkg.dev/kunjanp-gke-dev-2/lora-sidecar/sidecar:latest
