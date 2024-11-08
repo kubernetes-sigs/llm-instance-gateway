@@ -108,9 +108,9 @@ metadata:
 data:
   configmap.yaml: |
       vLLMLoRAConfig:
-        host: localhost
+        host: modelServerHost
         name: sql-loras-llama
-        port: 8000
+        port: modelServerPort
         ensureExist:
           models:
           - base-model: meta-llama/Llama-2-7b-hf
