@@ -36,6 +36,11 @@ The sidecar uses the vLLM server's API to load or unload adapters based on the c
     ```bash
     kubectl create configmap name-of-your-configmap --from-file=your-file.yaml
 3. **Mount the configmap and configure sidecar in your pod**
-    ![example deployment][deployment]
+    ```yaml
+    volumeMounts: # DO NOT USE subPath
+          - name: config-volume
+            mountPath:  /config
+    ```
+    Do not use subPath, since configmap updates are not reflected in the file
 
 [deployment]: deployment.yaml
