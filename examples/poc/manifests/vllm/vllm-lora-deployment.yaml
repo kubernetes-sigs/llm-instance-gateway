@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
         - name: lora
-          image: "public.ecr.aws/q9t5s3a7/vllm-ci-test-repo:ac04a97a9fbc122bb14ff4eb590314d453cdf57c"
+          image: "vllm/vllm-openai:latest"
           imagePullPolicy: Always
           command: ["python3", "-m", "vllm.entrypoints.openai.api_server"]
           args:
