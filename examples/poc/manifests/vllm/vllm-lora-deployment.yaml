@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
         - name: lora
-          image: "ghcr.io/tomatillo-and-multiverse/vllm:demo"
+          image: "public.ecr.aws/q9t5s3a7/vllm-ci-test-repo:ac04a97a9fbc122bb14ff4eb590314d453cdf57c"
           imagePullPolicy: Always
           command: ["python3", "-m", "vllm.entrypoints.openai.api_server"]
           args:
@@ -40,7 +40,6 @@ spec:
           - "1"
           - "--port"
           - "8000"
-          - "--disable-log-requests"
           - "--enable-lora"
           - "--max-loras"
           - "4"

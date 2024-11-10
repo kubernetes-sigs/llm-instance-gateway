@@ -17,7 +17,9 @@ import (
 )
 
 const (
-	ActiveLoRAAdaptersMetricName = "vllm:info_active_adapters_info"
+	ActiveLoRAAdaptersMetricName        = "vllm:info_active_adapters_info"
+	LoraRequestInfoMetricName           = "vllm:lora_requests_info"
+	LoRAAdapterPendingRequestMetricName = "vllm:active_lora_adapters"
 	// TODO: Replace these with the num_tokens_running/waiting below once we add those to the fork.
 	RunningQueueSizeMetricName = "vllm:num_requests_running"
 	WaitingQueueSizeMetricName = "vllm:num_requests_waiting"
@@ -82,6 +84,9 @@ func promToPodMetrics(metricFamilies map[string]*dto.MetricFamily, existing *bac
 	if err == nil {
 		updated.KVCacheUsagePercent = cachePercent.GetGauge().GetValue()
 	}
+
+	loraMetrics, _, err := getLatestLoraMetric(metricFamilies[LoraRequestInfoMetricName])
+	multierr.Append(errs, err)
 	/* TODO: uncomment once this is available in vllm.
 	kvCap, _, err := getGaugeLatestValue(metricFamilies, KvCacheMaxTokenCapacityMetricName)
 	errs = multierr.Append(errs, err)
@@ -112,10 +117,52 @@ func promToPodMetrics(metricFamilies map[string]*dto.MetricFamily, existing *bac
 		}
 	} else {
 		klog.Warningf("metric family %q not found", ActiveLoRAAdaptersMetricName)
-		errs = multierr.Append(errs, fmt.Errorf("metric family %q not found", ActiveLoRAAdaptersMetricName))
+		multierr.Append(errs, fmt.Errorf("metric family %q not found", ActiveLoRAAdaptersMetricName))
+	}
+
+	if loraMetrics != nil {
+		updated.Metrics.ActiveModels = make(map[string]int)
+		for _, label := range loraMetrics.GetLabel() {
+			if label.GetName() == "running_lora_adapters" {
+				if label.GetValue() != "" {
+					adapterList := strings.Split(label.GetValue(), ",")
+					for _, adapter := range adapterList {
+						updated.Metrics.ActiveModels[adapter] = 0
+					}
+				}
+			}
+		}
+
+	}
+
+	if loraMetrics != nil {
+		updated.CachedModels = make(map[string]int)
+		for _, label := range loraMetrics.GetLabel() {
+			if label.GetName() == "running_lora_adapters" {
+				if label.GetValue() != "" {
+					adapterList := strings.Split(label.GetValue(), ",")
+					for _, adapter := range adapterList {
+						updated.CachedModels[adapter] = 0
+					}
+				}
+			}
+		}
+
 	}
 
 	return updated, errs
+}
+
+func getLatestLoraMetric(loraRequests *dto.MetricFamily) (*dto.Metric, time.Time, error) {
+	var latestTs float64
+	var latest *dto.Metric
+	for _, m := range loraRequests.GetMetric() {
+		if m.GetGauge().GetValue() > latestTs {
+			latestTs = m.GetGauge().GetValue()
+			latest = m
+		}
+	}
+	return latest, time.Unix(0, int64(latestTs*1000)), nil
 }
 
 // getLatestMetric gets the latest metric of a family. This should be used to get the latest Gauge metric.
