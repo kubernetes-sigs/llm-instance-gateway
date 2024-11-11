@@ -3,3 +3,4 @@ jsonschema
 pyyaml
 requests 
 watchfiles
+watchdog

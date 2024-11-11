@@ -1,3 +1,10 @@
+FROM python:3.9-slim-buster AS test
+
+WORKDIR /dynamic-lora-reconciler-test
+COPY requirements.txt .
+COPY sidecar/* . 
+RUN pip install -r requirements.txt
+RUN python -m unittest discover || exit 1  
 
 FROM python:3.10-slim-buster
 
