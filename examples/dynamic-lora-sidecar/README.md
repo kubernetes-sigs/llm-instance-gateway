@@ -45,6 +45,25 @@ The sidecar uses the vLLM server's API to load or unload adapters based on the c
 
 [deployment]: deployment.yaml
 
+## Configuration Fields
+- `vLLMLoRAConfig`[**required**]  base key 
+- `host` [*optional*]Model server's host. defaults to localhost
+- `port` [*optional*] Model server's port. defaults to 8000
+- `name`[*optional*] Name of this config
+- `ensureExist`[*optional*] List of models to ensure existence on specified model server.
+    -  `models`[**required**] [list]
+        - `base-model`[*optional*] Base model for lora adapter
+        - `id`[**required**] unique id of lora adapter
+        - `source`[**required**] path (remote or local) to lora adapter
+- `ensureNotExist` [*optional*]
+    - `models`[**required**] [list]
+        - `id`[**required**] unique id of lora adapter
+        -  `source`[**required**] path (remote or local) to lora adapter
+        - `base-model`[*optional*] Base model for lora adapter
+
+
+
+
 ## Screenshots & Testing
 I tested the sidecar in my cluster with deployment and configmap specified in this repo. Here are the screen grabs of the logs from the sidecar and vllm server. I used the specified configmap, verified that the adapters were loaded by querying `v1/models` and looking at vllm logs. I changed the configmap and validated the same on vllm server. Note: There is slight lag between updates. 
 ![lora-adapter-syncer](screenshots/lora-syncer-sidecar.png)
