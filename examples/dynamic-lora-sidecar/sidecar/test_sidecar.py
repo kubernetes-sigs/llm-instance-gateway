@@ -101,7 +101,7 @@ class LoraReconcilerTest(unittest.TestCase):
             mock_response = getMockResponse()
             mock_response.json.return_value = RESPONSES["v1/models"]
             mock_get.return_value = mock_response
-            self.reconciler = LoraReconciler()
+            self.reconciler = LoraReconciler(False)
             self.maxDiff = None
 
     @patch("sidecar.requests.get")

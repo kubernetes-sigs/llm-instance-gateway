@@ -1,6 +1,7 @@
 import requests
 import yaml
 import time
+from jsonschema import validate
 from watchfiles import awatch
 import ipaddress
 from dataclasses import dataclass
@@ -43,16 +44,30 @@ class LoraReconciler:
     Reconciles adapters registered on vllm server with adapters listed in configmap in current state
     """
 
-    def __init__(self):
+    def __init__(self, config_validation=True):
         self.health_check_timeout = datetime.timedelta(seconds=300)
         self.health_check_interval = datetime.timedelta(seconds=15)
-
+        self.config_validation = config_validation
+        
+    def validate_config(self, c)-> bool:
+        try:
+            with open('validation.yaml', 'r') as f:
+                schema = yaml.safe_load(f)
+                validate(instance=c, schema=schema)
+                return True
+        except Exception as e:
+            logging.error(f"Cannot load config {CONFIG_MAP_FILE} validation error: {e}")
+            return False
+        
     @property
     def config(self):
         """Load configmap into memory"""
         try:
+            
             with open(CONFIG_MAP_FILE, "r") as f:
                 c = yaml.safe_load(f)
+                if self.config_validation and not self.validate_config(c):
+                    return {}
                 if c is None:
                     c = {}
                 c = c.get("vLLMLoRAConfig",{})
