@@ -64,9 +64,5 @@ properties:
                 - source
         required:
           - models
-    required:
-      - host
-      - port
-      - name
 required:
   - vLLMLoRAConfig
