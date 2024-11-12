@@ -1,0 +1,18 @@
+vLLMLoRAConfig:
+  name: sql-loras-llama
+  ensureExist:
+    models:
+    - base-model: meta-llama/Llama-2-7b-hf
+      id: sql-lora-v8
+      source: yard1/llama-2-7b-sql-lora-test
+    - base-model: meta-llama/Llama-2-7b-hf
+      id: sql-lora-v12
+      source: yard1/llama-2-7b-sql-lora-test
+  ensureNotExist:
+    models:
+    - base-model: meta-llama/Llama-2-7b-hf
+      id: sql-lora-v2
+      source: yard1/llama-2-7b-sql-lora-test
+    - base-model: meta-llama/Llama-2-7b-hf
+      id: sql-lora-v7
+      source: yard1/llama-2-7b-sql-lora-test
