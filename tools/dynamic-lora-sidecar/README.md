@@ -43,7 +43,7 @@ The sidecar uses the vLLM server's API to load or unload adapters based on the c
     ```
     Do not use subPath, since configmap updates are not reflected in the file
 
-[deployment]: deployment.yaml it uses [sidecar](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/) which is beta feature enabled by default from 1.29.
+[deployment]: deployment.yaml it uses [sidecar](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/) which is beta feature enabled by default since k8s version 1.29. They need to be enabled in 1.28 and prior to 1.28 sidecar are not officially supported.
 
 ## Configuration Fields
 - `vLLMLoRAConfig`[**required**]  base key 
