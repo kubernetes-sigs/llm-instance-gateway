@@ -26,9 +26,14 @@ spec:
           original_dst_lb_config:
             use_http_header: true
             http_header_name: "target-pod"
-          connect_timeout: 6s
+          connect_timeout: 1000s
           lb_policy: CLUSTER_PROVIDED
           dns_lookup_family: V4_ONLY
+          circuit_breakers:
+            thresholds:
+            - max_connections: 40000
+              max_pending_requests: 40000
+              max_requests: 40000
 
     - type: "type.googleapis.com/envoy.config.route.v3.RouteConfiguration"
       name: default/<GATEWAY-NAME>/llm-gw

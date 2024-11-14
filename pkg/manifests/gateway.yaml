@@ -45,3 +45,6 @@ spec:
       - group: gateway.envoyproxy.io
         kind: Backend
         name: backend-dummy
+    timeouts:
+      request: "24h"
+      backendRequest: "24h"
