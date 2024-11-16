@@ -1,6 +1,6 @@
 # Dynamic LORA Adapter Sidecar for vLLM
 
-This directory contains a configmap containing lora adapters configurations and script for a sidecar container to dynamically manage LORA adapters for a vLLM server running in the same Kubernetes pod by reconciling it with a configmap containing lora adapters. 
+This is a sidecar-based tool to help rolling out new LoRA adapters to a set of running vLLM model servers. The user deploys the sidecar with a vLLM server, and using a ConfigMap, the user can express their intent as to which LoRA adapters they want to have the running vLLM servers to be configure with. The sidecar watches the ConfigMap and sends load/unload requests to the vLLM container to actuate on the user intent. 
 
 ## Overview
 
