@@ -65,7 +65,7 @@ The sidecar uses the vLLM server's API to load or unload adapters based on the c
 
 
 ## Screenshots & Testing
-I tested the sidecar in my cluster with deployment and configmap specified in this repo. Here are the screen grabs of the logs from the sidecar and vllm server. I used the specified configmap, verified that the adapters were loaded by querying `v1/models` and looking at vllm logs. I changed the configmap and validated the same on vllm server. Note: There is slight lag between updates. 
+The sidecar was tested with the Deployment and ConfigMap specified in this repo. Here are screen grabs of the logs from the sidecar and vllm server. One can verify that the adapters were loaded by querying `v1/models` and looking at vllm logs.
 ![lora-adapter-syncer](screenshots/lora-syncer-sidecar.png)
 ![config map change](screenshots/configmap-change.png)
 ![vllm-logs](screenshots/vllm-logs.png)
