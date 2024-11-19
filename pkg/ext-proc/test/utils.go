@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"sync"
 	"time"
 
 	"google.golang.org/grpc"
@@ -12,9 +13,9 @@ import (
 
 	extProcPb "github.com/envoyproxy/go-control-plane/envoy/service/ext_proc/v3"
 
-	"ext-proc/backend"
-	"ext-proc/handlers"
-	"ext-proc/scheduling"
+	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/backend"
+	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/handlers"
+	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/scheduling"
 )
 
 func StartExtProc(port int, refreshPodsInterval, refreshMetricsInterval time.Duration, pods []*backend.PodMetrics) *grpc.Server {
@@ -25,7 +26,7 @@ func StartExtProc(port int, refreshPodsInterval, refreshMetricsInterval time.Dur
 		pms[pod.Pod] = pod
 	}
 	pmc := &backend.FakePodMetricsClient{Res: pms}
-	pp := backend.NewProvider(pmc, &backend.FakePodLister{Pods: ps})
+	pp := backend.NewProvider(pmc, &backend.K8sDatastore{Pods: &sync.Map{}})
 	if err := pp.Init(refreshPodsInterval, refreshMetricsInterval); err != nil {
 		klog.Fatalf("failed to initialize: %v", err)
 	}
@@ -72,9 +73,8 @@ func GenerateRequest(model string) *extProcPb.ProcessingRequest {
 func FakePod(index int) backend.Pod {
 	address := fmt.Sprintf("address-%v", index)
 	pod := backend.Pod{
-		Namespace: "default",
-		Name:      fmt.Sprintf("pod-%v", index),
-		Address:   address,
+		Name:    fmt.Sprintf("pod-%v", index),
+		Address: address,
 	}
 	return pod
 }

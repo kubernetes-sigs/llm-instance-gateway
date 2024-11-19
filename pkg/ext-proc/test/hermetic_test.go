@@ -3,11 +3,12 @@ package test
 
 import (
 	"context"
-	"ext-proc/backend"
 	"fmt"
 	"log"
 	"testing"
 	"time"
+
+	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/backend"
 
 	configPb "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	extProcPb "github.com/envoyproxy/go-control-plane/envoy/service/ext_proc/v3"
