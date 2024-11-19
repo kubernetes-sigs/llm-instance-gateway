@@ -2,6 +2,7 @@ package backend
 
 import (
 	"errors"
+	"sync"
 	"testing"
 	"time"
 
@@ -38,19 +39,16 @@ var (
 
 func TestProvider(t *testing.T) {
 	tests := []struct {
-		name    string
-		pmc     PodMetricsClient
-		pl      PodLister
-		initErr bool
-		want    []*PodMetrics
+		name      string
+		pmc       PodMetricsClient
+		datastore *K8sDatastore
+		initErr   bool
+		want      []*PodMetrics
 	}{
 		{
 			name: "Init success",
-			pl: &FakePodLister{
-				Pods: map[Pod]bool{
-					pod1.Pod: true,
-					pod2.Pod: true,
-				},
+			datastore: &K8sDatastore{
+				Pods: populateMap(pod1.Pod, pod2.Pod),
 			},
 			pmc: &FakePodMetricsClient{
 				Res: map[Pod]*PodMetrics{
@@ -62,12 +60,6 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "Fetch metrics error",
-			pl: &FakePodLister{
-				Pods: map[Pod]bool{
-					pod1.Pod: true,
-					pod2.Pod: true,
-				},
-			},
 			pmc: &FakePodMetricsClient{
 				Err: map[Pod]error{
 					pod2.Pod: errors.New("injected error"),
@@ -75,6 +67,9 @@ func TestProvider(t *testing.T) {
 				Res: map[Pod]*PodMetrics{
 					pod1.Pod: pod1,
 				},
+			},
+			datastore: &K8sDatastore{
+				Pods: populateMap(pod1.Pod, pod2.Pod),
 			},
 			initErr: true,
 			want: []*PodMetrics{
@@ -94,7 +89,7 @@ func TestProvider(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			p := NewProvider(test.pmc, test.pl)
+			p := NewProvider(test.pmc, test.datastore)
 			err := p.Init(time.Millisecond, time.Millisecond)
 			if test.initErr != (err != nil) {
 				t.Fatalf("Unexpected error, got: %v, want: %v", err, test.initErr)
@@ -108,4 +103,12 @@ func TestProvider(t *testing.T) {
 			}
 		})
 	}
+}
+
+func populateMap(pods ...Pod) *sync.Map {
+	newMap := &sync.Map{}
+	for _, pod := range pods {
+		newMap.Store(pod, true)
+	}
+	return newMap
 }
