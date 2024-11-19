@@ -9,7 +9,7 @@ import (
 	extProcPb "github.com/envoyproxy/go-control-plane/envoy/service/ext_proc/v3"
 	klog "k8s.io/klog/v2"
 
-	"ext-proc/scheduling"
+	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/scheduling"
 )
 
 // HandleRequestBody handles body of the request to the backend server, such as parsing the "model"

@@ -3,11 +3,12 @@ package vllm
 
 import (
 	"context"
-	"ext-proc/backend"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
+
+	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/backend"
 
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"

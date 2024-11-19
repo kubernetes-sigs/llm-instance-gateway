@@ -23,16 +23,16 @@ import (
 	klog "k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	"ext-proc/backend"
-	"ext-proc/backend/vllm"
-	"ext-proc/handlers"
-	"ext-proc/scheduling"
+	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/backend"
+	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/backend/vllm"
+	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/handlers"
+	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/scheduling"
 )
 
 var (
 	port                   = flag.Int("port", 9002, "gRPC port")
 	targetPodHeader        = flag.String("targetPodHeader", "target-pod", "the header key for the target pod address to instruct Envoy to send the request to. This must match Envoy configuration.")
-	serverPoolName         = flag.String("serverPoolName", "", "Name of the serverPool this ext-proc is associated with.")
+	serverPoolName         = flag.String("serverPoolName", "", "Name of the serverPool this Endpoint Picker is associated with.")
 	serviceName            = flag.String("serviceName", "", "Name of the service that will be used to read the endpointslices from")
 	namespace              = flag.String("namespace", "default", "The Namespace that the server pool should exist in.")
 	zone                   = flag.String("zone", "", "The zone that this instance is created in. Will be passed to the corresponding endpointSlice. ")
