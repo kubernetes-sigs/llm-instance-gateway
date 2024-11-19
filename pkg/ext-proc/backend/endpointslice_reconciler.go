@@ -2,6 +2,7 @@ package backend
 
 import (
 	"context"
+	"fmt"
 
 	discoveryv1 "k8s.io/api/discovery/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -49,7 +50,7 @@ func (c *EndpointSliceReconciler) updateDatastore(slice *discoveryv1.EndpointSli
 	for _, endpoint := range slice.Endpoints {
 		klog.V(4).Infof("Zone: %v \n endpoint: %+v \n", c.Zone, endpoint)
 		if c.validPod(endpoint) {
-			pod := Pod{Name: *&endpoint.TargetRef.Name, Address: endpoint.Addresses[0] + ":" + c.Datastore.Port}
+			pod := Pod{Name: *&endpoint.TargetRef.Name, Address: endpoint.Addresses[0] + ":" + fmt.Sprint(c.Datastore.LLMServerPool.Spec.TargetPort)}
 			podMap[pod] = true
 			c.Datastore.Pods.Store(pod, true)
 		}

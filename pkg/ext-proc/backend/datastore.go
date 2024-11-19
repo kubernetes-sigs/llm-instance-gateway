@@ -11,7 +11,6 @@ import (
 type K8sDatastore struct {
 	LLMServerPool *v1alpha1.LLMServerPool
 	Pods          *sync.Map
-	Port          string
 }
 
 func (ds *K8sDatastore) GetPodIPs() []string {

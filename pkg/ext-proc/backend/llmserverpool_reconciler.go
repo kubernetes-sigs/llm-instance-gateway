@@ -26,7 +26,6 @@ type LLMServerPoolReconciler struct {
 	ServerPoolName string
 	Namespace      string
 	Datastore      *K8sDatastore
-	Port           int
 	Zone           string
 }
 

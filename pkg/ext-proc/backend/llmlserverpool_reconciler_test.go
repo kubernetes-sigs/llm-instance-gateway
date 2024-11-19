@@ -20,9 +20,7 @@ func TestUpdateDatastore_LLMServerPoolReconciler(t *testing.T) {
 			datastore: K8sDatastore{
 				LLMServerPool: &v1alpha1.LLMServerPool{
 					Spec: v1alpha1.LLMServerPoolSpec{
-						ModelServerSelector: metav1.LabelSelector{
-							MatchLabels: map[string]string{"app": "vllm"},
-						},
+						ModelServerSelector: map[string]string{"app": "vllm"},
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:            "test-pool",
@@ -32,9 +30,7 @@ func TestUpdateDatastore_LLMServerPoolReconciler(t *testing.T) {
 			},
 			incomingServerPool: &v1alpha1.LLMServerPool{
 				Spec: v1alpha1.LLMServerPoolSpec{
-					ModelServerSelector: metav1.LabelSelector{
-						MatchLabels: map[string]string{"app": "not-vllm"},
-					},
+					ModelServerSelector: map[string]string{"app": "not-vllm"},
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:            "test-pool",
@@ -44,9 +40,7 @@ func TestUpdateDatastore_LLMServerPoolReconciler(t *testing.T) {
 			want: K8sDatastore{
 				LLMServerPool: &v1alpha1.LLMServerPool{
 					Spec: v1alpha1.LLMServerPoolSpec{
-						ModelServerSelector: metav1.LabelSelector{
-							MatchLabels: map[string]string{"app": "not-vllm"},
-						},
+						ModelServerSelector: map[string]string{"app": "not-vllm"},
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:            "test-pool",
@@ -60,9 +54,7 @@ func TestUpdateDatastore_LLMServerPoolReconciler(t *testing.T) {
 			datastore: K8sDatastore{
 				LLMServerPool: &v1alpha1.LLMServerPool{
 					Spec: v1alpha1.LLMServerPoolSpec{
-						ModelServerSelector: metav1.LabelSelector{
-							MatchLabels: map[string]string{"app": "vllm"},
-						},
+						ModelServerSelector: map[string]string{"app": "vllm"},
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:            "test-pool",
@@ -72,9 +64,7 @@ func TestUpdateDatastore_LLMServerPoolReconciler(t *testing.T) {
 			},
 			incomingServerPool: &v1alpha1.LLMServerPool{
 				Spec: v1alpha1.LLMServerPoolSpec{
-					ModelServerSelector: metav1.LabelSelector{
-						MatchLabels: map[string]string{"technically": "this-should-never-happen"},
-					},
+					ModelServerSelector: map[string]string{"technically": "this-should-never-happen"},
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:            "test-pool",
@@ -84,9 +74,7 @@ func TestUpdateDatastore_LLMServerPoolReconciler(t *testing.T) {
 			want: K8sDatastore{
 				LLMServerPool: &v1alpha1.LLMServerPool{
 					Spec: v1alpha1.LLMServerPoolSpec{
-						ModelServerSelector: metav1.LabelSelector{
-							MatchLabels: map[string]string{"app": "vllm"},
-						},
+						ModelServerSelector: map[string]string{"app": "vllm"},
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:            "test-pool",

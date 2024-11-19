@@ -25,11 +25,19 @@ import (
 // LLMServerPoolSpec defines the desired state of LLMServerPool
 type LLMServerPoolSpec struct {
 
-	// ModelServerSelector uses label selection to watch model server pods
+	// ModelServerSelector uses a map of label to watch model server pods
 	// that should be included in the LLMServerPool. ModelServers should not
 	// be with any other Service or LLMServerPool, that behavior is not supported
 	// and will result in sub-optimal utilization.
-	ModelServerSelector metav1.LabelSelector `json:"modelServerSelector,omitempty"`
+	// Due to this selector being translated to a service a simple map is used instead
+	// of: https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#LabelSelector
+	// To avoid footshoot errors when the https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#LabelSelectorAsMap would be used.
+	ModelServerSelector map[string]string `json:"modelServerSelector,omitempty"`
+
+	// TargetPort is the port number that the model servers within the pool expect
+	// to recieve traffic from.
+	// This maps to the TargetPort in: https://pkg.go.dev/k8s.io/api/core/v1#ServicePort
+	TargetPort int32
 }
 
 // LLMServerPoolStatus defines the observed state of LLMServerPool
