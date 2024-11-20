@@ -21,6 +21,7 @@ package v1alpha1
 // with apply.
 type LLMServerPoolSpecApplyConfiguration struct {
 	ModelServerSelector map[string]string `json:"modelServerSelector,omitempty"`
+	TargetPort          *int32            `json:"targetPort,omitempty"`
 }
 
 // LLMServerPoolSpecApplyConfiguration constructs a declarative configuration of the LLMServerPoolSpec type for use with
@@ -40,5 +41,13 @@ func (b *LLMServerPoolSpecApplyConfiguration) WithModelServerSelector(entries ma
 	for k, v := range entries {
 		b.ModelServerSelector[k] = v
 	}
+	return b
+}
+
+// WithTargetPort sets the TargetPort field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the TargetPort field is set to the value of the last call.
+func (b *LLMServerPoolSpecApplyConfiguration) WithTargetPort(value int32) *LLMServerPoolSpecApplyConfiguration {
+	b.TargetPort = &value
 	return b
 }

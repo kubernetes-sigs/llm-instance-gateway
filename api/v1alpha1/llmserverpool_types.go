@@ -37,7 +37,7 @@ type LLMServerPoolSpec struct {
 	// TargetPort is the port number that the model servers within the pool expect
 	// to recieve traffic from.
 	// This maps to the TargetPort in: https://pkg.go.dev/k8s.io/api/core/v1#ServicePort
-	TargetPort int32
+	TargetPort int32 `json:"targetPort,omitempty"`
 }
 
 // LLMServerPoolStatus defines the observed state of LLMServerPool
