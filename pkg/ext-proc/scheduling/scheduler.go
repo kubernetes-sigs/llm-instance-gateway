@@ -16,20 +16,21 @@ const (
 	// TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/16) Make this configurable.
 	kvCacheThreshold = 0.8
 	// TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/16) Make this configurable.
-	queueThreshold = 5
+	queueThresholdCritical = 5
+	queueingThresholdLoRA  = 1000
 )
 
 var (
 	defaultFilter = &filter{
 		name:          "critical request",
 		filter:        toFilterFunc(criticalRequestPredicate),
-		nextOnSuccess: lowLatencyFilter,
+		nextOnSuccess: lowLatencyFilterModified,
 		nextOnFailure: sheddableRequestFilter,
 	}
 
 	// lowLatencyFilter tries to minimize the latency. The heuristic is to pick a server with lower
 	// cost to load an adapter and has low KV cache, which typically yields lower latency.
-	lowLatencyFilter = &filter{
+	lowLatencyFilterLoRA = &filter{
 		name:   "least queuing",
 		filter: leastQueuingFilterFunc,
 		nextOnSuccessOrFailure: &filter{
@@ -42,13 +43,40 @@ var (
 		},
 	}
 
+	// lowLatencyFilterNoLoRA is the same as lowLatencyFilter but without the LoRA cost filter.
+	lowLatencyFilterNoLoRA = &filter{
+		name:   "least queuing",
+		filter: leastQueuingFilterFunc,
+		nextOnSuccessOrFailure: &filter{
+			name:   "least KV cache percent",
+			filter: leastKVCacheFilterFunc,
+		},
+	}
+
+	// lowLatencyFilterModified defaults to lowLatencyFilter above a certain queueing threshold. LoRA affinity takes precedence below that queueing threshold.
+	lowLatencyFilterModified = &filter{
+		name:   "low queueing filter",
+		filter: lowQueuingFilterFunc,
+		nextOnSuccess: &filter{
+			name:          "affinity LoRA",
+			filter:        toFilterFunc(loRAAffinityPredicate),
+			nextOnSuccess: lowLatencyFilterNoLoRA,
+			nextOnFailure: &filter{
+				name:                   "min cost LoRA",
+				filter:                 toFilterFunc(minLoRAPredicate),
+				nextOnSuccessOrFailure: lowLatencyFilterNoLoRA,
+			},
+		},
+		nextOnFailure: lowLatencyFilterLoRA,
+	}
+
 	sheddableRequestFilter = &filter{
 		// When there is at least one model server that's not queuing requests, and still has KV
 		// cache below a certain threshold, we consider this model server has capacity to handle
 		// a sheddable request without impacting critical requests.
 		name:          "has capacity for sheddable requests",
-		filter:        toFilterFunc(noQueueAndLessThanKVCacheThresholdPredicate(queueThreshold, kvCacheThreshold)),
-		nextOnSuccess: lowLatencyFilter,
+		filter:        toFilterFunc(noQueueAndLessThanKVCacheThresholdPredicate(queueThresholdCritical, kvCacheThreshold)),
+		nextOnSuccess: lowLatencyFilterLoRA,
 		// If all pods are queuing or running above the KVCache threshold, we drop the sheddable
 		// request to make room for critical requests.
 		nextOnFailure: &filter{
@@ -62,6 +90,7 @@ var (
 )
 
 func NewScheduler(pmp PodMetricsProvider) *Scheduler {
+
 	return &Scheduler{
 		podMetricsProvider: pmp,
 		filter:             defaultFilter,
