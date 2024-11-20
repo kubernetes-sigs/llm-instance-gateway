@@ -36,7 +36,6 @@ var (
 	serviceName            = flag.String("serviceName", "", "Name of the service that will be used to read the endpointslices from")
 	namespace              = flag.String("namespace", "default", "The Namespace that the server pool should exist in.")
 	zone                   = flag.String("zone", "", "The zone that this instance is created in. Will be passed to the corresponding endpointSlice. ")
-	desiredPort            = flag.String("desiredPort", "8000", "The port that the model server exposes")
 	refreshPodsInterval    = flag.Duration("refreshPodsInterval", 10*time.Second, "interval to refresh pods")
 	refreshMetricsInterval = flag.Duration("refreshMetricsInterval", 50*time.Millisecond, "interval to refresh metrics")
 	scheme                 = runtime.NewScheme()
@@ -71,7 +70,7 @@ func main() {
 		klog.Fatalf("failed to listen: %v", err)
 	}
 
-	datastore := &backend.K8sDatastore{LLMServerPool: &v1alpha1.LLMServerPool{}, Pods: &sync.Map{}, Port: *desiredPort}
+	datastore := &backend.K8sDatastore{LLMServerPool: &v1alpha1.LLMServerPool{}, Pods: &sync.Map{}}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme: scheme,

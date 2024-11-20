@@ -4,6 +4,7 @@ import (
 	"sync"
 	"testing"
 
+	"inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 )
@@ -25,7 +26,11 @@ func TestUpdateDatastore_EndpointSliceReconciler(t *testing.T) {
 			name: "Add new pod",
 			datastore: K8sDatastore{
 				Pods: populateMap(basePod1, basePod2),
-				Port: "8000",
+				LLMServerPool: &v1alpha1.LLMServerPool{
+					Spec: v1alpha1.LLMServerPoolSpec{
+						TargetPort: int32(8000),
+					},
+				},
 			},
 			incomingSlice: &discoveryv1.EndpointSlice{
 				Endpoints: []discoveryv1.Endpoint{
@@ -63,14 +68,17 @@ func TestUpdateDatastore_EndpointSliceReconciler(t *testing.T) {
 			},
 			want: K8sDatastore{
 				Pods: populateMap(basePod1, basePod2, basePod3),
-				Port: "8000",
 			},
 		},
 		{
 			name: "New pod, but its not ready yet. Do not add.",
 			datastore: K8sDatastore{
 				Pods: populateMap(basePod1, basePod2),
-				Port: "8000",
+				LLMServerPool: &v1alpha1.LLMServerPool{
+					Spec: v1alpha1.LLMServerPoolSpec{
+						TargetPort: int32(8000),
+					},
+				},
 			},
 			incomingSlice: &discoveryv1.EndpointSlice{
 				Endpoints: []discoveryv1.Endpoint{
@@ -108,14 +116,17 @@ func TestUpdateDatastore_EndpointSliceReconciler(t *testing.T) {
 			},
 			want: K8sDatastore{
 				Pods: populateMap(basePod1, basePod2),
-				Port: "8000",
 			},
 		},
 		{
 			name: "Existing pod not ready, new pod added, and is ready",
 			datastore: K8sDatastore{
 				Pods: populateMap(basePod1, basePod2),
-				Port: "8000",
+				LLMServerPool: &v1alpha1.LLMServerPool{
+					Spec: v1alpha1.LLMServerPoolSpec{
+						TargetPort: int32(8000),
+					},
+				},
 			},
 			incomingSlice: &discoveryv1.EndpointSlice{
 				Endpoints: []discoveryv1.Endpoint{
@@ -153,7 +164,6 @@ func TestUpdateDatastore_EndpointSliceReconciler(t *testing.T) {
 			},
 			want: K8sDatastore{
 				Pods: populateMap(basePod3, basePod2),
-				Port: "8000",
 			},
 		},
 	}
