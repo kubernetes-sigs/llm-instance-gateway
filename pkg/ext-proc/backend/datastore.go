@@ -10,6 +10,7 @@ import (
 // The datastore is a local cache of relevant data for the given LLMServerPool (currently all pulled from k8s-api)
 type K8sDatastore struct {
 	LLMServerPool *v1alpha1.LLMServerPool
+	LLMServices   *sync.Map
 	Pods          *sync.Map
 }
 

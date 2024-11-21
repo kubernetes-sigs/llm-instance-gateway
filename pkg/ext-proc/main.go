@@ -70,7 +70,11 @@ func main() {
 		klog.Fatalf("failed to listen: %v", err)
 	}
 
-	datastore := &backend.K8sDatastore{LLMServerPool: &v1alpha1.LLMServerPool{}, Pods: &sync.Map{}}
+	datastore := &backend.K8sDatastore{
+		LLMServerPool: &v1alpha1.LLMServerPool{},
+		LLMServices:   &sync.Map{},
+		Pods:          &sync.Map{},
+	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme: scheme,
@@ -89,6 +93,17 @@ func main() {
 		Record:         mgr.GetEventRecorderFor("llmserverpool"),
 	}).SetupWithManager(mgr); err != nil {
 		klog.Error(err, "Error setting up LLMServerPoolReconciler")
+	}
+
+	if err := (&backend.LLMServiceReconciler{
+		Datastore:      datastore,
+		Scheme:         mgr.GetScheme(),
+		Client:         mgr.GetClient(),
+		ServerPoolName: *serverPoolName,
+		Namespace:      *namespace,
+		Record:         mgr.GetEventRecorderFor("llmservice"),
+	}).SetupWithManager(mgr); err != nil {
+		klog.Error(err, "Error setting up LLMServiceReconciler")
 	}
 
 	if err := (&backend.EndpointSliceReconciler{
@@ -123,7 +138,7 @@ func main() {
 	klog.Infof("Starting gRPC server on port :%v", *port)
 
 	// shutdown
-	var gracefulStop = make(chan os.Signal)
+	var gracefulStop = make(chan os.Signal, 1)
 	signal.Notify(gracefulStop, syscall.SIGTERM)
 	signal.Notify(gracefulStop, syscall.SIGINT)
 	go func() {

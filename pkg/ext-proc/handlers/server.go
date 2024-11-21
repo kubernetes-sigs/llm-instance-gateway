@@ -98,14 +98,14 @@ func (s *Server) Process(srv extProcPb.ExternalProcessor_ProcessServer) error {
 					},
 				}
 			default:
-				return status.Errorf(status.Code(err), "failed to handle request: %w", err)
+				return status.Errorf(status.Code(err), "failed to handle request: %v", err)
 			}
 		}
 
 		klog.V(3).Infof("response: %v", resp)
 		if err := srv.Send(resp); err != nil {
 			klog.Errorf("send error %v", err)
-			return status.Errorf(codes.Unknown, "failed to send response back to Envoy: %w", err)
+			return status.Errorf(codes.Unknown, "failed to send response back to Envoy: %v", err)
 		}
 	}
 }
