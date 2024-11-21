@@ -59,11 +59,10 @@ func (p *Provider) GetPodMetrics(pod Pod) (*PodMetrics, bool) {
 
 func (p *Provider) Init(refreshPodsInterval, refreshMetricsInterval time.Duration) error {
 	if err := p.refreshPodsOnce(); err != nil {
-		return fmt.Errorf("failed to init pods: %v", err)
+		klog.Errorf("Failed to init pods: %v", err)
 	}
-	err := p.refreshMetricsOnce()
-	if err != nil {
-		return fmt.Errorf("failed to init metrics: %v", err)
+	if err := p.refreshMetricsOnce(); err != nil {
+		klog.Errorf("Failed to init metrics: %v", err)
 	}
 
 	klog.Infof("Initialized pods and metrics: %+v", p.AllPodMetrics())

@@ -71,11 +71,10 @@ func TestProvider(t *testing.T) {
 			datastore: &K8sDatastore{
 				Pods: populateMap(pod1.Pod, pod2.Pod),
 			},
-			initErr: true,
 			want: []*PodMetrics{
 				pod1,
 				// Failed to fetch pod2 metrics so it remains the default values.
-				&PodMetrics{
+				{
 					Pod: Pod{Name: "pod2"},
 					Metrics: Metrics{
 						WaitingQueueSize:    0,
