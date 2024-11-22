@@ -82,7 +82,8 @@ func TestProvider(t *testing.T) {
 						MaxActiveModels:     0,
 						ActiveModels:        map[string]int{},
 					},
-				}},
+				},
+			},
 		},
 	}
 
