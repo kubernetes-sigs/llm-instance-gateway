@@ -78,7 +78,14 @@ func TestHandleRequestBody(t *testing.T) {
 						RawValue: []byte("address-1"),
 					},
 				},
+				{
+					Header: &configPb.HeaderValue{
+						Key:      "Content-Length",
+						RawValue: []byte("70"),
+					},
+				},
 			},
+			wantBody: []byte("{\"max_tokens\":100,\"model\":\"my-model\",\"prompt\":\"hello\",\"temperature\":0}"),
 		},
 	}
 
@@ -93,12 +100,11 @@ func TestHandleRequestBody(t *testing.T) {
 							HeaderMutation: &extProcPb.HeaderMutation{
 								SetHeaders: test.wantHeaders,
 							},
-							// TODO: Also check body once it's added.
-							// BodyMutation: &extProcPb.BodyMutation{
-							// 	Mutation: &extProcPb.BodyMutation_Body{
-							// 		Body: test.wantBody,
-							// 	},
-							// },
+							BodyMutation: &extProcPb.BodyMutation{
+								Mutation: &extProcPb.BodyMutation_Body{
+									Body: test.wantBody,
+								},
+							},
 						},
 					},
 				},
