@@ -14,10 +14,10 @@ require (
 	go.uber.org/multierr v1.11.0
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
-	k8s.io/api v0.31.0
-	k8s.io/apimachinery v0.31.1
-	k8s.io/client-go v0.31.0
-	k8s.io/code-generator v0.31.1
+	k8s.io/api v0.31.3
+	k8s.io/apimachinery v0.31.3
+	k8s.io/client-go v0.31.3
+	k8s.io/code-generator v0.31.3
 	k8s.io/klog/v2 v2.130.1
 	sigs.k8s.io/controller-runtime v0.19.0
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1
