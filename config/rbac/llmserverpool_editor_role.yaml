@@ -8,7 +8,7 @@ metadata:
   name: llmserverpool-editor-role
 rules:
 - apiGroups:
-  - gateway.inference.networking.x-k8s.io
+  - inference.networking.x-k8s.io
   resources:
   - llmserverpools
   verbs:
@@ -20,7 +20,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - gateway.inference.networking.x-k8s.io
+  - inference.networking.x-k8s.io
   resources:
   - llmserverpools/status
   verbs:
