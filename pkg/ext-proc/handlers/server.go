@@ -13,11 +13,12 @@ import (
 	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/scheduling"
 )
 
-func NewServer(pp PodProvider, scheduler Scheduler, targetPodHeader string) *Server {
+func NewServer(pp PodProvider, scheduler Scheduler, targetPodHeader string, datastore *backend.K8sDatastore) *Server {
 	return &Server{
 		scheduler:       scheduler,
 		podProvider:     pp,
 		targetPodHeader: targetPodHeader,
+		datastore:       datastore,
 	}
 }
 
@@ -29,6 +30,7 @@ type Server struct {
 	// The key of the header to specify the target pod address. This value needs to match Envoy
 	// configuration.
 	targetPodHeader string
+	datastore       *backend.K8sDatastore
 }
 
 type Scheduler interface {
