@@ -9,6 +9,8 @@ import (
 	extProcPb "github.com/envoyproxy/go-control-plane/envoy/service/ext_proc/v3"
 	klog "k8s.io/klog/v2"
 
+	"inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
+	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/backend"
 	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/scheduling"
 )
 
@@ -33,25 +35,38 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 		return nil, fmt.Errorf("model not found in request")
 	}
 	klog.V(3).Infof("Model requested: %v", model)
+	modelName := model
+
+	// NOTE: The nil checking for the modelObject means that we DO allow passthrough currently.
+	// This might be a security risk in the future where adapters not registered in the LLMService
+	// are able to be requested by using their distinct name.
+	modelObj := s.FetchModelData(model)
+	if modelObj != nil && len(modelObj.TargetModels) > 0 {
+		modelName = backend.RandomWeightedDraw(modelObj)
+		if modelName == "" {
+			return nil, fmt.Errorf("Error getting target model name for model %v", modelObj.Name)
+		}
+	}
+	klog.Infof("Model is null %v", modelObj == nil)
 	llmReq := &scheduling.LLMRequest{
-		Model: model,
-		// For now use the model as the target model.
-		// TODO: Once the API is approved, read the "LLMUseCase" configuration and apply traffic split.
-		TargetModels:        map[string]int{model: 100},
-		ResolvedTargetModel: model,
-		// TODO: Read from LLMService CRD.
-		Critical: true,
+		Model:               model,
+		ResolvedTargetModel: modelName,
+		Critical:            backend.ModelHasObjective(modelObj),
 	}
 	klog.V(3).Infof("LLM Request: %+v", llmReq)
 
+	requestBody := v.RequestBody.Body
+	var err error
 	// Update target models in the body.
-	rb["model"] = llmReq.ResolvedTargetModel
-	updatedBody, err := json.Marshal(rb)
-	if err != nil {
-		klog.Errorf("Error marshaling request body: %v", err)
-		return nil, fmt.Errorf("error marshaling request body: %v", err)
+	if llmReq.Model != llmReq.ResolvedTargetModel {
+		rb["model"] = llmReq.ResolvedTargetModel
+		requestBody, err = json.Marshal(rb)
+		if err != nil {
+			klog.Errorf("Error marshaling request body: %v", err)
+			return nil, fmt.Errorf("error marshaling request body: %v", err)
+		}
+		klog.V(3).Infof("Updated body: %v", string(requestBody))
 	}
-	klog.V(3).Infof("Updated body: %v", string(updatedBody))
 
 	targetPod, err := s.scheduler.Schedule(llmReq)
 	if err != nil {
@@ -75,7 +90,7 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 		{
 			Header: &configPb.HeaderValue{
 				Key:      "Content-Length",
-				RawValue: []byte(strconv.Itoa(len(updatedBody))),
+				RawValue: []byte(strconv.Itoa(len(requestBody))),
 			},
 		},
 	}
@@ -93,7 +108,7 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 					},
 					BodyMutation: &extProcPb.BodyMutation{
 						Mutation: &extProcPb.BodyMutation_Body{
-							Body: updatedBody,
+							Body: requestBody,
 						},
 					},
 				},
@@ -101,6 +116,22 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 		},
 	}
 	return resp, nil
+}
+
+func (s *Server) FetchModelData(modelName string) (returnModel *v1alpha1.Model) {
+	s.datastore.LLMServices.Range(func(k, v any) bool {
+		service := v.(*v1alpha1.LLMService)
+		klog.Infof("Service name: %v", service.Name)
+		for _, model := range service.Spec.Models {
+			if model.Name == modelName {
+				returnModel = &model
+				// We want to stop iterating, return false.
+				return false
+			}
+		}
+		return true
+	})
+	return
 }
 
 func HandleRequestHeaders(reqCtx *RequestContext, req *extProcPb.ProcessingRequest) *extProcPb.ProcessingResponse {

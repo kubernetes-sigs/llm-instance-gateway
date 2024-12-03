@@ -132,7 +132,7 @@ func main() {
 	if err := pp.Init(*refreshPodsInterval, *refreshMetricsInterval); err != nil {
 		klog.Fatalf("failed to initialize: %v", err)
 	}
-	extProcPb.RegisterExternalProcessorServer(s, handlers.NewServer(pp, scheduling.NewScheduler(pp), *targetPodHeader))
+	extProcPb.RegisterExternalProcessorServer(s, handlers.NewServer(pp, scheduling.NewScheduler(pp), *targetPodHeader, datastore))
 	healthPb.RegisterHealthServer(s, &healthServer{})
 
 	klog.Infof("Starting gRPC server on port :%v", *port)
