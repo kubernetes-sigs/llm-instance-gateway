@@ -20,7 +20,7 @@ set -o pipefail
 
 SCRIPT_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
 echo "$SCRIPT_ROOT script"
-CODEGEN_PKG=${CODEGEN_PKG:-$(cd "${SCRIPT_ROOT}"; ls -d -1 ./vendor/k8s.io/code-generator 2>/dev/null || echo ../code-generator)}
+CODEGEN_PKG=${2:-bin}
 echo $CODEGEN_PKG
 source "${CODEGEN_PKG}/kube_codegen.sh"
 THIS_PKG="inference.networking.x-k8s.io/llm-instance-gateway"
