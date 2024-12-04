@@ -9,7 +9,6 @@ import (
 	extProcPb "github.com/envoyproxy/go-control-plane/envoy/service/ext_proc/v3"
 	klog "k8s.io/klog/v2"
 
-	"inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
 	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/backend"
 	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/scheduling"
 )
@@ -40,14 +39,14 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 	// NOTE: The nil checking for the modelObject means that we DO allow passthrough currently.
 	// This might be a security risk in the future where adapters not registered in the LLMService
 	// are able to be requested by using their distinct name.
-	modelObj := s.FetchModelData(model)
+	modelObj := s.datastore.FetchModelData(model)
 	if modelObj != nil && len(modelObj.TargetModels) > 0 {
-		modelName = backend.RandomWeightedDraw(modelObj)
+		modelName = backend.RandomWeightedDraw(modelObj, 0)
 		if modelName == "" {
-			return nil, fmt.Errorf("Error getting target model name for model %v", modelObj.Name)
+			return nil, fmt.Errorf("error getting target model name for model %v", modelObj.Name)
 		}
 	}
-	klog.Infof("Model is null %v", modelObj == nil)
+	klog.V(3).Infof("Model is null %v", modelObj == nil)
 	llmReq := &scheduling.LLMRequest{
 		Model:               model,
 		ResolvedTargetModel: modelName,
@@ -116,22 +115,6 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 		},
 	}
 	return resp, nil
-}
-
-func (s *Server) FetchModelData(modelName string) (returnModel *v1alpha1.Model) {
-	s.datastore.LLMServices.Range(func(k, v any) bool {
-		service := v.(*v1alpha1.LLMService)
-		klog.Infof("Service name: %v", service.Name)
-		for _, model := range service.Spec.Models {
-			if model.Name == modelName {
-				returnModel = &model
-				// We want to stop iterating, return false.
-				return false
-			}
-		}
-		return true
-	})
-	return
 }
 
 func HandleRequestHeaders(reqCtx *RequestContext, req *extProcPb.ProcessingRequest) *extProcPb.ProcessingResponse {

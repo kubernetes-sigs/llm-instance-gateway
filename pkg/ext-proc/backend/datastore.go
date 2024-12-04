@@ -25,6 +25,22 @@ func (ds *K8sDatastore) GetPodIPs() []string {
 	return ips
 }
 
+func (s *K8sDatastore) FetchModelData(modelName string) (returnModel *v1alpha1.Model) {
+	s.LLMServices.Range(func(k, v any) bool {
+		service := v.(*v1alpha1.LLMService)
+		klog.V(3).Infof("Service name: %v", service.Name)
+		for _, model := range service.Spec.Models {
+			if model.Name == modelName {
+				returnModel = &model
+				// We want to stop iterating, return false.
+				return false
+			}
+		}
+		return true
+	})
+	return
+}
+
 func RandomWeightedDraw(model *v1alpha1.Model, seed int64) string {
 	weights := 0
 
@@ -36,7 +52,7 @@ func RandomWeightedDraw(model *v1alpha1.Model, seed int64) string {
 	for _, model := range model.TargetModels {
 		weights += model.Weight
 	}
-	klog.Infof("Weights for Model(%v) total to: %v", model.Name, weights)
+	klog.V(3).Infof("Weights for Model(%v) total to: %v", model.Name, weights)
 	randomVal := r.Intn(weights)
 	for _, model := range model.TargetModels {
 		if randomVal < model.Weight {
