@@ -18,10 +18,10 @@ limitations under the License.
 package v1alpha1
 
 import (
-	apiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	listers "k8s.io/client-go/listers"
-	cache "k8s.io/client-go/tools/cache"
+	v1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
+	"k8s.io/client-go/tools/cache"
 )
 
 // LLMServiceLister helps list LLMServices.
@@ -29,7 +29,7 @@ import (
 type LLMServiceLister interface {
 	// List lists all LLMServices in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*apiv1alpha1.LLMService, err error)
+	List(selector labels.Selector) (ret []*v1alpha1.LLMService, err error)
 	// LLMServices returns an object that can list and get LLMServices.
 	LLMServices(namespace string) LLMServiceNamespaceLister
 	LLMServiceListerExpansion
@@ -37,17 +37,17 @@ type LLMServiceLister interface {
 
 // lLMServiceLister implements the LLMServiceLister interface.
 type lLMServiceLister struct {
-	listers.ResourceIndexer[*apiv1alpha1.LLMService]
+	listers.ResourceIndexer[*v1alpha1.LLMService]
 }
 
 // NewLLMServiceLister returns a new LLMServiceLister.
 func NewLLMServiceLister(indexer cache.Indexer) LLMServiceLister {
-	return &lLMServiceLister{listers.New[*apiv1alpha1.LLMService](indexer, apiv1alpha1.Resource("llmservice"))}
+	return &lLMServiceLister{listers.New[*v1alpha1.LLMService](indexer, v1alpha1.Resource("llmservice"))}
 }
 
 // LLMServices returns an object that can list and get LLMServices.
 func (s *lLMServiceLister) LLMServices(namespace string) LLMServiceNamespaceLister {
-	return lLMServiceNamespaceLister{listers.NewNamespaced[*apiv1alpha1.LLMService](s.ResourceIndexer, namespace)}
+	return lLMServiceNamespaceLister{listers.NewNamespaced[*v1alpha1.LLMService](s.ResourceIndexer, namespace)}
 }
 
 // LLMServiceNamespaceLister helps list and get LLMServices.
@@ -55,15 +55,15 @@ func (s *lLMServiceLister) LLMServices(namespace string) LLMServiceNamespaceList
 type LLMServiceNamespaceLister interface {
 	// List lists all LLMServices in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*apiv1alpha1.LLMService, err error)
+	List(selector labels.Selector) (ret []*v1alpha1.LLMService, err error)
 	// Get retrieves the LLMService from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*apiv1alpha1.LLMService, error)
+	Get(name string) (*v1alpha1.LLMService, error)
 	LLMServiceNamespaceListerExpansion
 }
 
 // lLMServiceNamespaceLister implements the LLMServiceNamespaceLister
 // interface.
 type lLMServiceNamespaceLister struct {
-	listers.ResourceIndexer[*apiv1alpha1.LLMService]
+	listers.ResourceIndexer[*v1alpha1.LLMService]
 }
