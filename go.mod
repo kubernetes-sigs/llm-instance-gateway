@@ -1,7 +1,8 @@
 module inference.networking.x-k8s.io/llm-instance-gateway
 
-go 1.22.0
-toolchain go1.22.9
+go 1.22.7
+
+toolchain go1.23.2
 
 require (
 	github.com/bojand/ghz v0.120.0

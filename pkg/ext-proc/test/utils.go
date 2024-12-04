@@ -13,12 +13,13 @@ import (
 
 	extProcPb "github.com/envoyproxy/go-control-plane/envoy/service/ext_proc/v3"
 
+	"inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
 	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/backend"
 	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/handlers"
 	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/scheduling"
 )
 
-func StartExtProc(port int, refreshPodsInterval, refreshMetricsInterval time.Duration, pods []*backend.PodMetrics) *grpc.Server {
+func StartExtProc(port int, refreshPodsInterval, refreshMetricsInterval time.Duration, pods []*backend.PodMetrics, models map[string]*v1alpha1.Model) *grpc.Server {
 	ps := make(backend.PodSet)
 	pms := make(map[backend.Pod]*backend.PodMetrics)
 	for _, pod := range pods {
@@ -30,11 +31,11 @@ func StartExtProc(port int, refreshPodsInterval, refreshMetricsInterval time.Dur
 	if err := pp.Init(refreshPodsInterval, refreshMetricsInterval); err != nil {
 		klog.Fatalf("failed to initialize: %v", err)
 	}
-	return startExtProc(port, pp)
+	return startExtProc(port, pp, models)
 }
 
 // startExtProc starts an extProc server with fake pods.
-func startExtProc(port int, pp *backend.Provider) *grpc.Server {
+func startExtProc(port int, pp *backend.Provider, models map[string]*v1alpha1.Model) *grpc.Server {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		klog.Fatalf("failed to listen: %v", err)
@@ -42,7 +43,7 @@ func startExtProc(port int, pp *backend.Provider) *grpc.Server {
 
 	s := grpc.NewServer()
 
-	extProcPb.RegisterExternalProcessorServer(s, handlers.NewServer(pp, scheduling.NewScheduler(pp), "target-pod"))
+	extProcPb.RegisterExternalProcessorServer(s, handlers.NewServer(pp, scheduling.NewScheduler(pp), "target-pod", &backend.FakeDataStore{Res: models}))
 
 	klog.Infof("Starting gRPC server on port :%v", port)
 	reflection.Register(s)

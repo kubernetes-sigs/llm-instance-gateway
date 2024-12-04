@@ -9,11 +9,12 @@ import (
 	"google.golang.org/grpc/status"
 	klog "k8s.io/klog/v2"
 
+	"inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
 	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/backend"
 	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/scheduling"
 )
 
-func NewServer(pp PodProvider, scheduler Scheduler, targetPodHeader string, datastore *backend.K8sDatastore) *Server {
+func NewServer(pp PodProvider, scheduler Scheduler, targetPodHeader string, datastore ModelDataStore) *Server {
 	return &Server{
 		scheduler:       scheduler,
 		podProvider:     pp,
@@ -30,7 +31,7 @@ type Server struct {
 	// The key of the header to specify the target pod address. This value needs to match Envoy
 	// configuration.
 	targetPodHeader string
-	datastore       *backend.K8sDatastore
+	datastore       ModelDataStore
 }
 
 type Scheduler interface {
@@ -41,6 +42,10 @@ type Scheduler interface {
 type PodProvider interface {
 	GetPodMetrics(pod backend.Pod) (*backend.PodMetrics, bool)
 	UpdatePodMetrics(pod backend.Pod, pm *backend.PodMetrics)
+}
+
+type ModelDataStore interface {
+	FetchModelData(modelName string) (returnModel *v1alpha1.Model)
 }
 
 func (s *Server) Process(srv extProcPb.ExternalProcessor_ProcessServer) error {
