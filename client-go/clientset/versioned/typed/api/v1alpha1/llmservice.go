@@ -18,10 +18,10 @@ limitations under the License.
 package v1alpha1
 
 import (
-	context "context"
+	"context"
 
-	apiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
-	applyconfigurationapiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/client-go/applyconfiguration/api/v1alpha1"
+	v1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
+	apiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/client-go/applyconfiguration/api/v1alpha1"
 	scheme "inference.networking.x-k8s.io/llm-instance-gateway/client-go/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,36 +37,36 @@ type LLMServicesGetter interface {
 
 // LLMServiceInterface has methods to work with LLMService resources.
 type LLMServiceInterface interface {
-	Create(ctx context.Context, lLMService *apiv1alpha1.LLMService, opts v1.CreateOptions) (*apiv1alpha1.LLMService, error)
-	Update(ctx context.Context, lLMService *apiv1alpha1.LLMService, opts v1.UpdateOptions) (*apiv1alpha1.LLMService, error)
+	Create(ctx context.Context, lLMService *v1alpha1.LLMService, opts v1.CreateOptions) (*v1alpha1.LLMService, error)
+	Update(ctx context.Context, lLMService *v1alpha1.LLMService, opts v1.UpdateOptions) (*v1alpha1.LLMService, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, lLMService *apiv1alpha1.LLMService, opts v1.UpdateOptions) (*apiv1alpha1.LLMService, error)
+	UpdateStatus(ctx context.Context, lLMService *v1alpha1.LLMService, opts v1.UpdateOptions) (*v1alpha1.LLMService, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*apiv1alpha1.LLMService, error)
-	List(ctx context.Context, opts v1.ListOptions) (*apiv1alpha1.LLMServiceList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.LLMService, error)
+	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.LLMServiceList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *apiv1alpha1.LLMService, err error)
-	Apply(ctx context.Context, lLMService *applyconfigurationapiv1alpha1.LLMServiceApplyConfiguration, opts v1.ApplyOptions) (result *apiv1alpha1.LLMService, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.LLMService, err error)
+	Apply(ctx context.Context, lLMService *apiv1alpha1.LLMServiceApplyConfiguration, opts v1.ApplyOptions) (result *v1alpha1.LLMService, err error)
 	// Add a +genclient:noStatus comment above the type to avoid generating ApplyStatus().
-	ApplyStatus(ctx context.Context, lLMService *applyconfigurationapiv1alpha1.LLMServiceApplyConfiguration, opts v1.ApplyOptions) (result *apiv1alpha1.LLMService, err error)
+	ApplyStatus(ctx context.Context, lLMService *apiv1alpha1.LLMServiceApplyConfiguration, opts v1.ApplyOptions) (result *v1alpha1.LLMService, err error)
 	LLMServiceExpansion
 }
 
 // lLMServices implements LLMServiceInterface
 type lLMServices struct {
-	*gentype.ClientWithListAndApply[*apiv1alpha1.LLMService, *apiv1alpha1.LLMServiceList, *applyconfigurationapiv1alpha1.LLMServiceApplyConfiguration]
+	*gentype.ClientWithListAndApply[*v1alpha1.LLMService, *v1alpha1.LLMServiceList, *apiv1alpha1.LLMServiceApplyConfiguration]
 }
 
 // newLLMServices returns a LLMServices
 func newLLMServices(c *ApiV1alpha1Client, namespace string) *lLMServices {
 	return &lLMServices{
-		gentype.NewClientWithListAndApply[*apiv1alpha1.LLMService, *apiv1alpha1.LLMServiceList, *applyconfigurationapiv1alpha1.LLMServiceApplyConfiguration](
+		gentype.NewClientWithListAndApply[*v1alpha1.LLMService, *v1alpha1.LLMServiceList, *apiv1alpha1.LLMServiceApplyConfiguration](
 			"llmservices",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *apiv1alpha1.LLMService { return &apiv1alpha1.LLMService{} },
-			func() *apiv1alpha1.LLMServiceList { return &apiv1alpha1.LLMServiceList{} }),
+			func() *v1alpha1.LLMService { return &v1alpha1.LLMService{} },
+			func() *v1alpha1.LLMServiceList { return &v1alpha1.LLMServiceList{} }),
 	}
 }

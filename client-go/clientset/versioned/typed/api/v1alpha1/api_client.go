@@ -18,10 +18,10 @@ limitations under the License.
 package v1alpha1
 
 import (
-	http "net/http"
+	"net/http"
 
-	apiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
-	scheme "inference.networking.x-k8s.io/llm-instance-gateway/client-go/clientset/versioned/scheme"
+	v1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
+	"inference.networking.x-k8s.io/llm-instance-gateway/client-go/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 
@@ -89,7 +89,7 @@ func New(c rest.Interface) *ApiV1alpha1Client {
 }
 
 func setConfigDefaults(config *rest.Config) error {
-	gv := apiv1alpha1.SchemeGroupVersion
+	gv := v1alpha1.SchemeGroupVersion
 	config.GroupVersion = &gv
 	config.APIPath = "/apis"
 	config.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
