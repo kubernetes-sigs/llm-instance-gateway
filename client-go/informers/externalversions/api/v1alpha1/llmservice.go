@@ -18,13 +18,13 @@ limitations under the License.
 package v1alpha1
 
 import (
-	context "context"
+	"context"
 	time "time"
 
-	llminstancegatewayapiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
+	apiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
 	versioned "inference.networking.x-k8s.io/llm-instance-gateway/client-go/clientset/versioned"
 	internalinterfaces "inference.networking.x-k8s.io/llm-instance-gateway/client-go/informers/externalversions/internalinterfaces"
-	apiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/client-go/listers/api/v1alpha1"
+	v1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/client-go/listers/api/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -35,7 +35,7 @@ import (
 // LLMServices.
 type LLMServiceInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() apiv1alpha1.LLMServiceLister
+	Lister() v1alpha1.LLMServiceLister
 }
 
 type lLMServiceInformer struct {
@@ -70,7 +70,7 @@ func NewFilteredLLMServiceInformer(client versioned.Interface, namespace string,
 				return client.ApiV1alpha1().LLMServices(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&llminstancegatewayapiv1alpha1.LLMService{},
+		&apiv1alpha1.LLMService{},
 		resyncPeriod,
 		indexers,
 	)
@@ -81,9 +81,9 @@ func (f *lLMServiceInformer) defaultInformer(client versioned.Interface, resyncP
 }
 
 func (f *lLMServiceInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&llminstancegatewayapiv1alpha1.LLMService{}, f.defaultInformer)
+	return f.factory.InformerFor(&apiv1alpha1.LLMService{}, f.defaultInformer)
 }
 
-func (f *lLMServiceInformer) Lister() apiv1alpha1.LLMServiceLister {
-	return apiv1alpha1.NewLLMServiceLister(f.Informer().GetIndexer())
+func (f *lLMServiceInformer) Lister() v1alpha1.LLMServiceLister {
+	return v1alpha1.NewLLMServiceLister(f.Informer().GetIndexer())
 }

@@ -18,10 +18,10 @@ limitations under the License.
 package v1alpha1
 
 import (
-	context "context"
+	"context"
 
-	apiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
-	applyconfigurationapiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/client-go/applyconfiguration/api/v1alpha1"
+	v1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
+	apiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/client-go/applyconfiguration/api/v1alpha1"
 	scheme "inference.networking.x-k8s.io/llm-instance-gateway/client-go/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,36 +37,36 @@ type LLMServerPoolsGetter interface {
 
 // LLMServerPoolInterface has methods to work with LLMServerPool resources.
 type LLMServerPoolInterface interface {
-	Create(ctx context.Context, lLMServerPool *apiv1alpha1.LLMServerPool, opts v1.CreateOptions) (*apiv1alpha1.LLMServerPool, error)
-	Update(ctx context.Context, lLMServerPool *apiv1alpha1.LLMServerPool, opts v1.UpdateOptions) (*apiv1alpha1.LLMServerPool, error)
+	Create(ctx context.Context, lLMServerPool *v1alpha1.LLMServerPool, opts v1.CreateOptions) (*v1alpha1.LLMServerPool, error)
+	Update(ctx context.Context, lLMServerPool *v1alpha1.LLMServerPool, opts v1.UpdateOptions) (*v1alpha1.LLMServerPool, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, lLMServerPool *apiv1alpha1.LLMServerPool, opts v1.UpdateOptions) (*apiv1alpha1.LLMServerPool, error)
+	UpdateStatus(ctx context.Context, lLMServerPool *v1alpha1.LLMServerPool, opts v1.UpdateOptions) (*v1alpha1.LLMServerPool, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*apiv1alpha1.LLMServerPool, error)
-	List(ctx context.Context, opts v1.ListOptions) (*apiv1alpha1.LLMServerPoolList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.LLMServerPool, error)
+	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.LLMServerPoolList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *apiv1alpha1.LLMServerPool, err error)
-	Apply(ctx context.Context, lLMServerPool *applyconfigurationapiv1alpha1.LLMServerPoolApplyConfiguration, opts v1.ApplyOptions) (result *apiv1alpha1.LLMServerPool, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.LLMServerPool, err error)
+	Apply(ctx context.Context, lLMServerPool *apiv1alpha1.LLMServerPoolApplyConfiguration, opts v1.ApplyOptions) (result *v1alpha1.LLMServerPool, err error)
 	// Add a +genclient:noStatus comment above the type to avoid generating ApplyStatus().
-	ApplyStatus(ctx context.Context, lLMServerPool *applyconfigurationapiv1alpha1.LLMServerPoolApplyConfiguration, opts v1.ApplyOptions) (result *apiv1alpha1.LLMServerPool, err error)
+	ApplyStatus(ctx context.Context, lLMServerPool *apiv1alpha1.LLMServerPoolApplyConfiguration, opts v1.ApplyOptions) (result *v1alpha1.LLMServerPool, err error)
 	LLMServerPoolExpansion
 }
 
 // lLMServerPools implements LLMServerPoolInterface
 type lLMServerPools struct {
-	*gentype.ClientWithListAndApply[*apiv1alpha1.LLMServerPool, *apiv1alpha1.LLMServerPoolList, *applyconfigurationapiv1alpha1.LLMServerPoolApplyConfiguration]
+	*gentype.ClientWithListAndApply[*v1alpha1.LLMServerPool, *v1alpha1.LLMServerPoolList, *apiv1alpha1.LLMServerPoolApplyConfiguration]
 }
 
 // newLLMServerPools returns a LLMServerPools
 func newLLMServerPools(c *ApiV1alpha1Client, namespace string) *lLMServerPools {
 	return &lLMServerPools{
-		gentype.NewClientWithListAndApply[*apiv1alpha1.LLMServerPool, *apiv1alpha1.LLMServerPoolList, *applyconfigurationapiv1alpha1.LLMServerPoolApplyConfiguration](
+		gentype.NewClientWithListAndApply[*v1alpha1.LLMServerPool, *v1alpha1.LLMServerPoolList, *apiv1alpha1.LLMServerPoolApplyConfiguration](
 			"llmserverpools",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *apiv1alpha1.LLMServerPool { return &apiv1alpha1.LLMServerPool{} },
-			func() *apiv1alpha1.LLMServerPoolList { return &apiv1alpha1.LLMServerPoolList{} }),
+			func() *v1alpha1.LLMServerPool { return &v1alpha1.LLMServerPool{} },
+			func() *v1alpha1.LLMServerPoolList { return &v1alpha1.LLMServerPoolList{} }),
 	}
 }

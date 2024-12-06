@@ -8,7 +8,7 @@ metadata:
   name: llmservice-viewer-role
 rules:
 - apiGroups:
-  - gateway.inference.networking.x-k8s.io
+  - inference.networking.x-k8s.io
   resources:
   - llmservices
   verbs:
@@ -16,7 +16,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - gateway.inference.networking.x-k8s.io
+  - inference.networking.x-k8s.io
   resources:
   - llmservices/status
   verbs:

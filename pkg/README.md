@@ -1,5 +1,8 @@
 ## Quickstart
 
+### Requirements
+The current manifests rely on Envoy Gateway [v1.2.1](https://gateway.envoyproxy.io/docs/install/install-yaml/#install-with-yaml) or higher.
+
 ### Steps
 
 1. **Deploy Sample vLLM Application**

@@ -14,11 +14,11 @@ const (
 	fetchMetricsTimeout = 5 * time.Second
 )
 
-func NewProvider(pmc PodMetricsClient, pl PodLister) *Provider {
+func NewProvider(pmc PodMetricsClient, datastore *K8sDatastore) *Provider {
 	p := &Provider{
 		podMetrics: sync.Map{},
 		pmc:        pmc,
-		pl:         pl,
+		datastore:  datastore,
 	}
 	return p
 }
@@ -28,15 +28,11 @@ type Provider struct {
 	// key: Pod, value: *PodMetrics
 	podMetrics sync.Map
 	pmc        PodMetricsClient
-	pl         PodLister
+	datastore  *K8sDatastore
 }
 
 type PodMetricsClient interface {
 	FetchMetrics(ctx context.Context, pod Pod, existing *PodMetrics) (*PodMetrics, error)
-}
-
-type PodLister interface {
-	List() (PodSet, error)
 }
 
 func (p *Provider) AllPodMetrics() []*PodMetrics {
@@ -63,11 +59,10 @@ func (p *Provider) GetPodMetrics(pod Pod) (*PodMetrics, bool) {
 
 func (p *Provider) Init(refreshPodsInterval, refreshMetricsInterval time.Duration) error {
 	if err := p.refreshPodsOnce(); err != nil {
-		return fmt.Errorf("failed to init pods: %v", err)
+		klog.Errorf("Failed to init pods: %v", err)
 	}
-	err := p.refreshMetricsOnce()
-	if err != nil {
-		return fmt.Errorf("failed to init metrics: %v", err)
+	if err := p.refreshMetricsOnce(); err != nil {
+		klog.Errorf("Failed to init metrics: %v", err)
 	}
 
 	klog.Infof("Initialized pods and metrics: %+v", p.AllPodMetrics())
@@ -108,13 +103,10 @@ func (p *Provider) Init(refreshPodsInterval, refreshMetricsInterval time.Duratio
 // refreshPodsOnce lists pods and updates keys in the podMetrics map.
 // Note this function doesn't update the PodMetrics value, it's done separately.
 func (p *Provider) refreshPodsOnce() error {
-	pods, err := p.pl.List()
-	if err != nil {
-		return err
-	}
 	// merge new pods with cached ones.
 	// add new pod to the map
-	for pod := range pods {
+	addNewPods := func(k, v any) bool {
+		pod := k.(Pod)
 		if _, ok := p.podMetrics.Load(pod); !ok {
 			new := &PodMetrics{
 				Pod: pod,
@@ -124,16 +116,18 @@ func (p *Provider) refreshPodsOnce() error {
 			}
 			p.podMetrics.Store(pod, new)
 		}
+		return true
 	}
 	// remove pods that don't exist any more.
 	mergeFn := func(k, v any) bool {
 		pod := k.(Pod)
-		if _, ok := pods[pod]; !ok {
+		if _, ok := p.datastore.Pods.Load(pod); !ok {
 			p.podMetrics.Delete(pod)
 		}
 		return true
 	}
 	p.podMetrics.Range(mergeFn)
+	p.datastore.Pods.Range(addNewPods)
 	return nil
 }
 

@@ -6,13 +6,12 @@ import "fmt"
 type PodSet map[Pod]bool
 
 type Pod struct {
-	Namespace string
-	Name      string
-	Address   string
+	Name    string
+	Address string
 }
 
 func (p Pod) String() string {
-	return p.Namespace + "/" + p.Name
+	return p.Name + ":" + p.Address
 }
 
 type Metrics struct {

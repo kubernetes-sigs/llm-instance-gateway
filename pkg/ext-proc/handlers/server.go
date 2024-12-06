@@ -9,15 +9,17 @@ import (
 	"google.golang.org/grpc/status"
 	klog "k8s.io/klog/v2"
 
-	"ext-proc/backend"
-	"ext-proc/scheduling"
+	"inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
+	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/backend"
+	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/scheduling"
 )
 
-func NewServer(pp PodProvider, scheduler Scheduler, targetPodHeader string) *Server {
+func NewServer(pp PodProvider, scheduler Scheduler, targetPodHeader string, datastore ModelDataStore) *Server {
 	return &Server{
 		scheduler:       scheduler,
 		podProvider:     pp,
 		targetPodHeader: targetPodHeader,
+		datastore:       datastore,
 	}
 }
 
@@ -29,6 +31,7 @@ type Server struct {
 	// The key of the header to specify the target pod address. This value needs to match Envoy
 	// configuration.
 	targetPodHeader string
+	datastore       ModelDataStore
 }
 
 type Scheduler interface {
@@ -39,6 +42,10 @@ type Scheduler interface {
 type PodProvider interface {
 	GetPodMetrics(pod backend.Pod) (*backend.PodMetrics, bool)
 	UpdatePodMetrics(pod backend.Pod, pm *backend.PodMetrics)
+}
+
+type ModelDataStore interface {
+	FetchModelData(modelName string) (returnModel *v1alpha1.Model)
 }
 
 func (s *Server) Process(srv extProcPb.ExternalProcessor_ProcessServer) error {
@@ -98,14 +105,14 @@ func (s *Server) Process(srv extProcPb.ExternalProcessor_ProcessServer) error {
 					},
 				}
 			default:
-				return status.Errorf(status.Code(err), "failed to handle request: %w", err)
+				return status.Errorf(status.Code(err), "failed to handle request: %v", err)
 			}
 		}
 
 		klog.V(3).Infof("response: %v", resp)
 		if err := srv.Send(resp); err != nil {
 			klog.Errorf("send error %v", err)
-			return status.Errorf(codes.Unknown, "failed to send response back to Envoy: %w", err)
+			return status.Errorf(codes.Unknown, "failed to send response back to Envoy: %v", err)
 		}
 	}
 }

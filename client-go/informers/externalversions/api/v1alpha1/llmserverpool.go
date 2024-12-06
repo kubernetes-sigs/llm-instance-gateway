@@ -18,13 +18,13 @@ limitations under the License.
 package v1alpha1
 
 import (
-	context "context"
+	"context"
 	time "time"
 
-	llminstancegatewayapiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
+	apiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
 	versioned "inference.networking.x-k8s.io/llm-instance-gateway/client-go/clientset/versioned"
 	internalinterfaces "inference.networking.x-k8s.io/llm-instance-gateway/client-go/informers/externalversions/internalinterfaces"
-	apiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/client-go/listers/api/v1alpha1"
+	v1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/client-go/listers/api/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -35,7 +35,7 @@ import (
 // LLMServerPools.
 type LLMServerPoolInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() apiv1alpha1.LLMServerPoolLister
+	Lister() v1alpha1.LLMServerPoolLister
 }
 
 type lLMServerPoolInformer struct {
@@ -70,7 +70,7 @@ func NewFilteredLLMServerPoolInformer(client versioned.Interface, namespace stri
 				return client.ApiV1alpha1().LLMServerPools(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&llminstancegatewayapiv1alpha1.LLMServerPool{},
+		&apiv1alpha1.LLMServerPool{},
 		resyncPeriod,
 		indexers,
 	)
@@ -81,9 +81,9 @@ func (f *lLMServerPoolInformer) defaultInformer(client versioned.Interface, resy
 }
 
 func (f *lLMServerPoolInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&llminstancegatewayapiv1alpha1.LLMServerPool{}, f.defaultInformer)
+	return f.factory.InformerFor(&apiv1alpha1.LLMServerPool{}, f.defaultInformer)
 }
 
-func (f *lLMServerPoolInformer) Lister() apiv1alpha1.LLMServerPoolLister {
-	return apiv1alpha1.NewLLMServerPoolLister(f.Informer().GetIndexer())
+func (f *lLMServerPoolInformer) Lister() v1alpha1.LLMServerPoolLister {
+	return v1alpha1.NewLLMServerPoolLister(f.Informer().GetIndexer())
 }

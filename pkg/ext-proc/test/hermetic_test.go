@@ -3,11 +3,13 @@ package test
 
 import (
 	"context"
-	"ext-proc/backend"
 	"fmt"
 	"log"
 	"testing"
 	"time"
+
+	"inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
+	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/backend"
 
 	configPb "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	extProcPb "github.com/envoyproxy/go-control-plane/envoy/service/ext_proc/v3"
@@ -27,6 +29,7 @@ func TestHandleRequestBody(t *testing.T) {
 		name        string
 		req         *extProcPb.ProcessingRequest
 		pods        []*backend.PodMetrics
+		models      map[string]*v1alpha1.Model
 		wantHeaders []*configPb.HeaderValueOption
 		wantBody    []byte
 		wantErr     bool
@@ -34,6 +37,17 @@ func TestHandleRequestBody(t *testing.T) {
 		{
 			name: "success",
 			req:  GenerateRequest("my-model"),
+			models: map[string]*v1alpha1.Model{
+				"my-model": {
+					Name: "my-model",
+					TargetModels: []v1alpha1.TargetModel{
+						{
+							Name:   "my-model-v1",
+							Weight: 100,
+						},
+					},
+				},
+			},
 			// pod-1 will be picked because it has relatively low queue size, with the requested
 			// model being active, and has low KV cache.
 			pods: []*backend.PodMetrics{
@@ -51,11 +65,11 @@ func TestHandleRequestBody(t *testing.T) {
 				{
 					Pod: FakePod(1),
 					Metrics: backend.Metrics{
-						WaitingQueueSize:    3,
+						WaitingQueueSize:    0,
 						KVCacheUsagePercent: 0.1,
 						ActiveModels: map[string]int{
-							"foo":      1,
-							"my-model": 1,
+							"foo":         1,
+							"my-model-v1": 1,
 						},
 					},
 				},
@@ -77,13 +91,20 @@ func TestHandleRequestBody(t *testing.T) {
 						RawValue: []byte("address-1"),
 					},
 				},
+				{
+					Header: &configPb.HeaderValue{
+						Key:      "Content-Length",
+						RawValue: []byte("73"),
+					},
+				},
 			},
+			wantBody: []byte("{\"max_tokens\":100,\"model\":\"my-model-v1\",\"prompt\":\"hello\",\"temperature\":0}"),
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			client, cleanup := setUpServer(t, test.pods)
+			client, cleanup := setUpServer(t, test.pods, test.models)
 			t.Cleanup(cleanup)
 			want := &extProcPb.ProcessingResponse{
 				Response: &extProcPb.ProcessingResponse_RequestBody{
@@ -92,12 +113,11 @@ func TestHandleRequestBody(t *testing.T) {
 							HeaderMutation: &extProcPb.HeaderMutation{
 								SetHeaders: test.wantHeaders,
 							},
-							// TODO: Also check body once it's added.
-							// BodyMutation: &extProcPb.BodyMutation{
-							// 	Mutation: &extProcPb.BodyMutation_Body{
-							// 		Body: test.wantBody,
-							// 	},
-							// },
+							BodyMutation: &extProcPb.BodyMutation{
+								Mutation: &extProcPb.BodyMutation_Body{
+									Body: test.wantBody,
+								},
+							},
 						},
 					},
 				},
@@ -116,8 +136,8 @@ func TestHandleRequestBody(t *testing.T) {
 
 }
 
-func setUpServer(t *testing.T, pods []*backend.PodMetrics) (client extProcPb.ExternalProcessor_ProcessClient, cleanup func()) {
-	server := StartExtProc(port, time.Second, time.Second, pods)
+func setUpServer(t *testing.T, pods []*backend.PodMetrics, models map[string]*v1alpha1.Model) (client extProcPb.ExternalProcessor_ProcessClient, cleanup func()) {
+	server := StartExtProc(port, time.Second, time.Second, pods, models)
 
 	address := fmt.Sprintf("localhost:%v", port)
 	// Create a grpc connection

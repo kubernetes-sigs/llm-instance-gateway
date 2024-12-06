@@ -18,9 +18,9 @@ limitations under the License.
 package fake
 
 import (
-	context "context"
+	"context"
 	json "encoding/json"
-	fmt "fmt"
+	"fmt"
 
 	v1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
 	apiv1alpha1 "inference.networking.x-k8s.io/llm-instance-gateway/client-go/applyconfiguration/api/v1alpha1"

@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.1
-  name: llmserverpools.gateway.inference.networking.x-k8s.io
+  name: llmserverpools.inference.networking.x-k8s.io
 spec:
-  group: gateway.inference.networking.x-k8s.io
+  group: inference.networking.x-k8s.io
   names:
     kind: LLMServerPool
     listKind: LLMServerPoolList
@@ -40,55 +40,24 @@ spec:
             description: LLMServerPoolSpec defines the desired state of LLMServerPool
             properties:
               modelServerSelector:
+                additionalProperties:
+                  type: string
                 description: |-
-                  ModelServerSelector uses label selection to watch model server pods
+                  ModelServerSelector uses a map of label to watch model server pods
                   that should be included in the LLMServerPool. ModelServers should not
                   be with any other Service or LLMServerPool, that behavior is not supported
                   and will result in sub-optimal utilization.
-                properties:
-                  matchExpressions:
-                    description: matchExpressions is a list of label selector requirements.
-                      The requirements are ANDed.
-                    items:
-                      description: |-
-                        A label selector requirement is a selector that contains values, a key, and an operator that
-                        relates the key and values.
-                      properties:
-                        key:
-                          description: key is the label key that the selector applies
-                            to.
-                          type: string
-                        operator:
-                          description: |-
-                            operator represents a key's relationship to a set of values.
-                            Valid operators are In, NotIn, Exists and DoesNotExist.
-                          type: string
-                        values:
-                          description: |-
-                            values is an array of string values. If the operator is In or NotIn,
-                            the values array must be non-empty. If the operator is Exists or DoesNotExist,
-                            the values array must be empty. This array is replaced during a strategic
-                            merge patch.
-                          items:
-                            type: string
-                          type: array
-                          x-kubernetes-list-type: atomic
-                      required:
-                      - key
-                      - operator
-                      type: object
-                    type: array
-                    x-kubernetes-list-type: atomic
-                  matchLabels:
-                    additionalProperties:
-                      type: string
-                    description: |-
-                      matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
-                      map is equivalent to an element of matchExpressions, whose key field is "key", the
-                      operator is "In", and the values array contains only "value". The requirements are ANDed.
-                    type: object
+                  Due to this selector being translated to a service a simple map is used instead
+                  of: https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#LabelSelector
+                  To avoid footshoot errors when the https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#LabelSelectorAsMap would be used.
                 type: object
-                x-kubernetes-map-type: atomic
+              targetPort:
+                description: |-
+                  TargetPort is the port number that the model servers within the pool expect
+                  to recieve traffic from.
+                  This maps to the TargetPort in: https://pkg.go.dev/k8s.io/api/core/v1#ServicePort
+                format: int32
+                type: integer
             type: object
           status:
             description: LLMServerPoolStatus defines the observed state of LLMServerPool

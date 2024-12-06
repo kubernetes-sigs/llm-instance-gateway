@@ -1,11 +1,11 @@
 package backend
 
-import "context"
+import (
+	"context"
 
-type FakePodLister struct {
-	Err  error
-	Pods PodSet
-}
+	"inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
+	klog "k8s.io/klog/v2"
+)
 
 type FakePodMetricsClient struct {
 	Err map[Pod]error
@@ -16,9 +16,14 @@ func (f *FakePodMetricsClient) FetchMetrics(ctx context.Context, pod Pod, existi
 	if err, ok := f.Err[pod]; ok {
 		return nil, err
 	}
+	klog.V(1).Infof("pod: %+v\n existing: %+v \n new: %+v \n", pod, existing, f.Res[pod])
 	return f.Res[pod], nil
 }
 
-func (fpl *FakePodLister) List() (PodSet, error) {
-	return fpl.Pods, fpl.Err
+type FakeDataStore struct {
+	Res map[string]*v1alpha1.Model
+}
+
+func (fds *FakeDataStore) FetchModelData(modelName string) (returnModel *v1alpha1.Model) {
+	return fds.Res[modelName]
 }

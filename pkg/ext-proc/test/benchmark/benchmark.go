@@ -12,8 +12,9 @@ import (
 	"google.golang.org/protobuf/proto"
 	klog "k8s.io/klog/v2"
 
-	"ext-proc/backend"
-	"ext-proc/test"
+	"inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
+	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/backend"
+	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/test"
 )
 
 var (
@@ -36,7 +37,7 @@ func main() {
 	flag.Parse()
 
 	if *localServer {
-		test.StartExtProc(port, *refreshPodsInterval, *refreshMetricsInterval, fakePods())
+		test.StartExtProc(port, *refreshPodsInterval, *refreshMetricsInterval, fakePods(), fakeModels())
 		time.Sleep(time.Second) // wait until server is up
 		klog.Info("Server started")
 	}
@@ -68,6 +69,18 @@ func generateRequest(mtd *desc.MethodDescriptor, callData *runner.CallData) []by
 		klog.Fatal("marshaling error: ", err)
 	}
 	return data
+}
+
+func fakeModels() map[string]*v1alpha1.Model {
+	models := map[string]*v1alpha1.Model{}
+	for i := range *numFakePods {
+		for j := range *numModelsPerPod {
+			m := modelName(i*(*numModelsPerPod) + j)
+			models[m] = &v1alpha1.Model{Name: m}
+		}
+	}
+
+	return models
 }
 
 func fakePods() []*backend.PodMetrics {

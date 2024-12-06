@@ -3,12 +3,14 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	configPb "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	extProcPb "github.com/envoyproxy/go-control-plane/envoy/service/ext_proc/v3"
 	klog "k8s.io/klog/v2"
 
-	"ext-proc/scheduling"
+	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/backend"
+	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/scheduling"
 )
 
 // HandleRequestBody handles body of the request to the backend server, such as parsing the "model"
@@ -32,24 +34,38 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 		return nil, fmt.Errorf("model not found in request")
 	}
 	klog.V(3).Infof("Model requested: %v", model)
-	llmReq := &scheduling.LLMRequest{
-		Model: model,
-		// For now use the model as the target model.
-		// TODO: Once the API is approved, read the "LLMUseCase" configuration and apply traffic split.
-		TargetModels:        map[string]int{model: 100},
-		ResolvedTargetModel: model,
-		// TODO: Read from LLMService CRD.
-		Critical: true,
-	}
+	modelName := model
 
-	// Update target models in the body.
-	rb["model"] = llmReq.ResolvedTargetModel
-	updatedBody, err := json.Marshal(rb)
-	if err != nil {
-		klog.Errorf("Error marshaling request body: %v", err)
-		return nil, fmt.Errorf("error marshaling request body: %v", err)
+	// NOTE: The nil checking for the modelObject means that we DO allow passthrough currently.
+	// This might be a security risk in the future where adapters not registered in the LLMService
+	// are able to be requested by using their distinct name.
+	modelObj := s.datastore.FetchModelData(model)
+	if modelObj != nil && len(modelObj.TargetModels) > 0 {
+		modelName = backend.RandomWeightedDraw(modelObj, 0)
+		if modelName == "" {
+			return nil, fmt.Errorf("error getting target model name for model %v", modelObj.Name)
+		}
 	}
-	klog.V(3).Infof("Updated body: %v", updatedBody)
+	klog.V(3).Infof("Model is null %v", modelObj == nil)
+	llmReq := &scheduling.LLMRequest{
+		Model:               model,
+		ResolvedTargetModel: modelName,
+		Critical:            backend.ModelHasObjective(modelObj),
+	}
+	klog.V(3).Infof("LLM Request: %+v", llmReq)
+
+	requestBody := v.RequestBody.Body
+	var err error
+	// Update target models in the body.
+	if llmReq.Model != llmReq.ResolvedTargetModel {
+		rb["model"] = llmReq.ResolvedTargetModel
+		requestBody, err = json.Marshal(rb)
+		if err != nil {
+			klog.Errorf("Error marshaling request body: %v", err)
+			return nil, fmt.Errorf("error marshaling request body: %v", err)
+		}
+		klog.V(3).Infof("Updated body: %v", string(requestBody))
+	}
 
 	targetPod, err := s.scheduler.Schedule(llmReq)
 	if err != nil {
@@ -68,6 +84,14 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 				RawValue: []byte(targetPod.Address),
 			},
 		},
+		// We need to update the content length header if the body is mutated, see Envoy doc:
+		// https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/http/ext_proc/v3/processing_mode.proto#enum-extensions-filters-http-ext-proc-v3-processingmode-bodysendmode
+		{
+			Header: &configPb.HeaderValue{
+				Key:      "Content-Length",
+				RawValue: []byte(strconv.Itoa(len(requestBody))),
+			},
+		},
 	}
 	// Print headers for debugging
 	for _, header := range headers {
@@ -81,12 +105,11 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 					HeaderMutation: &extProcPb.HeaderMutation{
 						SetHeaders: headers,
 					},
-					// TODO: Enable body mutation
-					// BodyMutation: &extProcPb.BodyMutation{
-					// 	Mutation: &extProcPb.BodyMutation_Body{
-					// 		Body: updatedBody,
-					// 	},
-					// },
+					BodyMutation: &extProcPb.BodyMutation{
+						Mutation: &extProcPb.BodyMutation_Body{
+							Body: requestBody,
+						},
+					},
 				},
 			},
 		},
