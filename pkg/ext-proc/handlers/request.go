@@ -120,7 +120,7 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 }
 
 func HandleRequestHeaders(reqCtx *RequestContext, req *extProcPb.ProcessingRequest) *extProcPb.ProcessingResponse {
-	klog.V(3).Info("--- In RequestHeaders processing ...")
+	klog.V(3).Info("Handling request headers ...")
 	r := req.Request
 	h := r.(*extProcPb.ProcessingRequest_RequestHeaders)
 	klog.V(3).Infof("Headers: %+v\n", h)

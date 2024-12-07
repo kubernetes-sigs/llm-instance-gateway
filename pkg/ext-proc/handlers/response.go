@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"encoding/json"
+	"fmt"
+
 	configPb "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	extProcPb "github.com/envoyproxy/go-control-plane/envoy/service/ext_proc/v3"
 	klog "k8s.io/klog/v2"
@@ -32,4 +35,59 @@ func (s *Server) HandleResponseHeaders(reqCtx *RequestContext, req *extProcPb.Pr
 		},
 	}
 	return resp, nil
+}
+
+// HandleResponseBody parses response body to update information such as number of completion tokens.
+// Example response
+/*
+{
+    "id": "cmpl-573498d260f2423f9e42817bbba3743a",
+    "object": "text_completion",
+    "created": 1732563765,
+    "model": "meta-llama/Llama-2-7b-hf",
+    "choices": [
+        {
+            "index": 0,
+            "text": " Chronicle\nThe San Francisco Chronicle has a new book review section, and it's a good one. The reviews are short, but they're well-written and well-informed. The Chronicle's book review section is a good place to start if you're looking for a good book review.\nThe Chronicle's book review section is a good place to start if you're looking for a good book review. The Chronicle's book review section",
+            "logprobs": null,
+            "finish_reason": "length",
+            "stop_reason": null,
+            "prompt_logprobs": null
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 11,
+        "total_tokens": 111,
+        "completion_tokens": 100
+    }
+}*/
+func (s *Server) HandleResponseBody(reqCtx *RequestContext, req *extProcPb.ProcessingRequest) (*extProcPb.ProcessingResponse, error) {
+	klog.V(3).Info("Processing HandleResponseBody")
+	body := req.Request.(*extProcPb.ProcessingRequest_ResponseBody)
+
+	res := Response{}
+	if err := json.Unmarshal(body.ResponseBody.Body, &res); err != nil {
+		return nil, fmt.Errorf("unmarshaling response body: %v", err)
+	}
+	reqCtx.Response = res
+	klog.V(3).Infof("Response: %+v", res)
+
+	resp := &extProcPb.ProcessingResponse{
+		Response: &extProcPb.ProcessingResponse_ResponseBody{
+			ResponseBody: &extProcPb.BodyResponse{
+				Response: &extProcPb.CommonResponse{},
+			},
+		},
+	}
+	return resp, nil
+}
+
+type Response struct {
+	Usage Usage `json:"usage"`
+}
+
+type Usage struct {
+	PromptTokens     int `json:"prompt_tokens"`
+	CompletionTokens int `json:"completion_tokens"`
+	TotalTokens      int `json:"total_tokens"`
 }
