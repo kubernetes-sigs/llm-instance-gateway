@@ -64,6 +64,13 @@ func main() {
 
 	ctrl.SetLogger(klog.TODO())
 
+	// Print all flag values
+	flags := "Flags: "
+	flag.VisitAll(func(f *flag.Flag) {
+		flags += fmt.Sprintf("%s=%v; ", f.Name, f.Value)
+	})
+	klog.Info(flags)
+
 	klog.Infof("Listening on %q", fmt.Sprintf(":%d", *port))
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
