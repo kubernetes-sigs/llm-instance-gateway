@@ -9,7 +9,9 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 var (
@@ -28,16 +30,12 @@ type EndpointSliceReconciler struct {
 }
 
 func (c *EndpointSliceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	klog.V(1).Info("reconciling EndpointSlice ", req.NamespacedName)
+	klog.V(2).Info("Reconciling EndpointSlice ", req.NamespacedName)
 
 	endpointSlice := &discoveryv1.EndpointSlice{}
 	if err := c.Get(ctx, req.NamespacedName, endpointSlice); err != nil {
-		klog.Error(err, "unable to get LLMServerPool")
+		klog.Errorf("Unable to get EndpointSlice: %v", err)
 		return ctrl.Result{}, err
-	}
-
-	if !c.ownsEndPointSlice(endpointSlice.ObjectMeta.Labels) {
-		return ctrl.Result{}, nil
 	}
 
 	c.updateDatastore(endpointSlice)
@@ -71,13 +69,19 @@ func (c *EndpointSliceReconciler) updateDatastore(slice *discoveryv1.EndpointSli
 }
 
 func (c *EndpointSliceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&discoveryv1.EndpointSlice{}).
-		Complete(c)
-}
+	ownsEndPointSlice := func(object client.Object) bool {
+		// Check if the object is an EndpointSlice
+		endpointSlice, ok := object.(*discoveryv1.EndpointSlice)
+		if !ok {
+			return false
+		}
 
-func (c *EndpointSliceReconciler) ownsEndPointSlice(labels map[string]string) bool {
-	return labels[serviceOwnerLabel] == c.ServiceName
+		return endpointSlice.ObjectMeta.Labels[serviceOwnerLabel] == c.ServiceName
+	}
+
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&discoveryv1.EndpointSlice{}, builder.WithPredicates(predicate.NewPredicateFuncs(ownsEndPointSlice))).
+		Complete(c)
 }
 
 func (c *EndpointSliceReconciler) validPod(endpoint discoveryv1.Endpoint) bool {

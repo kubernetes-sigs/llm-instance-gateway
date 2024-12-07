@@ -33,11 +33,11 @@ func (c *LLMServerPoolReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if req.NamespacedName.Name != c.ServerPoolName && req.NamespacedName.Namespace != c.Namespace {
 		return ctrl.Result{}, nil
 	}
-	klog.V(1).Info("reconciling LLMServerPool", req.NamespacedName)
+	klog.V(2).Infof("Reconciling LLMServerPool %v", req.NamespacedName)
 
 	serverPool := &v1alpha1.LLMServerPool{}
 	if err := c.Get(ctx, req.NamespacedName, serverPool); err != nil {
-		klog.Error(err, "unable to get LLMServerPool")
+		klog.Errorf("Unable to get LLMServerPool: %v", err)
 		return ctrl.Result{}, err
 	}
 
@@ -48,6 +48,7 @@ func (c *LLMServerPoolReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 func (c *LLMServerPoolReconciler) updateDatastore(serverPool *v1alpha1.LLMServerPool) {
 	if c.Datastore.LLMServerPool == nil || serverPool.ObjectMeta.ResourceVersion != c.Datastore.LLMServerPool.ObjectMeta.ResourceVersion {
+		klog.V(2).Infof("Updated LLMServerPool: %+v", serverPool)
 		c.Datastore.LLMServerPool = serverPool
 	}
 }
