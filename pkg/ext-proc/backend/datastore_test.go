@@ -10,10 +10,9 @@ var ()
 
 func TestRandomWeightedDraw(t *testing.T) {
 	tests := []struct {
-		name      string
-		datastore K8sDatastore
-		model     *v1alpha1.Model
-		want      string
+		name  string
+		model *v1alpha1.Model
+		want  string
 	}{
 		{
 			name: "'random' distribution",

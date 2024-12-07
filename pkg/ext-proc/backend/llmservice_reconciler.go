@@ -44,12 +44,12 @@ func (c *LLMServiceReconciler) updateDatastore(service *v1alpha1.LLMService) {
 	for _, ref := range service.Spec.PoolRef {
 		if strings.Contains(strings.ToLower(ref.Kind), strings.ToLower("LLMServerPool")) && ref.Name == c.ServerPoolName {
 			klog.V(2).Infof("Adding/Updating service: %+v", service)
-			c.Datastore.LLMServices.Store(service.Name, service)
+			c.Datastore.llmServices.Store(service.Name, service)
 			return
 		}
 	}
 	klog.V(2).Infof("Removing/Not adding service: %+v", service)
 	// The LLMService may have changed to a different pool. Remove such services.
 	// Otherwise this is a noop.
-	c.Datastore.LLMServices.Delete(service.Name)
+	c.Datastore.llmServices.Delete(service.Name)
 }

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"sync"
 	"time"
 
 	"google.golang.org/grpc"
@@ -27,7 +26,7 @@ func StartExtProc(port int, refreshPodsInterval, refreshMetricsInterval time.Dur
 		pms[pod.Pod] = pod
 	}
 	pmc := &backend.FakePodMetricsClient{Res: pms}
-	pp := backend.NewProvider(pmc, &backend.K8sDatastore{Pods: populatePodDatastore(pods)})
+	pp := backend.NewProvider(pmc, backend.NewK8sDataStore(backend.WithPods(pods)))
 	if err := pp.Init(refreshPodsInterval, refreshMetricsInterval); err != nil {
 		klog.Fatalf("failed to initialize: %v", err)
 	}
@@ -78,13 +77,4 @@ func FakePod(index int) backend.Pod {
 		Address: address,
 	}
 	return pod
-}
-
-func populatePodDatastore(pods []*backend.PodMetrics) *sync.Map {
-	returnVal := &sync.Map{}
-
-	for _, pod := range pods {
-		returnVal.Store(pod.Pod, true)
-	}
-	return returnVal
 }
