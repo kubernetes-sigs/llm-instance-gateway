@@ -41,16 +41,10 @@ func (c *LLMServerPoolReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
-	c.updateDatastore(serverPool)
+	klog.V(2).Infof("Updated LLMServerPool: %+v", serverPool)
+	c.Datastore.setLLMServerPool(serverPool)
 
 	return ctrl.Result{}, nil
-}
-
-func (c *LLMServerPoolReconciler) updateDatastore(serverPool *v1alpha1.LLMServerPool) {
-	if c.Datastore.LLMServerPool == nil || serverPool.ObjectMeta.ResourceVersion != c.Datastore.LLMServerPool.ObjectMeta.ResourceVersion {
-		klog.V(2).Infof("Updated LLMServerPool: %+v", serverPool)
-		c.Datastore.LLMServerPool = serverPool
-	}
 }
 
 func (c *LLMServerPoolReconciler) SetupWithManager(mgr ctrl.Manager) error {

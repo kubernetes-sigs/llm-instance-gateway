@@ -48,7 +48,7 @@ func TestProvider(t *testing.T) {
 		{
 			name: "Init success",
 			datastore: &K8sDatastore{
-				Pods: populateMap(pod1.Pod, pod2.Pod),
+				pods: populateMap(pod1.Pod, pod2.Pod),
 			},
 			pmc: &FakePodMetricsClient{
 				Res: map[Pod]*PodMetrics{
@@ -69,7 +69,7 @@ func TestProvider(t *testing.T) {
 				},
 			},
 			datastore: &K8sDatastore{
-				Pods: populateMap(pod1.Pod, pod2.Pod),
+				pods: populateMap(pod1.Pod, pod2.Pod),
 			},
 			want: []*PodMetrics{
 				pod1,

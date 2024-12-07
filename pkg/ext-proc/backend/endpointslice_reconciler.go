@@ -48,9 +48,9 @@ func (c *EndpointSliceReconciler) updateDatastore(slice *discoveryv1.EndpointSli
 	for _, endpoint := range slice.Endpoints {
 		klog.V(4).Infof("Zone: %v \n endpoint: %+v \n", c.Zone, endpoint)
 		if c.validPod(endpoint) {
-			pod := Pod{Name: *&endpoint.TargetRef.Name, Address: endpoint.Addresses[0] + ":" + fmt.Sprint(c.Datastore.LLMServerPool.Spec.TargetPort)}
+			pod := Pod{Name: *&endpoint.TargetRef.Name, Address: endpoint.Addresses[0] + ":" + fmt.Sprint(c.Datastore.llmServerPool.Spec.TargetPort)}
 			podMap[pod] = true
-			c.Datastore.Pods.Store(pod, true)
+			c.Datastore.pods.Store(pod, true)
 		}
 	}
 
@@ -61,14 +61,22 @@ func (c *EndpointSliceReconciler) updateDatastore(slice *discoveryv1.EndpointSli
 			return false
 		}
 		if _, ok := podMap[pod]; !ok {
-			c.Datastore.Pods.Delete(pod)
+			c.Datastore.pods.Delete(pod)
 		}
 		return true
 	}
-	c.Datastore.Pods.Range(removeOldPods)
+	c.Datastore.pods.Range(removeOldPods)
 }
 
 func (c *EndpointSliceReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	llmServerPoolAvailable := func(object client.Object) bool {
+		_, err := c.Datastore.getLLMServerPool()
+		if err != nil {
+			klog.Warningf("Skipping reconciling EndpointSlice because LLMServerPool is not available yet: %v", err)
+		}
+		return err == nil
+	}
+
 	ownsEndPointSlice := func(object client.Object) bool {
 		// Check if the object is an EndpointSlice
 		endpointSlice, ok := object.(*discoveryv1.EndpointSlice)
@@ -80,7 +88,7 @@ func (c *EndpointSliceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&discoveryv1.EndpointSlice{}, builder.WithPredicates(predicate.NewPredicateFuncs(ownsEndPointSlice))).
+		For(&discoveryv1.EndpointSlice{}, builder.WithPredicates(predicate.NewPredicateFuncs(llmServerPoolAvailable), predicate.NewPredicateFuncs(ownsEndPointSlice))).
 		Complete(c)
 }
 

@@ -7,7 +7,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 
@@ -77,11 +76,7 @@ func main() {
 		klog.Fatalf("failed to listen: %v", err)
 	}
 
-	datastore := &backend.K8sDatastore{
-		LLMServerPool: &v1alpha1.LLMServerPool{},
-		LLMServices:   &sync.Map{},
-		Pods:          &sync.Map{},
-	}
+	datastore := backend.NewK8sDataStore()
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme: scheme,
