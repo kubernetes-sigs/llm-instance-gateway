@@ -49,7 +49,7 @@ spec:
       containers:
       - name: instance-gateway-ext-proc
         # TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/34) Update the image and args.
-        image: "us-docker.pkg.dev/kaushikmitra-gke-dev/kaushikmitra-docker-repo/llm-ig-ext-proc:latest"
+        image: <BUILT-IMAGE>
         args:
         - -serverPoolName 
         - "vllm-llama2-7b-pool"
