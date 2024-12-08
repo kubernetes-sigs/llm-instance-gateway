@@ -32,15 +32,6 @@ const (
 type PodMetricsClientImpl struct {
 }
 
-// bug fix
-func replaceValue(input string, newValue string) string {
-	parts := strings.Split(input, ":")
-	if len(parts) != 2 {
-		return input // Return original if no colon found or multiple colons
-	}
-	return parts[0] + ":" + newValue
-}
-
 // FetchMetrics fetches metrics from a given pod.
 func (p *PodMetricsClientImpl) FetchMetrics(ctx context.Context, pod backend.Pod, existing *backend.PodMetrics) (*backend.PodMetrics, error) {
 	// Currently the metrics endpoint is hard-coded, which works with vLLM.
