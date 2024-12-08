@@ -59,4 +59,4 @@ The current manifests rely on Envoy Gateway [v1.2.1](https://gateway.envoyproxy.
 The scheduling package implements request scheduling algorithms for load balancing requests across backend pods in an inference gateway. The scheduler ensures efficient resource utilization while maintaining low latency and prioritizing critical requests. It applies a series of filters based on metrics and heuristics to select the best pod for a given request.
 
 # Flowchart
-![alt text](../docs/schedular-flowchart.png)
+<img src="../docs/schedular-flowchart.png" alt="Scheduling Algorithm" width="400" />
