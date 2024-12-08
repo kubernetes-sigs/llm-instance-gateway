@@ -125,7 +125,7 @@ func leastQueuingFilterFunc(req *LLMRequest, pods []*backend.PodMetrics) ([]*bac
 func lowQueuingFilterFunc(req *LLMRequest, pods []*backend.PodMetrics) ([]*backend.PodMetrics, error) {
 	filtered := []*backend.PodMetrics{}
 	for _, pod := range pods {
-		if pod.WaitingQueueSize <= queueingThresholdLoRA {
+		if pod.WaitingQueueSize < queueingThresholdLoRA {
 			filtered = append(filtered, pod)
 		}
 	}

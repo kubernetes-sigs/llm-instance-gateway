@@ -12,24 +12,53 @@ func (s *Server) HandleResponseHeaders(reqCtx *RequestContext, req *extProcPb.Pr
 	h := req.Request.(*extProcPb.ProcessingRequest_ResponseHeaders)
 	klog.V(3).Infof("Headers before: %+v\n", h)
 
-	resp := &extProcPb.ProcessingResponse{
-		Response: &extProcPb.ProcessingResponse_ResponseHeaders{
-			ResponseHeaders: &extProcPb.HeadersResponse{
-				Response: &extProcPb.CommonResponse{
-					HeaderMutation: &extProcPb.HeaderMutation{
-						SetHeaders: []*configPb.HeaderValueOption{
-							{
-								Header: &configPb.HeaderValue{
-									// This is for debugging purpose only.
-									Key:      "x-went-into-resp-headers",
-									RawValue: []byte("true"),
+	var resp *extProcPb.ProcessingResponse
+	if reqCtx.TargetPod != nil {
+		resp = &extProcPb.ProcessingResponse{
+			Response: &extProcPb.ProcessingResponse_ResponseHeaders{
+				ResponseHeaders: &extProcPb.HeadersResponse{
+					Response: &extProcPb.CommonResponse{
+						HeaderMutation: &extProcPb.HeaderMutation{
+							SetHeaders: []*configPb.HeaderValueOption{
+								{
+									Header: &configPb.HeaderValue{
+										// This is for debugging purpose only.
+										Key:      "x-went-into-resp-headers",
+										RawValue: []byte("true"),
+									},
+								},
+								{
+									Header: &configPb.HeaderValue{
+										Key:      "target-pod",
+										RawValue: []byte(reqCtx.TargetPod.Address),
+									},
 								},
 							},
 						},
 					},
 				},
 			},
-		},
+		}
+	} else {
+		resp = &extProcPb.ProcessingResponse{
+			Response: &extProcPb.ProcessingResponse_ResponseHeaders{
+				ResponseHeaders: &extProcPb.HeadersResponse{
+					Response: &extProcPb.CommonResponse{
+						HeaderMutation: &extProcPb.HeaderMutation{
+							SetHeaders: []*configPb.HeaderValueOption{
+								{
+									Header: &configPb.HeaderValue{
+										// This is for debugging purpose only.
+										Key:      "x-went-into-resp-headers",
+										RawValue: []byte("true"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
 	}
 	return resp, nil
 }

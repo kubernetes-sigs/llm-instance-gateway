@@ -3,9 +3,9 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: <GATEWAY-NAME>
+  name: instance-gateway
 spec:
-  gatewayClassName: <GATEWAY-NAME>
+  gatewayClassName: instance-gateway
   listeners:
     - name: http
       protocol: HTTP
@@ -17,7 +17,7 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
-  name: <GATEWAY-NAME>
+  name: instance-gateway
 spec:
   controllerName: gateway.envoyproxy.io/gatewayclass-controller
 ---
@@ -38,7 +38,7 @@ metadata:
   name: llm-route
 spec:
   parentRefs:
-    - name: <GATEWAY-NAME>
+    - name: instance-gateway
       sectionName: llm-gw
   rules:
   - backendRefs:

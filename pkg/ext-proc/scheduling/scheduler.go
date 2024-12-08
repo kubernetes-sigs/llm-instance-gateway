@@ -17,7 +17,8 @@ const (
 	kvCacheThreshold = 0.8
 	// TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/16) Make this configurable.
 	queueThresholdCritical = 5
-	queueingThresholdLoRA  = 1000
+	// TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/16) Make this configurable.
+	queueingThresholdLoRA = 1000
 )
 
 var (
@@ -53,7 +54,7 @@ var (
 		},
 	}
 
-	// lowLatencyFilterModified defaults to lowLatencyFilter above a certain queueing threshold. LoRA affinity takes precedence below that queueing threshold.
+	// lowLatencyFilterModified defaults to lowLatencyFilterLoRA above a certain queueing threshold. LoRA affinity takes precedence below that queueing threshold.
 	lowLatencyFilterModified = &filter{
 		name:   "low queueing filter",
 		filter: lowQueuingFilterFunc,
