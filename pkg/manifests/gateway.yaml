@@ -38,7 +38,7 @@ metadata:
   name: llm-route
 spec:
   parentRefs:
-    - name: instance-gateway
+    - name: <GATEWAY-NAME>
       sectionName: llm-gw
   rules:
   - backendRefs:
