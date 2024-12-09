@@ -1,32 +1,17 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: vllm-llama2-7b-pool
-spec:
-  selector:
-    app: vllm-llama2-7b-pool
-  ports:
-  - protocol: TCP
-    port: 8000
-    targetPort: 8000
-  type: LoadBalancer
-
----
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: vllm-llama2-7b-pool
+  name: vllm
   namespace: default
 spec:
-  replicas: 3
+  replicas: 6
   selector:
     matchLabels:
-      app: vllm-llama2-7b-pool
+      app: vllm
   template:
     metadata:
       labels:
-        app: vllm-llama2-7b-pool
+        app: vllm
     spec:
       containers:
         - name: lora

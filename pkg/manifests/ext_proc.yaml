@@ -1,34 +1,3 @@
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: pod-read
-rules:
-- apiGroups: ["inference.networking.x-k8s.io"]
-  resources: ["llmservices"]
-  verbs: ["get", "watch", "list"]
-- apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["get", "watch", "list"]
-- apiGroups: ["inference.networking.x-k8s.io"]
-  resources: ["llmserverpools"]
-  verbs: ["get", "watch", "list"]
-- apiGroups: ["discovery.k8s.io"]
-  resources: ["endpointslices"]
-  verbs: ["get", "watch", "list"]
---- 
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: pod-read-binding
-subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: default
-roleRef:
-  kind: ClusterRole
-  name: pod-read
----
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -51,14 +20,13 @@ spec:
         # TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/34) Update the image and args.
         image: <BUILT-IMAGE>
         args:
-        - -serverPoolName 
-        - "vllm-llama2-7b-pool"
-        - -v=3
-        - -serviceName
-        - "vllm-llama2-7b-pool"
+        # TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/12) Remove this once ext proc can dynamically reconcile on LLMServerPool.
+        - -pods
+        - "vllm-78665f78c4-h4kx4,vllm-78665f78c4-hnz84"
+        - -podIPs
+        - "10.24.11.6:8000,10.24.5.7:8000"
         ports:
         - containerPort: 9002
-        
       - name: curl
         image: curlimages/curl
         command: ["sleep", "3600"]
@@ -92,7 +60,7 @@ spec:
       processingMode:
         request:
           body: Buffered
-        response: {}
+        response:
       # The timeouts are likely not needed here. We can experiment with removing/tuning them slowly.
       # The connection limits are more important and will cause the opaque: ext_proc_gRPC_error_14 error in Envoy GW if not configured correctly. 
       messageTimeout: 1000s

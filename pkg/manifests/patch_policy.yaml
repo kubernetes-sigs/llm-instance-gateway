@@ -7,7 +7,7 @@ spec:
   targetRef:
     group: gateway.networking.k8s.io
     kind: Gateway
-    name: instance-gateway
+    name: <GATEWAY-NAME>
   type: JSONPatch
   jsonPatches:
     # Necessary to create a cluster of the type: ORIGINAL_DST to allow for 
@@ -36,7 +36,7 @@ spec:
               max_requests: 40000
 
     - type: "type.googleapis.com/envoy.config.route.v3.RouteConfiguration"
-      name: default/instance-gateway/llm-gw
+      name: default/<GATEWAY-NAME>/llm-gw
       operation:
         op: replace
         path: "/virtual_hosts/0/routes/0/route/cluster"
