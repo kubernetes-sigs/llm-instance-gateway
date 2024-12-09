@@ -18,7 +18,7 @@ const (
 	// TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/16) Make this configurable.
 	queueThresholdCritical = 5
 	// TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/16) Make this configurable.
-	queueingThresholdLoRA = 1000
+	queueingThresholdLoRA = 50
 )
 
 var (
