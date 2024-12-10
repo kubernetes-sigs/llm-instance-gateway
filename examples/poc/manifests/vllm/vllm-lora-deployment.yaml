@@ -1,17 +1,32 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm-llama2-7b-pool
+spec:
+  selector:
+    app: vllm-llama2-7b-pool
+  ports:
+  - protocol: TCP
+    port: 8000
+    targetPort: 8000
+  type: ClusterIP
+
+---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: vllm
+  name: vllm-llama2-7b-pool
   namespace: default
 spec:
-  replicas: 6
+  replicas: 3
   selector:
     matchLabels:
-      app: vllm
+      app: vllm-llama2-7b-pool
   template:
     metadata:
       labels:
-        app: vllm
+        app: vllm-llama2-7b-pool
     spec:
       containers:
         - name: lora
