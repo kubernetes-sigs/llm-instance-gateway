@@ -48,7 +48,7 @@ spec:
     spec:
       containers:
       - name: inference-gateway-ext-proc
-        # TODO(https://github.com/kubernetes-sigs/llm-inference-gateway/issues/34) Update the image and args.
+        # TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/34) Update the image and args.
         image: <BUILT-IMAGE>
         args:
         - -serverPoolName 
