@@ -40,13 +40,15 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 	// This might be a security risk in the future where adapters not registered in the LLMService
 	// are able to be requested by using their distinct name.
 	modelObj := s.datastore.FetchModelData(model)
-	if modelObj != nil && len(modelObj.TargetModels) > 0 {
+	if modelObj == nil {
+		return nil, fmt.Errorf("error finding a model object in LLMService for input model %v", model)
+	}
+	if len(modelObj.TargetModels) > 0 {
 		modelName = backend.RandomWeightedDraw(modelObj, 0)
 		if modelName == "" {
 			return nil, fmt.Errorf("error getting target model name for model %v", modelObj.Name)
 		}
 	}
-	klog.V(3).Infof("Model is null %v", modelObj == nil)
 	llmReq := &scheduling.LLMRequest{
 		Model:               model,
 		ResolvedTargetModel: modelName,

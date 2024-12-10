@@ -121,13 +121,13 @@ func (p *Provider) refreshPodsOnce() error {
 	// remove pods that don't exist any more.
 	mergeFn := func(k, v any) bool {
 		pod := k.(Pod)
-		if _, ok := p.datastore.Pods.Load(pod); !ok {
+		if _, ok := p.datastore.pods.Load(pod); !ok {
 			p.podMetrics.Delete(pod)
 		}
 		return true
 	}
 	p.podMetrics.Range(mergeFn)
-	p.datastore.Pods.Range(addNewPods)
+	p.datastore.pods.Range(addNewPods)
 	return nil
 }
 

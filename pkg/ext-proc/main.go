@@ -7,7 +7,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 
@@ -64,17 +63,20 @@ func main() {
 
 	ctrl.SetLogger(klog.TODO())
 
+	// Print all flag values
+	flags := "Flags: "
+	flag.VisitAll(func(f *flag.Flag) {
+		flags += fmt.Sprintf("%s=%v; ", f.Name, f.Value)
+	})
+	klog.Info(flags)
+
 	klog.Infof("Listening on %q", fmt.Sprintf(":%d", *port))
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
 		klog.Fatalf("failed to listen: %v", err)
 	}
 
-	datastore := &backend.K8sDatastore{
-		LLMServerPool: &v1alpha1.LLMServerPool{},
-		LLMServices:   &sync.Map{},
-		Pods:          &sync.Map{},
-	}
+	datastore := backend.NewK8sDataStore()
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme: scheme,

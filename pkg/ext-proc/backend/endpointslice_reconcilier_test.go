@@ -18,15 +18,15 @@ var (
 func TestUpdateDatastore_EndpointSliceReconciler(t *testing.T) {
 	tests := []struct {
 		name          string
-		datastore     K8sDatastore
+		datastore     *K8sDatastore
 		incomingSlice *discoveryv1.EndpointSlice
-		want          K8sDatastore
+		wantPods      *sync.Map
 	}{
 		{
 			name: "Add new pod",
-			datastore: K8sDatastore{
-				Pods: populateMap(basePod1, basePod2),
-				LLMServerPool: &v1alpha1.LLMServerPool{
+			datastore: &K8sDatastore{
+				pods: populateMap(basePod1, basePod2),
+				llmServerPool: &v1alpha1.LLMServerPool{
 					Spec: v1alpha1.LLMServerPoolSpec{
 						TargetPort: int32(8000),
 					},
@@ -66,15 +66,13 @@ func TestUpdateDatastore_EndpointSliceReconciler(t *testing.T) {
 					},
 				},
 			},
-			want: K8sDatastore{
-				Pods: populateMap(basePod1, basePod2, basePod3),
-			},
+			wantPods: populateMap(basePod1, basePod2, basePod3),
 		},
 		{
 			name: "New pod, but its not ready yet. Do not add.",
-			datastore: K8sDatastore{
-				Pods: populateMap(basePod1, basePod2),
-				LLMServerPool: &v1alpha1.LLMServerPool{
+			datastore: &K8sDatastore{
+				pods: populateMap(basePod1, basePod2),
+				llmServerPool: &v1alpha1.LLMServerPool{
 					Spec: v1alpha1.LLMServerPoolSpec{
 						TargetPort: int32(8000),
 					},
@@ -114,15 +112,13 @@ func TestUpdateDatastore_EndpointSliceReconciler(t *testing.T) {
 					},
 				},
 			},
-			want: K8sDatastore{
-				Pods: populateMap(basePod1, basePod2),
-			},
+			wantPods: populateMap(basePod1, basePod2),
 		},
 		{
 			name: "Existing pod not ready, new pod added, and is ready",
-			datastore: K8sDatastore{
-				Pods: populateMap(basePod1, basePod2),
-				LLMServerPool: &v1alpha1.LLMServerPool{
+			datastore: &K8sDatastore{
+				pods: populateMap(basePod1, basePod2),
+				llmServerPool: &v1alpha1.LLMServerPool{
 					Spec: v1alpha1.LLMServerPoolSpec{
 						TargetPort: int32(8000),
 					},
@@ -162,18 +158,16 @@ func TestUpdateDatastore_EndpointSliceReconciler(t *testing.T) {
 					},
 				},
 			},
-			want: K8sDatastore{
-				Pods: populateMap(basePod3, basePod2),
-			},
+			wantPods: populateMap(basePod3, basePod2),
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			endpointSliceReconciler := &EndpointSliceReconciler{Datastore: &test.datastore, Zone: ""}
+			endpointSliceReconciler := &EndpointSliceReconciler{Datastore: test.datastore, Zone: ""}
 			endpointSliceReconciler.updateDatastore(test.incomingSlice)
 
-			if mapsEqual(endpointSliceReconciler.Datastore.Pods, test.want.Pods) {
-				t.Errorf("Unexpected output pod mismatch. \n Got %v \n Want: %v \n", endpointSliceReconciler.Datastore.Pods, test.want.Pods)
+			if mapsEqual(endpointSliceReconciler.Datastore.pods, test.wantPods) {
+				t.Errorf("Unexpected output pod mismatch. \n Got %v \n Want: %v \n", endpointSliceReconciler.Datastore.pods, test.wantPods)
 			}
 		})
 	}
