@@ -32,28 +32,29 @@ roleRef:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: instance-gateway-ext-proc
+  name: inference-gateway-ext-proc
   namespace: default
   labels:
-    app: instance-gateway-ext-proc
+    app: inference-gateway-ext-proc
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: instance-gateway-ext-proc
+      app: inference-gateway-ext-proc
   template:
     metadata:
       labels:
-        app: instance-gateway-ext-proc
+        app: inference-gateway-ext-proc
     spec:
       containers:
-      - name: instance-gateway-ext-proc
-        # TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/34) Update the image and args.
+      - name: inference-gateway-ext-proc
+        # TODO(https://github.com/kubernetes-sigs/llm-inference-gateway/issues/34) Update the image and args.
         image: <BUILT-IMAGE>
         args:
         - -serverPoolName 
         - "vllm-llama2-7b-pool"
-        - -v=3
+        - -v
+        - "3"
         - -serviceName
         - "vllm-llama2-7b-pool"
         ports:
@@ -66,11 +67,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: instance-gateway-ext-proc
+  name: inference-gateway-ext-proc
   namespace: default
 spec:
   selector:
-    app: instance-gateway-ext-proc
+    app: inference-gateway-ext-proc
   ports:
     - protocol: TCP
       port: 9002
@@ -87,7 +88,7 @@ spec:
     - backendRefs:
       - group: ""
         kind: Service
-        name: instance-gateway-ext-proc
+        name: inference-gateway-ext-proc
         port: 9002
       processingMode:
         request:
