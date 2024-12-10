@@ -121,15 +121,9 @@ func leastQueuingFilterFunc(req *LLMRequest, pods []*backend.PodMetrics) ([]*bac
 	return filtered, nil
 }
 
-// lowQueuingFilterFunc filters pods that have queue size less than the threshold.
-func lowQueuingFilterFunc(req *LLMRequest, pods []*backend.PodMetrics) ([]*backend.PodMetrics, error) {
-	filtered := []*backend.PodMetrics{}
-	for _, pod := range pods {
-		if pod.WaitingQueueSize < queueingThresholdLoRA {
-			filtered = append(filtered, pod)
-		}
-	}
-	return filtered, nil
+// loRAAffinityPredicate is a filter function to check whether a pod has affinity to the lora requested.
+func lowQueueingPodPredicate(_ *LLMRequest, pod *backend.PodMetrics) bool {
+	return pod.WaitingQueueSize < queueingThresholdLoRA
 }
 
 // leastKVCacheFilterFunc finds the max and min KV cache of all pods, divides the whole range
@@ -176,8 +170,8 @@ func loRAAffinityPredicate(req *LLMRequest, pod *backend.PodMetrics) bool {
 	return ok
 }
 
-// minLoRAPredicate is a filter function to check whether a pod has room to load the adapter.
-func minLoRAPredicate(req *LLMRequest, pod *backend.PodMetrics) bool {
+// canAcceptNewLoraPredicate is a filter function to check whether a pod has room to load the adapter.
+func canAcceptNewLoraPredicate(req *LLMRequest, pod *backend.PodMetrics) bool {
 	return len(pod.ActiveModels) < pod.MaxActiveModels
 }
 

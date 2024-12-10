@@ -18,6 +18,8 @@ const (
 	// TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/16) Make this configurable.
 	queueThresholdCritical = 5
 	// TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/16) Make this configurable.
+	// the threshold for queued requests to be considered low below which we can prioritize LoRA affinity.
+	// The value of 50 is arrived heuristicically based on experiments.
 	queueingThresholdLoRA = 50
 )
 
@@ -57,14 +59,14 @@ var (
 	// lowLatencyFilterModified defaults to lowLatencyFilterLoRA above a certain queueing threshold. LoRA affinity takes precedence below that queueing threshold.
 	lowLatencyFilterModified = &filter{
 		name:   "low queueing filter",
-		filter: lowQueuingFilterFunc,
+		filter: toFilterFunc((lowQueueingPodPredicate)),
 		nextOnSuccess: &filter{
 			name:          "affinity LoRA",
 			filter:        toFilterFunc(loRAAffinityPredicate),
 			nextOnSuccess: lowLatencyFilterNoLoRA,
 			nextOnFailure: &filter{
 				name:                   "min cost LoRA",
-				filter:                 toFilterFunc(minLoRAPredicate),
+				filter:                 toFilterFunc(canAcceptNewLoraPredicate),
 				nextOnSuccessOrFailure: lowLatencyFilterNoLoRA,
 			},
 		},
