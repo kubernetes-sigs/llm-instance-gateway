@@ -9,12 +9,12 @@ The current manifests rely on Envoy Gateway [v1.2.1](https://gateway.envoyproxy.
 
    A sample vLLM deployment with the proper protocol to work with LLM Instance Gateway can be found [here](https://github.com/kubernetes-sigs/llm-instance-gateway/tree/main/examples/poc/manifests/vllm/vllm-lora-deployment.yaml#L18).
 
-2. **Deploy LLM Service and LLMServerPool**
+1. **Deploy LLM Service and LLMServerPool**
 
    You can find a sample LLM service and LLMServerPool configuration, based on the vLLM deployments mentioned above, [here](https://github.com/kubernetes-sigs/llm-instance-gateway/tree/main/examples/poc/manifests/llmservice.yaml).
 
 
-3. **Update Envoy Gateway Config to enable Patch Policy**
+1. **Update Envoy Gateway Config to enable Patch Policy**
 
    Our custom LLM Gateway ext-proc is patched into the existing envoy gateway via `EnvoyPatchPolicy`. To enable this feature, we must extend the Envoy Gateway config map. To do this, simply run:
    ```bash
@@ -25,20 +25,20 @@ The current manifests rely on Envoy Gateway [v1.2.1](https://gateway.envoyproxy.
    Additionally, if you would like to enable the admin interface, you can uncomment the admin lines and run this again.
 
 
-4. **Deploy Gateway**
+1. **Deploy Gateway**
 
    ```bash
    kubectl apply -f ./manifests/gateway.yaml
    ```
 
-5. **Deploy Ext-Proc**
+1. **Deploy Ext-Proc**
 
    ```bash
    kubectl apply -f ./manifests/ext_proc.yaml
    kubectl apply -f ./manifests/patch_policy.yaml
    ```
 
-6. **Try it out**
+1. **Try it out**
 
    Wait until the gateway is ready.
 
