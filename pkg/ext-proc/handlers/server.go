@@ -35,7 +35,7 @@ type Server struct {
 }
 
 type Scheduler interface {
-	Schedule(b *scheduling.LLMRequest) (targetPod *backend.Pod, err error)
+	Schedule(b *scheduling.LLMRequest) (targetPod backend.Pod, err error)
 }
 
 // PodProvider is an interface to provide set of pods in the backend and information such as metrics.
@@ -77,13 +77,16 @@ func (s *Server) Process(srv extProcPb.ExternalProcessor_ProcessServer) error {
 		switch v := req.Request.(type) {
 		case *extProcPb.ProcessingRequest_RequestHeaders:
 			resp = HandleRequestHeaders(reqCtx, req)
-			klog.V(3).Infof("Request context after HandleRequestHeaders: %v", reqCtx)
+			klog.V(3).Infof("Request context after HandleRequestHeaders: %+v", reqCtx)
 		case *extProcPb.ProcessingRequest_RequestBody:
 			resp, err = s.HandleRequestBody(reqCtx, req)
-			klog.V(3).Infof("Request context after HandleRequestBody: %v", reqCtx)
+			klog.V(3).Infof("Request context after HandleRequestBody: %+v", reqCtx)
 		case *extProcPb.ProcessingRequest_ResponseHeaders:
 			resp, err = s.HandleResponseHeaders(reqCtx, req)
-			klog.V(3).Infof("Request context after HandleResponseHeaders: %v", reqCtx)
+			klog.V(3).Infof("Request context after HandleResponseHeaders: %+v", reqCtx)
+		case *extProcPb.ProcessingRequest_ResponseBody:
+			resp, err = s.HandleResponseBody(reqCtx, req)
+			klog.V(3).Infof("Request context after HandleResponseBody: %+v", reqCtx)
 		default:
 			klog.Errorf("Unknown Request type %+v", v)
 			return status.Error(codes.Unknown, "unknown request type")
@@ -119,6 +122,7 @@ func (s *Server) Process(srv extProcPb.ExternalProcessor_ProcessServer) error {
 
 // RequestContext stores context information during the life time of an HTTP request.
 type RequestContext struct {
-	TargetPod *backend.Pod
+	TargetPod backend.Pod
 	Model     string
+	Response  Response
 }
