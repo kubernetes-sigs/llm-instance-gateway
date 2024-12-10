@@ -16,13 +16,19 @@ import (
 	"google.golang.org/grpc/codes"
 	healthPb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
-	"inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
-	"k8s.io/apimachinery/pkg/runtime"
+
+	// K8s imports
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	klog "k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 
+	// I-GW imports
+	"inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
+	clientset "inference.networking.x-k8s.io/llm-instance-gateway/client-go/clientset/versioned"
+	informers "inference.networking.x-k8s.io/llm-instance-gateway/client-go/informers/externalversions"
 	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/backend"
 	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/backend/vllm"
 	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/handlers"
@@ -38,7 +44,6 @@ var (
 	zone                   = flag.String("zone", "", "The zone that this instance is created in. Will be passed to the corresponding endpointSlice. ")
 	refreshPodsInterval    = flag.Duration("refreshPodsInterval", 10*time.Second, "interval to refresh pods")
 	refreshMetricsInterval = flag.Duration("refreshMetricsInterval", 50*time.Millisecond, "interval to refresh metrics")
-	scheme                 = runtime.NewScheme()
 )
 
 type healthServer struct{}
@@ -53,8 +58,8 @@ func (s *healthServer) Watch(in *healthPb.HealthCheckRequest, srv healthPb.Healt
 }
 
 func init() {
-	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(v1alpha1.AddToScheme(scheme))
+	utilruntime.Must(scheme.AddToScheme(scheme.Scheme))
+	utilruntime.Must(v1alpha1.AddToScheme(scheme.Scheme))
 }
 
 func main() {
@@ -63,6 +68,7 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(klog.TODO())
+	ctx := SetupSignalHandler()
 
 	klog.Infof("Listening on %q", fmt.Sprintf(":%d", *port))
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
@@ -77,23 +83,53 @@ func main() {
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme: scheme,
+		Scheme: scheme.Scheme,
 	})
 	if err != nil {
 		klog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
-	if err := (&backend.LLMServerPoolReconciler{
-		Datastore:      datastore,
-		Scheme:         mgr.GetScheme(),
-		Client:         mgr.GetClient(),
-		ServerPoolName: *serverPoolName,
-		Namespace:      *namespace,
-		Record:         mgr.GetEventRecorderFor("llmserverpool"),
-	}).SetupWithManager(mgr); err != nil {
-		klog.Error(err, "Error setting up LLMServerPoolReconciler")
+	cfg, err := rest.InClusterConfig()
+	if err != nil {
+		panic(err.Error())
 	}
+
+	kubeClient, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		klog.Error(err, "Error building kubernetes clientset")
+		klog.FlushAndExit(klog.ExitFlushTimeout, 1)
+	}
+
+	client, err := clientset.NewForConfig(cfg)
+	if err != nil {
+		klog.Error(err, "Error building kubernetes clientset")
+		klog.FlushAndExit(klog.ExitFlushTimeout, 1)
+	}
+
+	poolInformerFactory := informers.NewSharedInformerFactory(client, time.Second*30)
+
+	poolReconciler := backend.NewLLMServerPoolReconciler(
+		ctx,
+		poolInformerFactory.Api().V1alpha1().LLMServerPools(),
+		client,
+		kubeClient,
+		scheme.Scheme,
+		*serverPoolName,
+		*namespace,
+		*zone,
+		datastore,
+	)
+
+	// This is required, and informers will not sync without this func being called.
+	poolInformerFactory.Start(ctx.Done())
+
+	errChan := make(chan error)
+	go func() {
+		if err := poolReconciler.Run(ctx, 2); err != nil {
+			errChan <- err
+		}
+	}()
 
 	if err := (&backend.LLMServiceReconciler{
 		Datastore:      datastore,
@@ -118,7 +154,6 @@ func main() {
 		klog.Error(err, "Error setting up EndpointSliceReconciler")
 	}
 
-	errChan := make(chan error)
 	go func() {
 		if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 			klog.Error(err, "Error running manager")
@@ -155,4 +190,26 @@ func main() {
 
 	s.Serve(lis)
 
+}
+
+var onlyOneSignalHandler = make(chan struct{})
+
+// SetupSignalHandler registered for SIGTERM and SIGINT. A context is returned
+// which is cancelled on one of these signals. If a second signal is caught,
+// the program is terminated with exit code 1.
+func SetupSignalHandler() context.Context {
+	close(onlyOneSignalHandler) // panics when called twice
+
+	c := make(chan os.Signal, 2)
+	ctx, cancel := context.WithCancel(context.Background())
+	shutdownSignals := []os.Signal{os.Interrupt, syscall.SIGTERM}
+	signal.Notify(c, shutdownSignals...)
+	go func() {
+		<-c
+		cancel()
+		<-c
+		os.Exit(1) // second signal. Exit directly.
+	}()
+
+	return ctx
 }

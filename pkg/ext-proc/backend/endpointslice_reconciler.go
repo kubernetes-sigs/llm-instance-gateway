@@ -3,6 +3,7 @@ package backend
 import (
 	"context"
 	"fmt"
+	"time"
 
 	discoveryv1 "k8s.io/api/discovery/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,7 +30,9 @@ type EndpointSliceReconciler struct {
 
 func (c *EndpointSliceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	klog.V(1).Info("reconciling EndpointSlice ", req.NamespacedName)
-
+	if c.Datastore.LLMServerPool == nil {
+		return ctrl.Result{RequeueAfter: 100 * time.Millisecond}, nil
+	}
 	endpointSlice := &discoveryv1.EndpointSlice{}
 	if err := c.Get(ctx, req.NamespacedName, endpointSlice); err != nil {
 		klog.Error(err, "unable to get LLMServerPool")
