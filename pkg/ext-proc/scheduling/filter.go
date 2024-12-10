@@ -121,7 +121,6 @@ func leastQueuingFilterFunc(req *LLMRequest, pods []*backend.PodMetrics) ([]*bac
 	return filtered, nil
 }
 
-// loRAAffinityPredicate is a filter function to check whether a pod has affinity to the lora requested.
 func lowQueueingPodPredicate(_ *LLMRequest, pod *backend.PodMetrics) bool {
 	return pod.WaitingQueueSize < queueingThresholdLoRA
 }
