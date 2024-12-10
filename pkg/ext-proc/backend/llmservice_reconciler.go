@@ -22,14 +22,11 @@ type LLMServiceReconciler struct {
 }
 
 func (c *LLMServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	if req.Namespace != c.Namespace {
-		return ctrl.Result{}, nil
-	}
-	klog.V(1).Info("reconciling LLMService", req.NamespacedName)
+	klog.V(2).Infof("Reconciling LLMService %v", req.NamespacedName)
 
 	service := &v1alpha1.LLMService{}
 	if err := c.Get(ctx, req.NamespacedName, service); err != nil {
-		klog.Error(err, "unable to get LLMServerPool")
+		klog.Errorf("Unable to get LLMServerPool: %v", err)
 		return ctrl.Result{}, err
 	}
 
@@ -46,12 +43,13 @@ func (c *LLMServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func (c *LLMServiceReconciler) updateDatastore(service *v1alpha1.LLMService) {
 	for _, ref := range service.Spec.PoolRef {
 		if strings.Contains(strings.ToLower(ref.Kind), strings.ToLower("LLMServerPool")) && ref.Name == c.ServerPoolName {
-			klog.V(2).Infof("Adding/Updating service: %v", service.Name)
-			c.Datastore.LLMServices.Store(service.Name, service)
+			klog.V(2).Infof("Adding/Updating service: %+v", service)
+			c.Datastore.llmServices.Store(service.Name, service)
 			return
 		}
 	}
-	klog.V(2).Infof("Removing/Not adding service: %v", service.Name)
-	// If we get here. The service is not relevant to this pool, remove.
-	c.Datastore.LLMServices.Delete(service.Name)
+	klog.V(2).Infof("Removing/Not adding service: %+v", service)
+	// The LLMService may have changed to a different pool. Remove such services.
+	// Otherwise this is a noop.
+	c.Datastore.llmServices.Delete(service.Name)
 }

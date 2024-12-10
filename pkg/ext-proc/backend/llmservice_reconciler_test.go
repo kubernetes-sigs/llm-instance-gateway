@@ -69,14 +69,14 @@ var (
 func TestUpdateDatastore_LLMServiceReconciler(t *testing.T) {
 	tests := []struct {
 		name            string
-		datastore       K8sDatastore
+		datastore       *K8sDatastore
 		incomingService *v1alpha1.LLMService
-		want            K8sDatastore
+		wantLLMService  *sync.Map
 	}{
 		{
 			name: "No Services registered; valid, new service incoming.",
-			datastore: K8sDatastore{
-				LLMServerPool: &v1alpha1.LLMServerPool{
+			datastore: &K8sDatastore{
+				llmServerPool: &v1alpha1.LLMServerPool{
 					Spec: v1alpha1.LLMServerPoolSpec{
 						ModelServerSelector: map[string]string{"app": "vllm"},
 					},
@@ -85,26 +85,15 @@ func TestUpdateDatastore_LLMServiceReconciler(t *testing.T) {
 						ResourceVersion: "Old and boring",
 					},
 				},
-				LLMServices: &sync.Map{},
+				llmServices: &sync.Map{},
 			},
 			incomingService: service1,
-			want: K8sDatastore{
-				LLMServerPool: &v1alpha1.LLMServerPool{
-					Spec: v1alpha1.LLMServerPoolSpec{
-						ModelServerSelector: map[string]string{"app": "not-vllm"},
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name:            "test-pool",
-						ResourceVersion: "New and fun",
-					},
-				},
-				LLMServices: populateServiceMap(service1),
-			},
+			wantLLMService:  populateServiceMap(service1),
 		},
 		{
 			name: "Removing existing service.",
-			datastore: K8sDatastore{
-				LLMServerPool: &v1alpha1.LLMServerPool{
+			datastore: &K8sDatastore{
+				llmServerPool: &v1alpha1.LLMServerPool{
 					Spec: v1alpha1.LLMServerPoolSpec{
 						ModelServerSelector: map[string]string{"app": "vllm"},
 					},
@@ -113,26 +102,15 @@ func TestUpdateDatastore_LLMServiceReconciler(t *testing.T) {
 						ResourceVersion: "Old and boring",
 					},
 				},
-				LLMServices: populateServiceMap(service1),
+				llmServices: populateServiceMap(service1),
 			},
 			incomingService: service1Modified,
-			want: K8sDatastore{
-				LLMServerPool: &v1alpha1.LLMServerPool{
-					Spec: v1alpha1.LLMServerPoolSpec{
-						ModelServerSelector: map[string]string{"app": "not-vllm"},
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name:            "test-pool",
-						ResourceVersion: "New and fun",
-					},
-				},
-				LLMServices: populateServiceMap(),
-			},
+			wantLLMService:  populateServiceMap(),
 		},
 		{
 			name: "Unrelated service, do nothing.",
-			datastore: K8sDatastore{
-				LLMServerPool: &v1alpha1.LLMServerPool{
+			datastore: &K8sDatastore{
+				llmServerPool: &v1alpha1.LLMServerPool{
 					Spec: v1alpha1.LLMServerPoolSpec{
 						ModelServerSelector: map[string]string{"app": "vllm"},
 					},
@@ -141,7 +119,7 @@ func TestUpdateDatastore_LLMServiceReconciler(t *testing.T) {
 						ResourceVersion: "Old and boring",
 					},
 				},
-				LLMServices: populateServiceMap(service1),
+				llmServices: populateServiceMap(service1),
 			},
 			incomingService: &v1alpha1.LLMService{
 				Spec: v1alpha1.LLMServiceSpec{
@@ -161,23 +139,12 @@ func TestUpdateDatastore_LLMServiceReconciler(t *testing.T) {
 					Name: "unrelated-service",
 				},
 			},
-			want: K8sDatastore{
-				LLMServerPool: &v1alpha1.LLMServerPool{
-					Spec: v1alpha1.LLMServerPoolSpec{
-						ModelServerSelector: map[string]string{"app": "not-vllm"},
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name:            "test-pool",
-						ResourceVersion: "New and fun",
-					},
-				},
-				LLMServices: populateServiceMap(service1),
-			},
+			wantLLMService: populateServiceMap(service1),
 		},
 		{
 			name: "Add to existing",
-			datastore: K8sDatastore{
-				LLMServerPool: &v1alpha1.LLMServerPool{
+			datastore: &K8sDatastore{
+				llmServerPool: &v1alpha1.LLMServerPool{
 					Spec: v1alpha1.LLMServerPoolSpec{
 						ModelServerSelector: map[string]string{"app": "vllm"},
 					},
@@ -186,29 +153,18 @@ func TestUpdateDatastore_LLMServiceReconciler(t *testing.T) {
 						ResourceVersion: "Old and boring",
 					},
 				},
-				LLMServices: populateServiceMap(service1),
+				llmServices: populateServiceMap(service1),
 			},
 			incomingService: service2,
-			want: K8sDatastore{
-				LLMServerPool: &v1alpha1.LLMServerPool{
-					Spec: v1alpha1.LLMServerPoolSpec{
-						ModelServerSelector: map[string]string{"app": "not-vllm"},
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name:            "test-pool",
-						ResourceVersion: "New and fun",
-					},
-				},
-				LLMServices: populateServiceMap(service1, service2),
-			},
+			wantLLMService:  populateServiceMap(service1, service2),
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			llmServiceReconciler := &LLMServiceReconciler{Datastore: &test.datastore, ServerPoolName: test.datastore.LLMServerPool.Name}
+			llmServiceReconciler := &LLMServiceReconciler{Datastore: test.datastore, ServerPoolName: test.datastore.llmServerPool.Name}
 			llmServiceReconciler.updateDatastore(test.incomingService)
 
-			if ok := mapsEqual(llmServiceReconciler.Datastore.LLMServices, test.want.LLMServices); !ok {
+			if ok := mapsEqual(llmServiceReconciler.Datastore.llmServices, test.wantLLMService); !ok {
 				t.Error("Maps are not equal")
 			}
 		})

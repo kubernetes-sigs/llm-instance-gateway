@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"fmt"
 	"math/rand"
 	"sync"
 
@@ -9,16 +10,57 @@ import (
 	"k8s.io/klog/v2"
 )
 
+func NewK8sDataStore(options ...K8sDatastoreOption) *K8sDatastore {
+	store := &K8sDatastore{
+		poolMu:      sync.RWMutex{},
+		llmServices: &sync.Map{},
+		pods:        &sync.Map{},
+	}
+	for _, opt := range options {
+		opt(store)
+	}
+	return store
+}
+
 // The datastore is a local cache of relevant data for the given LLMServerPool (currently all pulled from k8s-api)
 type K8sDatastore struct {
-	LLMServerPool *v1alpha1.LLMServerPool
-	LLMServices   *sync.Map
-	Pods          *sync.Map
+	// poolMu is used to synchronize access to the llmServerPool.
+	poolMu        sync.RWMutex
+	llmServerPool *v1alpha1.LLMServerPool
+	llmServices   *sync.Map
+	pods          *sync.Map
+}
+
+type K8sDatastoreOption func(*K8sDatastore)
+
+// WithPods can be used in tests to override the pods.
+func WithPods(pods []*PodMetrics) K8sDatastoreOption {
+	return func(store *K8sDatastore) {
+		store.pods = &sync.Map{}
+		for _, pod := range pods {
+			store.pods.Store(pod.Pod, true)
+		}
+	}
+}
+
+func (ds *K8sDatastore) setLLMServerPool(pool *v1alpha1.LLMServerPool) {
+	ds.poolMu.Lock()
+	defer ds.poolMu.Unlock()
+	ds.llmServerPool = pool
+}
+
+func (ds *K8sDatastore) getLLMServerPool() (*v1alpha1.LLMServerPool, error) {
+	ds.poolMu.RLock()
+	defer ds.poolMu.RUnlock()
+	if ds.llmServerPool == nil {
+		return nil, fmt.Errorf("LLMServerPool hasn't been initialized yet")
+	}
+	return ds.llmServerPool, nil
 }
 
 func (ds *K8sDatastore) GetPodIPs() []string {
 	var ips []string
-	ds.Pods.Range(func(name, pod any) bool {
+	ds.pods.Range(func(name, pod any) bool {
 		ips = append(ips, pod.(*corev1.Pod).Status.PodIP)
 		return true
 	})
@@ -26,7 +68,7 @@ func (ds *K8sDatastore) GetPodIPs() []string {
 }
 
 func (s *K8sDatastore) FetchModelData(modelName string) (returnModel *v1alpha1.Model) {
-	s.LLMServices.Range(func(k, v any) bool {
+	s.llmServices.Range(func(k, v any) bool {
 		service := v.(*v1alpha1.LLMService)
 		klog.V(3).Infof("Service name: %v", service.Name)
 		for _, model := range service.Spec.Models {
