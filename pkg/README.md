@@ -7,7 +7,12 @@ The current manifests rely on Envoy Gateway [v1.2.1](https://gateway.envoyproxy.
 
 1. **Deploy Sample vLLM Application**
 
-   A sample vLLM deployment with the proper protocol to work with LLM Instance Gateway can be found [here](https://github.com/kubernetes-sigs/llm-instance-gateway/blob/6f9869d6595d2d0f8e6febcbec0f348cb44a3012/examples/poc/manifests/samples/vllm-lora-deployment.yaml#L18).
+   A sample vLLM deployment with the proper protocol to work with LLM Instance Gateway can be found [here](https://github.com/kubernetes-sigs/llm-instance-gateway/tree/main/examples/poc/manifests/vllm/vllm-lora-deployment.yaml#L18).
+
+1. **Deploy LLM Service and LLMServerPool**
+
+   You can find a sample LLM service and LLMServerPool configuration, based on the vLLM deployments mentioned above, [here](https://github.com/kubernetes-sigs/llm-instance-gateway/tree/main/examples/poc/manifests/llmservice.yaml).
+
 
 1. **Update Envoy Gateway Config to enable Patch Policy**
 
@@ -32,14 +37,13 @@ The current manifests rely on Envoy Gateway [v1.2.1](https://gateway.envoyproxy.
    kubectl apply -f ./manifests/ext_proc.yaml
    kubectl apply -f ./manifests/patch_policy.yaml
    ```
-   **NOTE**: Ensure the `instance-gateway-ext-proc` deployment is updated with the pod names and internal IP addresses of the vLLM replicas. This step is crucial for the correct routing of requests based on headers. This won't be needed once we make ext proc dynamically read the pods.
 
 1. **Try it out**
 
    Wait until the gateway is ready.
 
    ```bash
-   IP=$(kubectl get gateway/llm-gateway -o jsonpath='{.status.addresses[0].value}')
+   IP=$(kubectl get gateway/instance-gateway -o jsonpath='{.status.addresses[0].value}')
    PORT=8081
 
    curl -i ${IP}:${PORT}/v1/completions -H 'Content-Type: application/json' -d '{
@@ -49,3 +53,10 @@ The current manifests rely on Envoy Gateway [v1.2.1](https://gateway.envoyproxy.
    "temperature": 0
    }'
    ```
+
+
+## Scheduling Package in Ext Proc
+The scheduling package implements request scheduling algorithms for load balancing requests across backend pods in an inference gateway. The scheduler ensures efficient resource utilization while maintaining low latency and prioritizing critical requests. It applies a series of filters based on metrics and heuristics to select the best pod for a given request.
+
+# Flowchart
+<img src="../docs/schedular-flowchart.png" alt="Scheduling Algorithm" width="400" />
