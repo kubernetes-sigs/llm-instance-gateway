@@ -31,8 +31,7 @@ var (
 		nextOnFailure: sheddableRequestFilter,
 	}
 
-	// lowLatencyFilter tries to minimize the latency. The heuristic is to pick a server with lower
-	// cost to load an adapter and has low KV cache, which typically yields lower latency.
+	// queueLoRAAndKVCacheFilter applied least queue -> low cost lora ->  least KV Cache filter
 	queueLoRAAndKVCacheFilter = &filter{
 		name:   "least queuing",
 		filter: leastQueuingFilterFunc,
@@ -46,7 +45,7 @@ var (
 		},
 	}
 
-	// lowLatencyFilter is the same as lowLatencyFilter but without the LoRA cost filter.
+	// queueAndKVCacheFilter applies least queue followed by least KV Cache filter
 	queueAndKVCacheFilter = &filter{
 		name:   "least queuing",
 		filter: leastQueuingFilterFunc,
@@ -56,7 +55,6 @@ var (
 		},
 	}
 
-	// lowLatencyFilterModified defaults to lowLatencyFilterLoRA above a certain queueing threshold. LoRA affinity takes precedence below that queueing threshold.
 	lowLatencyFilter = &filter{
 		name:   "low queueing filter",
 		filter: toFilterFunc((lowQueueingPodPredicate)),
@@ -65,7 +63,7 @@ var (
 			filter:        toFilterFunc(loRAAffinityPredicate),
 			nextOnSuccess: queueAndKVCacheFilter,
 			nextOnFailure: &filter{
-				name:                   "min cost LoRA",
+				name:                   "can accept LoRA Adapter",
 				filter:                 toFilterFunc(canAcceptNewLoraPredicate),
 				nextOnSuccessOrFailure: queueAndKVCacheFilter,
 			},
