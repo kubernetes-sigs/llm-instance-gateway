@@ -60,7 +60,7 @@ The Inference Platform Admin creates and manages the infrastructure necessary to
 
 #### Inference Workload Owner
 
-A Inference Workload Owner persona owns and manages 1 or many Generative AI Workloads (LLM focused *currently*). This includes:
+An Inference Workload Owner persona owns and manages 1 or many Generative AI Workloads (LLM focused *currently*). This includes:
 - Defining importance
 - Managing fine-tunes
   - LoRA Adapters
@@ -95,11 +95,11 @@ It is _not_ expected for the InferencePool to:
  - Manage Deployments of Pods within the Pool
  - Manage Pod lifecycle of pods within the pool 
 
-Additionally, any Pod that seeks to join a InferencePool would need to support a protocol, defined by LLM Instance Gateway, to ensure the Pool has adequate information to intelligently route requests.
+Additionally, any Pod that seeks to join an InferencePool would need to support a protocol, defined by this project, to ensure the Pool has adequate information to intelligently route requests.
 
 ### InferenceModel
 
-A InferenceModel allows the Inference Workload Owner to define:
+An InferenceModel allows the Inference Workload Owner to define:
 - Which LoRA adapter(s) to consume 
   - InferenceModel allows for traffic splitting between adapters _in the same InferencePool_ to allow for new LoRA adapter versions to be easily rolled out 
 - SLO objectives for the InferenceModel
@@ -115,7 +115,7 @@ A InferenceModel allows the Inference Workload Owner to define:
 // leverages a large language model from a model frontend, drives the lifecycle
 // and rollout of new versions of those models, and defines the specific
 // performance and latency goals for the model. These workloads are
-// expected to operate within a InferencePool sharing compute capacity with other
+// expected to operate within an InferencePool sharing compute capacity with other
 // InferenceModels, defined by the Inference Platform Admin. We allow a user who
 // has multiple InferenceModels across multiple pools (with the same config) to
 // specify the configuration exactly once, and deploy to many pools 
@@ -150,8 +150,8 @@ type InferenceModelSpec struct {
 	    // If not specified, the target model name is defaulted to the modelName parameter.
         // modelName is often in reference to a LoRA adapter.
         TargetModels []TargetModel
-        // Reference to the backend pools that the model registers to.
-        PoolRef []corev1.ObjectReference
+        // Reference to the InferencePool that the model registers to. It must exist in the same namespace.
+        PoolRef InferencePoolReference
 }
 
 // Defines how important it is to serve the model compared to other models.
@@ -180,6 +180,10 @@ type TargetModel struct {
         // sent to this target model when multiple versions of the model are specified.
         Weight int
 }
+
+// InferencePoolReference is the name of the InferencePool.
+type InferencePoolReference string
+
 ```
 
 **InferencePool**
@@ -191,7 +195,7 @@ type TargetModel struct {
 // (External Processing). When a new LSP object is created, a new ext proc
 // deployment is created. InferencePools require at minimum a single InferenceModel to
 // be subscribed to them to accept traffic, any traffic with a model not
-// definied within a InferenceModel will be rejected.
+// defined within an InferenceModel will be rejected.
 type InferencePool struct {
         metav1.ObjectMeta
         metav1.TypeMeta
@@ -211,44 +215,41 @@ type InferencePoolSpec struct {
 ### Yaml Examples
 
 #### InferencePool(s)
-Here we create 2 LSPs that subscribe to services to collect the appropriate pods
+Here we create a pool that selects the appropriate pods
 ```yaml
 apiVersion: inference.x-k8s.io/v1alpha1
 kind: InferencePool
 metadata:
-  name: llama-2-pool
-  services: 
-  - llama-2-vllm
----
-apiVersion: inference.x-k8s.io/v1alpha1
-kind: InferencePool
-metadata:
-  name: gemini-pool
-  services: 
-  - gemini-jetstream-tpu-v5e
-  - gemini-vllm-a100
+  name: base-model-pool
+  modelServerSelector:
+  - app: llm-server
 ```
 
 #### InferenceModel
 
-Here we consume both pools with a single InferenceModel, while also specifying 2 InferenceModels. Where `sql-code-assist` is both the name of the ModelInferenceModel, and the name of the LoRA adapter on the model server. And `npc-bot` has a layer of indirection for those names, as well as a specified objective. Both `sql-code-assist` and `npc-bot` have available LoRA adapters on both InferencePools and routing to each InferencePool happens earlier(at the K8s Gateway). So traffic splitting between separate pools happens at the K8s Gateway.
+Here we consume the pool with two InferenceModels. Where `sql-code-assist` is both the name of the model and the name of the LoRA adapter on the model server. And `npc-bot` has a layer of indirection for those names, as well as a specified criticality. Both `sql-code-assist` and `npc-bot` have available LoRA adapters on the InferencePool and routing to each InferencePool happens earlier (at the K8s Gateway).
 ```yaml
 apiVersion: inference.x-k8s.io/v1alpha1
 kind: InferenceModel
 metadata:
-  name: my-llm-service
+  name: sql-code-assist
 spec:
-  InferenceModels:
-  - modelName: sql-code-assist
-  - modelName: npc-bot
-    targetModels:
-      targetModelName: npc-bot-v1
-        weight: 50
-      targetModelName: npc-bot-v2
-        weight: 50 	
-  poolRef: 
-   - name: llama-2-pool
-   - name: gemini-pool
+  modelName: sql-code-assist
+  poolRef: base-model-pool
+---
+apiVersion: inference.x-k8s.io/v1alpha1
+kind: InferenceModel
+metadata:
+  name: npc-bot
+spec:
+  modelName: npc-bot
+  criticality: Critical
+  targetModels:
+    targetModelName: npc-bot-v1
+      weight: 50
+    targetModelName: npc-bot-v2
+      weight: 50 	
+  poolRef: base-model-pool
 ```
 
 ### Diagrams
@@ -291,7 +292,7 @@ Our alternatives hinge on some key decisions:
 
 #### InferenceModel as a backend ref
 
-We toyed with the idea of allowing an InferenceModel be the target of an HTTPRouteRules backend ref. However, doing so would require the Kubernetes Gateway to be able to interpret body level parameters (assuming OpenAI protocol continues to require the model param in the body), and require that the HTTPRoute also specify the backend the InferenceModel is intended to run on. Since we our primary proposal already specifies the backend, packing this functionality would require substantial work on the Kubernetes Gateway, while not providing much flexibility.
+We toyed with the idea of allowing an InferenceModel be the target of an HTTPRouteRules backend ref. However, doing so would require the Kubernetes Gateway to be able to interpret body level parameters (assuming OpenAI protocol continues to require the model param in the body), and require that the HTTPRoute also specify the backend the InferenceModel is intended to run on. Since our primary proposal already specifies the backend, packing this functionality would require substantial work on the Kubernetes Gateway, while not providing much flexibility.
 
 #### LLMRoute
 
@@ -305,7 +306,6 @@ Our original idea was to define all InferenceModel config at the Kubernetes Gate
 - **What is a LSP attempting to define?**
   - InferencePool groups resources that should be shared over the InferenceModels that are affiliated with the pool
   - Best practice would also suggest keeping the same base model for all ModelServers in the pool, but that is not enforced
-- **Can a InferenceModel reference multiple LSPs?**
 - **How is this deployed?**
   - We will follow [common patterns](https://gateway.envoyproxy.io/docs/tasks/quickstart/#installation) to install the CRDs & Controllers
 - **Are all controllers necessary for this solution going to be provided by Instance Gateway(this repo)?**
