@@ -28,13 +28,12 @@
 
 ## Summary
 
-This proposal presents 2 new CRD objects to express the needs of the LLM Instance Gateway. **InferencePool** and **InferenceModel**. The InferencePool is the logical grouping of compute, owned by the Inference Platform Admin persona. While the InferenceModel defines the serving objectives of a specific model or LoRA adapter, and is owned by the Inference Workload Owner.
+This proposal presents 2 new CRD objects to express the needs of the Gateway API Inference Extension. **InferencePool** and **InferenceModel**. The InferencePool is the logical grouping of compute, owned by the Inference Platform Admin persona. While the InferenceModel defines the serving objectives of a specific model or LoRA adapter, and is owned by the Inference Workload Owner.
 
-**NOTE: Some routing terms are defined in the [glossary](./glossary.md) file, to more deeply describe how we will handle behaviors like priority and fairness**
 
 ## Goals
 
-- Drive concensus on direction of LLM Instance Gateway Solution
+- Drive concensus on direction of Gateway API Inference Extension Solution
 - Documentation of API decisions for posterity
 
 ## Non-Goals
@@ -61,7 +60,7 @@ The Inference Platform Admin creates and manages the infrastructure necessary to
 #### Inference Workload Owner
 
 An Inference Workload Owner persona owns and manages 1 or many Generative AI Workloads (LLM focused *currently*). This includes:
-- Defining importance
+- Defining criticality
 - Managing fine-tunes
   - LoRA Adapters
   - System Prompts
@@ -100,17 +99,44 @@ Additionally, any Pod that seeks to join an InferencePool would need to support 
 ### InferenceModel
 
 An InferenceModel allows the Inference Workload Owner to define:
-- Which LoRA adapter(s) to consume 
-  - InferenceModel allows for traffic splitting between adapters _in the same InferencePool_ to allow for new LoRA adapter versions to be easily rolled out 
-- SLO objectives for the InferenceModel
-- The Pools this InferenceModel is relevant to 
+- Which Model/LoRA adapter(s) to consume .
+  - Mapping from a client facing model name to the target model name in the InferencePool.
+  - InferenceModel allows for traffic splitting between adapters _in the same InferencePool_ to allow for new LoRA adapter versions to be easily rolled out.
+- Criticality of the requests to the InferenceModel.
+- The InferencePools this InferenceModel is relevant to.
 
 ### Spec
+
+**InferencePool**
+```golang
+// The InferencePool is a construct for pooling compute (often model servers) to
+// serve large models, that have the ability to share capacity across multiple
+// services (such as through prompt engineering, LoRA adapters, etc).
+// InferencePools have a dependency on a Gateway that is compatible with ext-proc
+// (External Processing). When a new InferencePool object is created, a new ext proc
+// deployment is created. InferencePools require at minimum a single InferenceModel to
+// be subscribed to them to accept traffic, any traffic with a model not
+// defined within an InferenceModel will be rejected.
+type InferencePool struct {
+        metav1.ObjectMeta
+        metav1.TypeMeta
+
+        Spec InferencePoolSpec
+}
+
+type InferencePoolSpec struct {
+        // ModelServerSelector uses label selection to watch model server pods
+        // that should be included in the InferencePool. ModelServers should not
+        // be with any other Service or InferencePool, that behavior is not supported
+        // and will result in sub-optimal utilization.
+        ModelServerSelector map[string]string `json:"modelServerSelector,omitempty"`
+}
+```
 
 **InferenceModel**
 ```golang
 // InferenceModel represents a set of Models/Adapters that are multiplexed onto one 
-// or more backend pools. This resource is managed by the "Inference Workload Owner"
+// or more Inferencepools. This resource is managed by the "Inference Workload Owner"
 // persona. The Inference Workload Owner persona is: a team that trains, verifies, and
 // leverages a large language model from a model frontend, drives the lifecycle
 // and rollout of new versions of those models, and defines the specific
@@ -120,11 +146,7 @@ An InferenceModel allows the Inference Workload Owner to define:
 // has multiple InferenceModels across multiple pools (with the same config) to
 // specify the configuration exactly once, and deploy to many pools 
 // simultaneously. Enabling a simpler config and single source of truth
-// for a given user. InferenceModel names are unique for a given InferencePool,
-// if the name is reused, an error will be  shown on the status of a 
-// InferenceModel that attempted to reuse. The oldest InferenceModel, based on
-// creation timestamp, will be selected to remain valid. In the event of a race
-// condition, one will be selected at random. 
+// for a given user. InferenceModel ModelNames are unique for a given InferencePool,
 type InferenceModel struct {
         metav1.ObjectMeta
         metav1.TypeMeta
@@ -147,11 +169,11 @@ type InferenceModelSpec struct {
         Criticality *Criticality
         // Optional.
 	    // Allow multiple versions of a model for traffic splitting. 
-	    // If not specified, the target model name is defaulted to the modelName parameter.
-        // modelName is often in reference to a LoRA adapter.
+	    // If not specified, the target model name is defaulted to the ModelName parameter.
+        // ModelName is often in reference to a LoRA adapter.
         TargetModels []TargetModel
         // Reference to the InferencePool that the model registers to. It must exist in the same namespace.
-        PoolRef InferencePoolReference
+        PoolReference *LocalObjectReference
 }
 
 // Defines how important it is to serve the model compared to other models.
@@ -168,11 +190,11 @@ const (
 
 // TargetModel represents a deployed model or a LoRA adapter. The
 // Name field is expected to match the name of the LoRA adapter
-// (or base model) as it is registered within the model server. Inference
-// Gateway assumes that the model exists on the model server and is the
+// (or base model) as it is registered within the model server. This
+// assumes that the model exists on the model server and it is the
 // responsibility of the user to validate a correct match. Should a model fail
-// to exist at request time, the error is processed by the Instance Gateway,
-// and then emitted on the appropriate InferenceModel object.
+// to exist at request time, the error is processed by the extension,
+// and then emitted on the appropriate InferenceModel object status.
 type TargetModel struct {
         // The name of the adapter as expected by the ModelServer.
         Name string
@@ -181,35 +203,19 @@ type TargetModel struct {
         Weight int
 }
 
-// InferencePoolReference is the name of the InferencePool.
-type InferencePoolReference string
+// LocalObjectReference identifies an API object within the namespace of the
+// referrer.
+type LocalObjectReference struct {
+	// Group is the group of the referent. 
+	Group Group
 
-```
+	// Kind is kind of the referent. For example "InferencePool".
+	Kind Kind
 
-**InferencePool**
-```golang
-// The InferencePool is a construct for pooling compute (often model servers) to
-// serve large models, that have the ability to share capacity across multiple
-// services (such as through prompt engineering, LoRA adapters, etc).
-// InferencePools have a dependency on a Gateway that is compatible with ext-proc
-// (External Processing). When a new LSP object is created, a new ext proc
-// deployment is created. InferencePools require at minimum a single InferenceModel to
-// be subscribed to them to accept traffic, any traffic with a model not
-// defined within an InferenceModel will be rejected.
-type InferencePool struct {
-        metav1.ObjectMeta
-        metav1.TypeMeta
-
-        Spec InferencePoolSpec
+	// Name is the name of the referent.
+	Name ObjectName
 }
 
-type InferencePoolSpec struct {
-        // ModelServerSelector uses label selection to watch model server pods
-        // that should be included in the InferencePool. ModelServers should not
-        // be with any other Service or InferencePool, that behavior is not supported
-        // and will result in sub-optimal utilization.
-        ModelServerSelector map[string]string `json:"modelServerSelector,omitempty"`
-}
 ```
 
 ### Yaml Examples
@@ -252,33 +258,6 @@ spec:
   poolRef: base-model-pool
 ```
 
-### Diagrams
-
-Much of this is better explained visually:
-
-Below is a detailed view of the InferencePool
-
-![InferencePool](./images/lsp.svg)
-
-This diagram lightly follows the example request for a model `name-generator`. 
-The flow can be described as:
-- The request comes in to our routing solution(Ext-Proc)
-- ExtProc looks up the InferenceModels affiliated with this pool `examplePool`
-- `name-generator` is currently undergoing a change of LoRA adapters from `name-generator-v3` (20% traffic split) to `name-generator-v2` (80% traffic split)
-- `name-generator-v2` is selected as the LoRA adapter, and replaces `name-generator` in the body of the request (mutated by ext-proc) 
-- the request is then efficiently scheduled onto one of the valid Pods
-- Prometheus metrics are sent back to the LSP, aggregated and re-emitted via sidecar (following the metric standardization)
-
-How Multiple InferencePools might integrate together:
-
-![K8s Gateway with InferencePools](./images/gw_w_lsp.svg)
-
-Here we see that we can have:
-- Multiple Routes pointing to the same pool
-- Routes splitting traffic across multiple pools
-
-The functionality of the Kubernetes Gateway is unchanged with this proposal, allowing seamless integration with the InferencePool.
-
 
 ### Alternatives
 
@@ -303,23 +282,12 @@ Our original idea was to define all InferenceModel config at the Kubernetes Gate
   - Feasibly done - No extension of HttpRoute. Just works, as InferencePool operates like a service.
   - Complexity is only expressed during transition states (model version upgrade)
   - Keeps Pools self contained - multiple K8s gateways can direct traffic to the same pool without needing to re-express Pool-level behavior
-- **What is a LSP attempting to define?**
+- **What is an InferencePool attempting to define?**
   - InferencePool groups resources that should be shared over the InferenceModels that are affiliated with the pool
   - Best practice would also suggest keeping the same base model for all ModelServers in the pool, but that is not enforced
 - **How is this deployed?**
   - We will follow [common patterns](https://gateway.envoyproxy.io/docs/tasks/quickstart/#installation) to install the CRDs & Controllers
-- **Are all controllers necessary for this solution going to be provided by Instance Gateway(this repo)?**
+- **Are all controllers necessary for this solution going to be provided by this project?**
   - Yes
 
 
-
-
-## Open Questions
-
-- Reasonable defaults (how do we behave in the absence of user-specified values in optional fields)
-  - Should services be required? Or can a customer simply create a pool, and direct requests to the pool, and expect even fairness/priority across the different LoRA adapters that are requested?
-    - If so? How should we handle the mix between explicit and implicit services? Are implicit InferenceModels just default everything? (and inherently lower prio).
-    - NOTE: Current thinking is this is yes we should allow non-use case defined requests, but is a security risk if on by default. So pools should opt-in
-- Configuration control
-  - How many routing decisions should we make on behalf of the user vs allow for configuration?
-     - Do we decide that SLO adherence is stricter than Fairness adherence? Do we allow for configuration of such tooling? (would be expressed in the InferencePool API)
