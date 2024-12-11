@@ -1,0 +1,16 @@
+apiVersion: inference.networking.x-k8s.io/v1alpha1
+kind: InferenceModel
+metadata:
+  labels:
+    app.kubernetes.io/name: api
+    app.kubernetes.io/managed-by: kustomize
+  name: inferencemodel-sample
+spec:
+  modelName: sql-code-assist
+    criticality: Critical
+    targetModels:
+    - name: npc-bot-v1
+      weight: 50
+    - name: npc-bot-v2
+      weight: 50 	
+  poolRef: test-pool

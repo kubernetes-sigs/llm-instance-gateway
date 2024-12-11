@@ -37,7 +37,7 @@ type PodMetricsClientImpl struct {
 // FetchMetrics fetches metrics from a given pod.
 func (p *PodMetricsClientImpl) FetchMetrics(ctx context.Context, pod backend.Pod, existing *backend.PodMetrics) (*backend.PodMetrics, error) {
 	// Currently the metrics endpoint is hard-coded, which works with vLLM.
-	// TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/16): Consume this from LLMServerPool config.
+	// TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/16): Consume this from InferencePool config.
 	url := fmt.Sprintf("http://%s/metrics", pod.Address)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {

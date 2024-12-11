@@ -16,10 +16,10 @@ const (
 	reconcilerNamePrefix = "instance-gateway-"
 )
 
-// LLMServerPoolReconciler utilizes the controller runtime to reconcile Instance Gateway resources
+// InferencePoolReconciler utilizes the controller runtime to reconcile Instance Gateway resources
 // This implementation is just used for reading & maintaining data sync. The Gateway implementation
 // will have the proper controller that will create/manage objects on behalf of the server pool.
-type LLMServerPoolReconciler struct {
+type InferencePoolReconciler struct {
 	client.Client
 	Scheme         *runtime.Scheme
 	Record         record.EventRecorder
@@ -29,26 +29,31 @@ type LLMServerPoolReconciler struct {
 	Zone           string
 }
 
-func (c *LLMServerPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (c *InferencePoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	if req.NamespacedName.Name != c.ServerPoolName && req.NamespacedName.Namespace != c.Namespace {
 		return ctrl.Result{}, nil
 	}
-	klog.V(2).Infof("Reconciling LLMServerPool %v", req.NamespacedName)
+	klog.V(1).Info("reconciling InferencePool", req.NamespacedName)
 
-	serverPool := &v1alpha1.LLMServerPool{}
+	serverPool := &v1alpha1.InferencePool{}
 	if err := c.Get(ctx, req.NamespacedName, serverPool); err != nil {
-		klog.Errorf("Unable to get LLMServerPool: %v", err)
+		klog.Error(err, "unable to get InferencePool")
 		return ctrl.Result{}, err
 	}
 
-	klog.V(2).Infof("Updated LLMServerPool: %+v", serverPool)
-	c.Datastore.setLLMServerPool(serverPool)
+	c.updateDatastore(serverPool)
 
 	return ctrl.Result{}, nil
 }
 
-func (c *LLMServerPoolReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (c *InferencePoolReconciler) updateDatastore(serverPool *v1alpha1.InferencePool) {
+	if c.Datastore.InferencePool == nil || serverPool.ObjectMeta.ResourceVersion != c.Datastore.InferencePool.ObjectMeta.ResourceVersion {
+		c.Datastore.InferencePool = serverPool
+	}
+}
+
+func (c *InferencePoolReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1alpha1.LLMServerPool{}).
+		For(&v1alpha1.InferencePool{}).
 		Complete(c)
 }

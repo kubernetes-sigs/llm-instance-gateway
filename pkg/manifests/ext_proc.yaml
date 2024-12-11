@@ -51,12 +51,20 @@ spec:
         # TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/34) Update the image and args.
         image: <BUILT-IMAGE>
         args:
+<<<<<<< HEAD
         - -serverPoolName 
         - "vllm-llama2-7b-pool"
         - -v
         - "3"
         - -serviceName
         - "vllm-llama2-7b-pool"
+=======
+        # TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/12) Remove this once ext proc can dynamically reconcile on InferencePool.
+        - -pods
+        - "vllm-78665f78c4-h4kx4,vllm-78665f78c4-hnz84"
+        - -podIPs
+        - "10.24.11.6:8000,10.24.5.7:8000"
+>>>>>>> 1e5b222 (Big dawg api change)
         ports:
         - containerPort: 9002
         

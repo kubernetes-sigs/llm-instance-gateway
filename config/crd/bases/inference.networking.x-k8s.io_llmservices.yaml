@@ -4,20 +4,20 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.1
-  name: llmservices.inference.networking.x-k8s.io
+  name: inferencemodels.inference.networking.x-k8s.io
 spec:
   group: inference.networking.x-k8s.io
   names:
-    kind: LLMService
-    listKind: LLMServiceList
-    plural: llmservices
-    singular: llmservice
+    kind: InferenceModel
+    listKind: InferenceModelList
+    plural: inferencemodels
+    singular: inferencemodel
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: LLMService is the Schema for the llmservices API
+        description: InferenceModel is the Schema for the inferencemodels API
         properties:
           apiVersion:
             description: |-
@@ -38,20 +38,20 @@ spec:
             type: object
           spec:
             description: |-
-              LLMService represents a set of LLM services that are multiplexed onto one
-              or more LLMServerPools. This resource is managed by the "LLM Service Owner"
+              InferenceModel represents a set of LLM services that are multiplexed onto one
+              or more InferencePools. This resource is managed by the "LLM Service Owner"
               persona. The Service Owner persona is: a team that trains, verifies, and
               leverages a large language model from a model frontend, drives the lifecycle
               and rollout of new versions of those models, and defines the specific
               performance and latency goals for the model. These services are
-              expected to operate within a LLMServerPool sharing compute capacity with other
-              LLMServices, defined by the Inference Platform Admin. We allow a user who
-              has multiple LLMServices across multiple pools (with the same config) to
+              expected to operate within a InferencePool sharing compute capacity with other
+              InferenceModels, defined by the Inference Platform Admin. We allow a user who
+              has multiple InferenceModels across multiple pools (with the same config) to
               specify the configuration exactly once, and deploy to many pools
               simultaneously. Enabling a simpler config and single source of truth
-              for a given user. LLMService names are unique for a given LLMServerPool,
+              for a given user. InferenceModel names are unique for a given InferencePool,
               if the name is reused, an error will be  shown on the status of a
-              LLMService that attempted to reuse. The oldest LLMService, based on
+              InferenceModel that attempted to reuse. The oldest InferenceModel, based on
               creation timestamp, will be selected to remain valid. In the event of a race
               condition, one will be selected at random.
             properties:
@@ -81,7 +81,7 @@ spec:
                       description: |-
                         Optional
                         LLM Services with an objective have higher priority than services without.
-                        IMPORTANT: By specifying an objective, this places the LLMService in a higher priority class than LLMServices without a defined priority class.
+                        IMPORTANT: By specifying an objective, this places the InferenceModel in a higher priority class than InferenceModels without a defined priority class.
                         In the face of resource-scarcity. Higher priority requests will be preserved, and lower priority class requests will be rejected.
                       properties:
                         desiredAveragePerOutputTokenLatencyAtP95OverMultipleRequests:
@@ -107,7 +107,7 @@ spec:
                           Gateway assumes that the model exists on the model server and is the
                           responsibility of the user to validate a correct match. Should a model fail
                           to exist at request time, the error is processed by the Instance Gateway,
-                          and then emitted on the appropriate LLMService object.
+                          and then emitted on the appropriate InferenceModel object.
                         properties:
                           name:
                             description: The name of the adapter as expected by the
@@ -124,7 +124,7 @@ spec:
                 type: array
               poolRef:
                 description: PoolRef are references to the backend pools that the
-                  LLMService registers to.
+                  InferenceModel registers to.
                 items:
                   description: ObjectReference contains enough information to let
                     you inspect or modify the referred object.
@@ -172,10 +172,10 @@ spec:
                 type: array
             type: object
           status:
-            description: LLMServiceStatus defines the observed state of LLMService
+            description: InferenceModelStatus defines the observed state of InferenceModel
             properties:
               conditions:
-                description: Conditions track the state of the LLMServerPool.
+                description: Conditions track the state of the InferencePool.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.

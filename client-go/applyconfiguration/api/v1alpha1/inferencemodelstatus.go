@@ -21,22 +21,22 @@ import (
 	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
-// LLMServiceStatusApplyConfiguration represents a declarative configuration of the LLMServiceStatus type for use
+// InferenceModelStatusApplyConfiguration represents a declarative configuration of the InferenceModelStatus type for use
 // with apply.
-type LLMServiceStatusApplyConfiguration struct {
+type InferenceModelStatusApplyConfiguration struct {
 	Conditions []v1.ConditionApplyConfiguration `json:"conditions,omitempty"`
 }
 
-// LLMServiceStatusApplyConfiguration constructs a declarative configuration of the LLMServiceStatus type for use with
+// InferenceModelStatusApplyConfiguration constructs a declarative configuration of the InferenceModelStatus type for use with
 // apply.
-func LLMServiceStatus() *LLMServiceStatusApplyConfiguration {
-	return &LLMServiceStatusApplyConfiguration{}
+func InferenceModelStatus() *InferenceModelStatusApplyConfiguration {
+	return &InferenceModelStatusApplyConfiguration{}
 }
 
 // WithConditions adds the given value to the Conditions field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Conditions field.
-func (b *LLMServiceStatusApplyConfiguration) WithConditions(values ...*v1.ConditionApplyConfiguration) *LLMServiceStatusApplyConfiguration {
+func (b *InferenceModelStatusApplyConfiguration) WithConditions(values ...*v1.ConditionApplyConfiguration) *InferenceModelStatusApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithConditions")

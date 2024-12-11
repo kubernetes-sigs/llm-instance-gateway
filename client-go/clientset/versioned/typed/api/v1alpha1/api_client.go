@@ -27,8 +27,8 @@ import (
 
 type ApiV1alpha1Interface interface {
 	RESTClient() rest.Interface
-	LLMServerPoolsGetter
-	LLMServicesGetter
+	InferenceModelsGetter
+	InferencePoolsGetter
 }
 
 // ApiV1alpha1Client is used to interact with features provided by the api group.
@@ -36,12 +36,12 @@ type ApiV1alpha1Client struct {
 	restClient rest.Interface
 }
 
-func (c *ApiV1alpha1Client) LLMServerPools(namespace string) LLMServerPoolInterface {
-	return newLLMServerPools(c, namespace)
+func (c *ApiV1alpha1Client) InferenceModels(namespace string) InferenceModelInterface {
+	return newInferenceModels(c, namespace)
 }
 
-func (c *ApiV1alpha1Client) LLMServices(namespace string) LLMServiceInterface {
-	return newLLMServices(c, namespace)
+func (c *ApiV1alpha1Client) InferencePools(namespace string) InferencePoolInterface {
+	return newInferencePools(c, namespace)
 }
 
 // NewForConfig creates a new ApiV1alpha1Client for the given config.

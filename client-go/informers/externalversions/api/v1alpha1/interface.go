@@ -23,10 +23,10 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
-	// LLMServerPools returns a LLMServerPoolInformer.
-	LLMServerPools() LLMServerPoolInformer
-	// LLMServices returns a LLMServiceInformer.
-	LLMServices() LLMServiceInformer
+	// InferenceModels returns a InferenceModelInformer.
+	InferenceModels() InferenceModelInformer
+	// InferencePools returns a InferencePoolInformer.
+	InferencePools() InferencePoolInformer
 }
 
 type version struct {
@@ -40,12 +40,12 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
 }
 
-// LLMServerPools returns a LLMServerPoolInformer.
-func (v *version) LLMServerPools() LLMServerPoolInformer {
-	return &lLMServerPoolInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+// InferenceModels returns a InferenceModelInformer.
+func (v *version) InferenceModels() InferenceModelInformer {
+	return &inferenceModelInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
-// LLMServices returns a LLMServiceInformer.
-func (v *version) LLMServices() LLMServiceInformer {
-	return &lLMServiceInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+// InferencePools returns a InferencePoolInformer.
+func (v *version) InferencePools() InferencePoolInformer {
+	return &inferencePoolInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

@@ -22,12 +22,12 @@ import (
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// LLMServerPoolSpec defines the desired state of LLMServerPool
-type LLMServerPoolSpec struct {
+// InferencePoolSpec defines the desired state of InferencePool
+type InferencePoolSpec struct {
 
 	// ModelServerSelector uses a map of label to watch model server pods
-	// that should be included in the LLMServerPool. ModelServers should not
-	// be with any other Service or LLMServerPool, that behavior is not supported
+	// that should be included in the InferencePool. ModelServers should not
+	// be with any other Service or InferencePool, that behavior is not supported
 	// and will result in sub-optimal utilization.
 	// Due to this selector being translated to a service a simple map is used instead
 	// of: https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#LabelSelector
@@ -40,10 +40,10 @@ type LLMServerPoolSpec struct {
 	TargetPort int32 `json:"targetPort,omitempty"`
 }
 
-// LLMServerPoolStatus defines the observed state of LLMServerPool
-type LLMServerPoolStatus struct {
+// InferencePoolStatus defines the observed state of InferencePool
+type InferencePoolStatus struct {
 
-	// Conditions track the state of the LLMServerPool.
+	// Conditions track the state of the InferencePool.
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
@@ -51,24 +51,24 @@ type LLMServerPoolStatus struct {
 // +kubebuilder:subresource:status
 // +genclient
 
-// LLMServerPool is the Schema for the llmserverpools API
-type LLMServerPool struct {
+// InferencePool is the Schema for the Inferencepools API
+type InferencePool struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   LLMServerPoolSpec   `json:"spec,omitempty"`
-	Status LLMServerPoolStatus `json:"status,omitempty"`
+	Spec   InferencePoolSpec   `json:"spec,omitempty"`
+	Status InferencePoolStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// LLMServerPoolList contains a list of LLMServerPool
-type LLMServerPoolList struct {
+// InferencePoolList contains a list of InferencePool
+type InferencePoolList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []LLMServerPool `json:"items"`
+	Items           []InferencePool `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&LLMServerPool{}, &LLMServerPoolList{})
+	SchemeBuilder.Register(&InferencePool{}, &InferencePoolList{})
 }

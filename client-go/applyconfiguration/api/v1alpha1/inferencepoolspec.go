@@ -17,24 +17,24 @@ limitations under the License.
 
 package v1alpha1
 
-// LLMServerPoolSpecApplyConfiguration represents a declarative configuration of the LLMServerPoolSpec type for use
+// InferencePoolSpecApplyConfiguration represents a declarative configuration of the InferencePoolSpec type for use
 // with apply.
-type LLMServerPoolSpecApplyConfiguration struct {
+type InferencePoolSpecApplyConfiguration struct {
 	ModelServerSelector map[string]string `json:"modelServerSelector,omitempty"`
 	TargetPort          *int32            `json:"targetPort,omitempty"`
 }
 
-// LLMServerPoolSpecApplyConfiguration constructs a declarative configuration of the LLMServerPoolSpec type for use with
+// InferencePoolSpecApplyConfiguration constructs a declarative configuration of the InferencePoolSpec type for use with
 // apply.
-func LLMServerPoolSpec() *LLMServerPoolSpecApplyConfiguration {
-	return &LLMServerPoolSpecApplyConfiguration{}
+func InferencePoolSpec() *InferencePoolSpecApplyConfiguration {
+	return &InferencePoolSpecApplyConfiguration{}
 }
 
 // WithModelServerSelector puts the entries into the ModelServerSelector field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, the entries provided by each call will be put on the ModelServerSelector field,
 // overwriting an existing map entries in ModelServerSelector field with the same key.
-func (b *LLMServerPoolSpecApplyConfiguration) WithModelServerSelector(entries map[string]string) *LLMServerPoolSpecApplyConfiguration {
+func (b *InferencePoolSpecApplyConfiguration) WithModelServerSelector(entries map[string]string) *InferencePoolSpecApplyConfiguration {
 	if b.ModelServerSelector == nil && len(entries) > 0 {
 		b.ModelServerSelector = make(map[string]string, len(entries))
 	}
@@ -47,7 +47,7 @@ func (b *LLMServerPoolSpecApplyConfiguration) WithModelServerSelector(entries ma
 // WithTargetPort sets the TargetPort field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the TargetPort field is set to the value of the last call.
-func (b *LLMServerPoolSpecApplyConfiguration) WithTargetPort(value int32) *LLMServerPoolSpecApplyConfiguration {
+func (b *InferencePoolSpecApplyConfiguration) WithTargetPort(value int32) *InferencePoolSpecApplyConfiguration {
 	b.TargetPort = &value
 	return b
 }

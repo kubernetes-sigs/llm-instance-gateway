@@ -31,22 +31,18 @@ import (
 func ForKind(kind schema.GroupVersionKind) interface{} {
 	switch kind {
 	// Group=api, Version=v1alpha1
-	case v1alpha1.SchemeGroupVersion.WithKind("LLMServerPool"):
-		return &apiv1alpha1.LLMServerPoolApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("LLMServerPoolSpec"):
-		return &apiv1alpha1.LLMServerPoolSpecApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("LLMServerPoolStatus"):
-		return &apiv1alpha1.LLMServerPoolStatusApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("LLMService"):
-		return &apiv1alpha1.LLMServiceApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("LLMServiceSpec"):
-		return &apiv1alpha1.LLMServiceSpecApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("LLMServiceStatus"):
-		return &apiv1alpha1.LLMServiceStatusApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("Model"):
-		return &apiv1alpha1.ModelApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("Objective"):
-		return &apiv1alpha1.ObjectiveApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("InferenceModel"):
+		return &apiv1alpha1.InferenceModelApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("InferenceModelSpec"):
+		return &apiv1alpha1.InferenceModelSpecApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("InferenceModelStatus"):
+		return &apiv1alpha1.InferenceModelStatusApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("InferencePool"):
+		return &apiv1alpha1.InferencePoolApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("InferencePoolSpec"):
+		return &apiv1alpha1.InferencePoolSpecApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("InferencePoolStatus"):
+		return &apiv1alpha1.InferencePoolStatusApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("TargetModel"):
 		return &apiv1alpha1.TargetModelApplyConfiguration{}
 

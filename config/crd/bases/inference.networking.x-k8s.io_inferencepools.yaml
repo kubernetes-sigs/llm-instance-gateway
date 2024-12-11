@@ -4,20 +4,20 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.1
-  name: llmserverpools.inference.networking.x-k8s.io
+  name: inferencepools.inference.networking.x-k8s.io
 spec:
   group: inference.networking.x-k8s.io
   names:
     kind: InferencePool
     listKind: InferencePoolList
-    plural: llmserverpools
-    singular: llmserverpool
+    plural: inferencepools
+    singular: inferencepool
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: InferencePool is the Schema for the llmserverpools API
+        description: InferencePool is the Schema for the Inferencepools API
         properties:
           apiVersion:
             description: |-

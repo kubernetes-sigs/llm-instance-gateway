@@ -12,9 +12,9 @@ import (
 
 func NewK8sDataStore(options ...K8sDatastoreOption) *K8sDatastore {
 	store := &K8sDatastore{
-		poolMu:      sync.RWMutex{},
-		llmServices: &sync.Map{},
-		pods:        &sync.Map{},
+		poolMu:          sync.RWMutex{},
+		InferenceModels: &sync.Map{},
+		pods:            &sync.Map{},
 	}
 	for _, opt := range options {
 		opt(store)
@@ -22,13 +22,13 @@ func NewK8sDataStore(options ...K8sDatastoreOption) *K8sDatastore {
 	return store
 }
 
-// The datastore is a local cache of relevant data for the given LLMServerPool (currently all pulled from k8s-api)
+// The datastore is a local cache of relevant data for the given InferencePool (currently all pulled from k8s-api)
 type K8sDatastore struct {
-	// poolMu is used to synchronize access to the llmServerPool.
-	poolMu        sync.RWMutex
-	llmServerPool *v1alpha1.LLMServerPool
-	llmServices   *sync.Map
-	pods          *sync.Map
+	// poolMu is used to synchronize access to the inferencePool.
+	poolMu          sync.RWMutex
+	InferencePool   *v1alpha1.InferencePool
+	InferenceModels *sync.Map
+	pods            *sync.Map
 }
 
 type K8sDatastoreOption func(*K8sDatastore)
@@ -43,19 +43,19 @@ func WithPods(pods []*PodMetrics) K8sDatastoreOption {
 	}
 }
 
-func (ds *K8sDatastore) setLLMServerPool(pool *v1alpha1.LLMServerPool) {
+func (ds *K8sDatastore) setInferencePool(pool *v1alpha1.InferencePool) {
 	ds.poolMu.Lock()
 	defer ds.poolMu.Unlock()
-	ds.llmServerPool = pool
+	ds.InferencePool = pool
 }
 
-func (ds *K8sDatastore) getLLMServerPool() (*v1alpha1.LLMServerPool, error) {
+func (ds *K8sDatastore) getInferencePool() (*v1alpha1.InferencePool, error) {
 	ds.poolMu.RLock()
 	defer ds.poolMu.RUnlock()
-	if ds.llmServerPool == nil {
-		return nil, fmt.Errorf("LLMServerPool hasn't been initialized yet")
+	if ds.InferencePool == nil {
+		return nil, fmt.Errorf("InferencePool hasn't been initialized yet")
 	}
-	return ds.llmServerPool, nil
+	return ds.InferencePool, nil
 }
 
 func (ds *K8sDatastore) GetPodIPs() []string {
@@ -67,23 +67,15 @@ func (ds *K8sDatastore) GetPodIPs() []string {
 	return ips
 }
 
-func (s *K8sDatastore) FetchModelData(modelName string) (returnModel *v1alpha1.Model) {
-	s.llmServices.Range(func(k, v any) bool {
-		service := v.(*v1alpha1.LLMService)
-		klog.V(3).Infof("Service name: %v", service.Name)
-		for _, model := range service.Spec.Models {
-			if model.Name == modelName {
-				returnModel = &model
-				// We want to stop iterating, return false.
-				return false
-			}
-		}
-		return true
-	})
+func (s *K8sDatastore) FetchModelData(modelName string) (returnModel *v1alpha1.InferenceModel) {
+	infModel, ok := s.InferenceModels.Load(modelName)
+	if ok {
+		returnModel = infModel.(*v1alpha1.InferenceModel)
+	}
 	return
 }
 
-func RandomWeightedDraw(model *v1alpha1.Model, seed int64) string {
+func RandomWeightedDraw(model *v1alpha1.InferenceModel, seed int64) string {
 	weights := 0
 
 	source := rand.NewSource(rand.Int63())
@@ -91,12 +83,12 @@ func RandomWeightedDraw(model *v1alpha1.Model, seed int64) string {
 		source = rand.NewSource(seed)
 	}
 	r := rand.New(source)
-	for _, model := range model.TargetModels {
+	for _, model := range model.Spec.TargetModels {
 		weights += model.Weight
 	}
 	klog.V(3).Infof("Weights for Model(%v) total to: %v", model.Name, weights)
 	randomVal := r.Intn(weights)
-	for _, model := range model.TargetModels {
+	for _, model := range model.Spec.TargetModels {
 		if randomVal < model.Weight {
 			return model.Name
 		}
@@ -105,10 +97,9 @@ func RandomWeightedDraw(model *v1alpha1.Model, seed int64) string {
 	return ""
 }
 
-func ModelHasObjective(model *v1alpha1.Model) bool {
-	if model.Objective != nil && model.Objective.DesiredAveragePerOutputTokenLatencyAtP95OverMultipleRequests != nil {
+func ModelHasObjective(model *v1alpha1.InferenceModel) bool {
+	if model.Spec.Criticality != nil && *model.Spec.Criticality == v1alpha1.Critical {
 		return true
 	}
-
 	return false
 }

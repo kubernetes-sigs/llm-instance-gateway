@@ -71,12 +71,12 @@ func generateRequest(mtd *desc.MethodDescriptor, callData *runner.CallData) []by
 	return data
 }
 
-func fakeModels() map[string]*v1alpha1.Model {
-	models := map[string]*v1alpha1.Model{}
+func fakeModels() map[string]*v1alpha1.InferenceModel {
+	models := map[string]*v1alpha1.InferenceModel{}
 	for i := range *numFakePods {
 		for j := range *numModelsPerPod {
 			m := modelName(i*(*numModelsPerPod) + j)
-			models[m] = &v1alpha1.Model{Name: m}
+			models[m] = &v1alpha1.InferenceModel{Spec: v1alpha1.InferenceModelSpec{ModelName: m}}
 		}
 	}
 

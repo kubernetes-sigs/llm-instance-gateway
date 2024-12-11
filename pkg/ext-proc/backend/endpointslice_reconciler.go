@@ -34,7 +34,7 @@ func (c *EndpointSliceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	endpointSlice := &discoveryv1.EndpointSlice{}
 	if err := c.Get(ctx, req.NamespacedName, endpointSlice); err != nil {
-		klog.Errorf("Unable to get EndpointSlice: %v", err)
+		klog.Error(err, "unable to get InferencePool")
 		return ctrl.Result{}, err
 	}
 
@@ -48,7 +48,7 @@ func (c *EndpointSliceReconciler) updateDatastore(slice *discoveryv1.EndpointSli
 	for _, endpoint := range slice.Endpoints {
 		klog.V(4).Infof("Zone: %v \n endpoint: %+v \n", c.Zone, endpoint)
 		if c.validPod(endpoint) {
-			pod := Pod{Name: *&endpoint.TargetRef.Name, Address: endpoint.Addresses[0] + ":" + fmt.Sprint(c.Datastore.llmServerPool.Spec.TargetPort)}
+			pod := Pod{Name: *&endpoint.TargetRef.Name, Address: endpoint.Addresses[0] + ":" + fmt.Sprint(c.Datastore.InferencePool.Spec.TargetPort)}
 			podMap[pod] = true
 			c.Datastore.pods.Store(pod, true)
 		}
@@ -70,7 +70,7 @@ func (c *EndpointSliceReconciler) updateDatastore(slice *discoveryv1.EndpointSli
 
 func (c *EndpointSliceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	llmServerPoolAvailable := func(object client.Object) bool {
-		_, err := c.Datastore.getLLMServerPool()
+		_, err := c.Datastore.getInferencePool()
 		if err != nil {
 			klog.Warningf("Skipping reconciling EndpointSlice because LLMServerPool is not available yet: %v", err)
 		}

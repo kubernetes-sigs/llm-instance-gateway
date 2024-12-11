@@ -21,22 +21,22 @@ import (
 	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
-// LLMServerPoolStatusApplyConfiguration represents a declarative configuration of the LLMServerPoolStatus type for use
+// InferencePoolStatusApplyConfiguration represents a declarative configuration of the InferencePoolStatus type for use
 // with apply.
-type LLMServerPoolStatusApplyConfiguration struct {
+type InferencePoolStatusApplyConfiguration struct {
 	Conditions []v1.ConditionApplyConfiguration `json:"conditions,omitempty"`
 }
 
-// LLMServerPoolStatusApplyConfiguration constructs a declarative configuration of the LLMServerPoolStatus type for use with
+// InferencePoolStatusApplyConfiguration constructs a declarative configuration of the InferencePoolStatus type for use with
 // apply.
-func LLMServerPoolStatus() *LLMServerPoolStatusApplyConfiguration {
-	return &LLMServerPoolStatusApplyConfiguration{}
+func InferencePoolStatus() *InferencePoolStatusApplyConfiguration {
+	return &InferencePoolStatusApplyConfiguration{}
 }
 
 // WithConditions adds the given value to the Conditions field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Conditions field.
-func (b *LLMServerPoolStatusApplyConfiguration) WithConditions(values ...*v1.ConditionApplyConfiguration) *LLMServerPoolStatusApplyConfiguration {
+func (b *InferencePoolStatusApplyConfiguration) WithConditions(values ...*v1.ConditionApplyConfiguration) *InferencePoolStatusApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithConditions")

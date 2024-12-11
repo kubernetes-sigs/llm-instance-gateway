@@ -4,20 +4,20 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.1
-  name: llmserverpools.inference.networking.x-k8s.io
+  name: inferencemodels.inference.networking.x-k8s.io
 spec:
   group: inference.networking.x-k8s.io
   names:
-    kind: InferencePool
-    listKind: InferencePoolList
-    plural: llmserverpools
-    singular: llmserverpool
+    kind: InferenceModel
+    listKind: InferenceModelList
+    plural: inferencemodels
+    singular: inferencemodel
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: InferencePool is the Schema for the llmserverpools API
+        description: InferenceModel is the Schema for the InferenceModels API
         properties:
           apiVersion:
             description: |-
@@ -37,30 +37,73 @@ spec:
           metadata:
             type: object
           spec:
-            description: InferencePoolSpec defines the desired state of InferencePool
+            description: |-
+              InferenceModelSpec represents a set of Models/Adapters that are multiplexed onto one
+              or more backend pools. This resource is managed by the "Inference Workload Owner"
+              persona. The Inference Workload Owner persona is: a team that trains, verifies, and
+              leverages a large language model from a model frontend, drives the lifecycle
+              and rollout of new versions of those models, and defines the specific
+              performance and latency goals for the model. These workloads are
+              expected to operate within an InferencePool sharing compute capacity with other
+              InferenceModels, defined by the Inference Platform Admin. We allow a user who
+              has multiple InferenceModels across multiple pools (with the same config) to
+              specify the configuration exactly once, and deploy to many pools
+              simultaneously. Enabling a simpler config and single source of truth
+              for a given user. InferenceModel names are unique for a given InferencePool,
+              if the name is reused, an error will be  shown on the status of a
+              InferenceModel that attempted to reuse. The oldest InferenceModel, based on
+              creation timestamp, will be selected to remain valid. In the event of a race
+              condition, one will be selected at random.
             properties:
-              modelServerSelector:
-                additionalProperties:
-                  type: string
+              criticality:
                 description: |-
-                  ModelServerSelector uses a map of label to watch model server pods
-                  that should be included in the InferencePool. ModelServers should not
-                  be with any other Service or InferencePool, that behavior is not supported
-                  and will result in sub-optimal utilization.
-                  Due to this selector being translated to a service a simple map is used instead
-                  of: https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#LabelSelector
-                  To avoid footshoot errors when the https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#LabelSelectorAsMap would be used.
-                type: object
-              targetPort:
+                  Optional
+                  Defines how important it is to serve the model compared to other models referencing the same pool.
+                type: string
+              modelName:
                 description: |-
-                  TargetPort is the port number that the model servers within the pool expect
-                  to recieve traffic from.
-                  This maps to the TargetPort in: https://pkg.go.dev/k8s.io/api/core/v1#ServicePort
-                format: int32
-                type: integer
+                  The name of the model as the users set in the "model" parameter in the requests.
+                  The name should be unique among the workloads that reference the same backend pool.
+                  This is the parameter that will be used to match the request with. In the future, we may
+                  allow to match on other request parameters. The other approach to support matching on
+                  on other request parameters is to use a different ModelName per HTTPFilter.
+                  Names can be reserved without implementing an actual model in the pool.
+                  This can be done by specifying a target model and setting the weight to zero,
+                  an error will be returned specifying that no valid target model is found.
+                type: string
+              poolRef:
+                description: Reference to the InferencePool that the model registers
+                  to. It must exist in the same namespace.
+                type: string
+              targetModels:
+                description: |-
+                  Optional.
+                  Allow multiple versions of a model for traffic splitting.
+                  If not specified, the target model name is defaulted to the modelName parameter.
+                  modelName is often in reference to a LoRA adapter.
+                items:
+                  description: |-
+                    TargetModel represents a deployed model or a LoRA adapter. The
+                    Name field is expected to match the name of the LoRA adapter
+                    (or base model) as it is registered within the model server. Inference
+                    Gateway assumes that the model exists on the model server and is the
+                    responsibility of the user to validate a correct match. Should a model fail
+                    to exist at request time, the error is processed by the Instance Gateway,
+                    and then emitted on the appropriate InferenceModel object.
+                  properties:
+                    name:
+                      description: The name of the adapter as expected by the ModelServer.
+                      type: string
+                    weight:
+                      description: |-
+                        Weight is used to determine the percentage of traffic that should be
+                        sent to this target model when multiple versions of the model are specified.
+                      type: integer
+                  type: object
+                type: array
             type: object
           status:
-            description: InferencePoolStatus defines the observed state of InferencePool
+            description: InferenceModelStatus defines the observed state of InferenceModel
             properties:
               conditions:
                 description: Conditions track the state of the InferencePool.

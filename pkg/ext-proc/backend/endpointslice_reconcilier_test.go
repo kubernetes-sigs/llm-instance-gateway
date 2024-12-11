@@ -26,8 +26,8 @@ func TestUpdateDatastore_EndpointSliceReconciler(t *testing.T) {
 			name: "Add new pod",
 			datastore: &K8sDatastore{
 				pods: populateMap(basePod1, basePod2),
-				llmServerPool: &v1alpha1.LLMServerPool{
-					Spec: v1alpha1.LLMServerPoolSpec{
+				InferencePool: &v1alpha1.InferencePool{
+					Spec: v1alpha1.InferencePoolSpec{
 						TargetPort: int32(8000),
 					},
 				},
@@ -72,8 +72,8 @@ func TestUpdateDatastore_EndpointSliceReconciler(t *testing.T) {
 			name: "New pod, but its not ready yet. Do not add.",
 			datastore: &K8sDatastore{
 				pods: populateMap(basePod1, basePod2),
-				llmServerPool: &v1alpha1.LLMServerPool{
-					Spec: v1alpha1.LLMServerPoolSpec{
+				InferencePool: &v1alpha1.InferencePool{
+					Spec: v1alpha1.InferencePoolSpec{
 						TargetPort: int32(8000),
 					},
 				},
@@ -118,8 +118,8 @@ func TestUpdateDatastore_EndpointSliceReconciler(t *testing.T) {
 			name: "Existing pod not ready, new pod added, and is ready",
 			datastore: &K8sDatastore{
 				pods: populateMap(basePod1, basePod2),
-				llmServerPool: &v1alpha1.LLMServerPool{
-					Spec: v1alpha1.LLMServerPoolSpec{
+				InferencePool: &v1alpha1.InferencePool{
+					Spec: v1alpha1.InferencePoolSpec{
 						TargetPort: int32(8000),
 					},
 				},

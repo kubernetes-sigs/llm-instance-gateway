@@ -37,13 +37,13 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 	modelName := model
 
 	// NOTE: The nil checking for the modelObject means that we DO allow passthrough currently.
-	// This might be a security risk in the future where adapters not registered in the LLMService
+	// This might be a security risk in the future where adapters not registered in the InferenceModel
 	// are able to be requested by using their distinct name.
 	modelObj := s.datastore.FetchModelData(model)
 	if modelObj == nil {
 		return nil, fmt.Errorf("error finding a model object in LLMService for input model %v", model)
 	}
-	if len(modelObj.TargetModels) > 0 {
+	if modelObj != nil && len(modelObj.Spec.TargetModels) > 0 {
 		modelName = backend.RandomWeightedDraw(modelObj, 0)
 		if modelName == "" {
 			return nil, fmt.Errorf("error getting target model name for model %v", modelObj.Name)

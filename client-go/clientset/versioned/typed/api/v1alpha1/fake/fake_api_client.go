@@ -27,12 +27,12 @@ type FakeApiV1alpha1 struct {
 	*testing.Fake
 }
 
-func (c *FakeApiV1alpha1) LLMServerPools(namespace string) v1alpha1.LLMServerPoolInterface {
-	return &FakeLLMServerPools{c, namespace}
+func (c *FakeApiV1alpha1) InferenceModels(namespace string) v1alpha1.InferenceModelInterface {
+	return &FakeInferenceModels{c, namespace}
 }
 
-func (c *FakeApiV1alpha1) LLMServices(namespace string) v1alpha1.LLMServiceInterface {
-	return &FakeLLMServices{c, namespace}
+func (c *FakeApiV1alpha1) InferencePools(namespace string) v1alpha1.InferencePoolInterface {
+	return &FakeInferencePools{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate

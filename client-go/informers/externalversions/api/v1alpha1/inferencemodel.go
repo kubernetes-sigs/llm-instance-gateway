@@ -31,59 +31,59 @@ import (
 	cache "k8s.io/client-go/tools/cache"
 )
 
-// LLMServiceInformer provides access to a shared informer and lister for
-// LLMServices.
-type LLMServiceInformer interface {
+// InferenceModelInformer provides access to a shared informer and lister for
+// InferenceModels.
+type InferenceModelInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.LLMServiceLister
+	Lister() v1alpha1.InferenceModelLister
 }
 
-type lLMServiceInformer struct {
+type inferenceModelInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
 	namespace        string
 }
 
-// NewLLMServiceInformer constructs a new informer for LLMService type.
+// NewInferenceModelInformer constructs a new informer for InferenceModel type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewLLMServiceInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredLLMServiceInformer(client, namespace, resyncPeriod, indexers, nil)
+func NewInferenceModelInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
+	return NewFilteredInferenceModelInformer(client, namespace, resyncPeriod, indexers, nil)
 }
 
-// NewFilteredLLMServiceInformer constructs a new informer for LLMService type.
+// NewFilteredInferenceModelInformer constructs a new informer for InferenceModel type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewFilteredLLMServiceInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
+func NewFilteredInferenceModelInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ApiV1alpha1().LLMServices(namespace).List(context.TODO(), options)
+				return client.ApiV1alpha1().InferenceModels(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ApiV1alpha1().LLMServices(namespace).Watch(context.TODO(), options)
+				return client.ApiV1alpha1().InferenceModels(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&apiv1alpha1.LLMService{},
+		&apiv1alpha1.InferenceModel{},
 		resyncPeriod,
 		indexers,
 	)
 }
 
-func (f *lLMServiceInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredLLMServiceInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+func (f *inferenceModelInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
+	return NewFilteredInferenceModelInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
-func (f *lLMServiceInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&apiv1alpha1.LLMService{}, f.defaultInformer)
+func (f *inferenceModelInformer) Informer() cache.SharedIndexInformer {
+	return f.factory.InformerFor(&apiv1alpha1.InferenceModel{}, f.defaultInformer)
 }
 
-func (f *lLMServiceInformer) Lister() v1alpha1.LLMServiceLister {
-	return v1alpha1.NewLLMServiceLister(f.Informer().GetIndexer())
+func (f *inferenceModelInformer) Lister() v1alpha1.InferenceModelLister {
+	return v1alpha1.NewInferenceModelLister(f.Informer().GetIndexer())
 }
