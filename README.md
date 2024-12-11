@@ -1,6 +1,6 @@
 # Kubernetes LLM Instance Gateway
 
-The LLM Instance Gateway came out of [wg-serving](https://github.com/kubernetes/community/tree/master/wg-serving) and is sponsored by [SIG Apps](https://github.com/kubernetes/community/blob/master/sig-apps/README.md#llm-instance-gateway). This repo contains: the load balancing algorithm, [ext-proc](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/ext_proc_filter) code, CRDs, and controllers to support the LLM Instance Gateway.
+The LLM Instance Gateway came out of [wg-serving](https://github.com/kubernetes/community/tree/master/wg-serving) and is sponsored by [SIG Network](https://github.com/kubernetes/community/blob/master/sig-network/README.md#gateway-api-inference-extension). This repo contains: the load balancing algorithm, [ext-proc](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/ext_proc_filter) code, CRDs, and controllers to support the LLM Instance Gateway.
 
 This Gateway is intented to provide value to multiplexed LLM services on a shared pool of compute. See the [proposal](https://github.com/kubernetes-sigs/wg-serving/tree/main/proposals/012-llm-instance-gateway) for more info.
 
