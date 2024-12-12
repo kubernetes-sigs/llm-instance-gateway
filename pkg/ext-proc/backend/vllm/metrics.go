@@ -5,19 +5,21 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
-
-	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/backend"
 
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"go.uber.org/multierr"
+	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/backend"
 	klog "k8s.io/klog/v2"
 )
 
 const (
-	ActiveLoRAAdaptersMetricName = "vllm:info_active_adapters_info"
+	LoraRequestInfoMetricName                = "vllm:lora_requests_info"
+	LoraRequestInfoRunningAdaptersMetricName = "running_lora_adapters"
+	LoraRequestInfoMaxAdaptersMetricName     = "max_lora"
 	// TODO: Replace these with the num_tokens_running/waiting below once we add those to the fork.
 	RunningQueueSizeMetricName = "vllm:num_requests_running"
 	WaitingQueueSizeMetricName = "vllm:num_requests_waiting"
@@ -82,6 +84,9 @@ func promToPodMetrics(metricFamilies map[string]*dto.MetricFamily, existing *bac
 	if err == nil {
 		updated.KVCacheUsagePercent = cachePercent.GetGauge().GetValue()
 	}
+
+	loraMetrics, _, err := getLatestLoraMetric(metricFamilies)
+	errs = multierr.Append(errs, err)
 	/* TODO: uncomment once this is available in vllm.
 	kvCap, _, err := getGaugeLatestValue(metricFamilies, KvCacheMaxTokenCapacityMetricName)
 	errs = multierr.Append(errs, err)
@@ -90,35 +95,55 @@ func promToPodMetrics(metricFamilies map[string]*dto.MetricFamily, existing *bac
 	}
 	*/
 
-	// TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/22): Read from vLLM metrics once the is available.
-	updated.MaxActiveModels = 4
-
-	// Update active loras
-	mf, ok := metricFamilies[ActiveLoRAAdaptersMetricName]
-	if ok {
-		// IMPORTANT: replace the map entries instead of appending to it.
+	if loraMetrics != nil {
 		updated.ActiveModels = make(map[string]int)
-		for _, metric := range mf.GetMetric() {
-			for _, label := range metric.GetLabel() {
-				if label.GetName() == "active_adapters" {
-					if label.GetValue() != "" {
-						adapterList := strings.Split(label.GetValue(), ",")
-						for _, adapter := range adapterList {
-							updated.ActiveModels[adapter] = 0
-						}
+		for _, label := range loraMetrics.GetLabel() {
+			if label.GetName() == LoraRequestInfoRunningAdaptersMetricName {
+				if label.GetValue() != "" {
+					adapterList := strings.Split(label.GetValue(), ",")
+					for _, adapter := range adapterList {
+						updated.ActiveModels[adapter] = 0
+					}
+				}
+			}
+			if label.GetName() == LoraRequestInfoMaxAdaptersMetricName {
+				if label.GetValue() != "" {
+					updated.MaxActiveModels, err = strconv.Atoi(label.GetValue())
+					if err != nil {
+						errs = multierr.Append(errs, err)
 					}
 				}
 			}
 		}
-	} else {
-		klog.Warningf("metric family %q not found", ActiveLoRAAdaptersMetricName)
-		errs = multierr.Append(errs, fmt.Errorf("metric family %q not found", ActiveLoRAAdaptersMetricName))
+
 	}
 
 	return updated, errs
 }
 
+// getLatestLoraMetric gets latest lora metric series in gauge metric family `vllm:lora_requests_info`
+// reason its specially fetched is because each label key value pair permutation generates new series
+// and only most recent is useful. The value of each series is the creation timestamp so we can
+// retrieve the latest by sorting the value.
+func getLatestLoraMetric(metricFamilies map[string]*dto.MetricFamily) (*dto.Metric, time.Time, error) {
+	loraRequests, ok := metricFamilies[LoraRequestInfoMetricName]
+	if !ok {
+		klog.Warningf("metric family %q not found", LoraRequestInfoMetricName)
+		return nil, time.Time{}, fmt.Errorf("metric family %q not found", LoraRequestInfoMetricName)
+	}
+	var latestTs float64
+	var latest *dto.Metric
+	for _, m := range loraRequests.GetMetric() {
+		if m.GetGauge().GetValue() > latestTs {
+			latestTs = m.GetGauge().GetValue()
+			latest = m
+		}
+	}
+	return latest, time.Unix(0, int64(latestTs*1000)), nil
+}
+
 // getLatestMetric gets the latest metric of a family. This should be used to get the latest Gauge metric.
+// Since vllm doesn't set the timestamp in metric, this metric essentially gets the first metric.
 func getLatestMetric(metricFamilies map[string]*dto.MetricFamily, metricName string) (*dto.Metric, time.Time, error) {
 	mf, ok := metricFamilies[metricName]
 	if !ok {
