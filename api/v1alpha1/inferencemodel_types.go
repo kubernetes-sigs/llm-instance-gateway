@@ -57,7 +57,20 @@ type InferenceModelSpec struct {
 	// modelName is often in reference to a LoRA adapter.
 	TargetModels []TargetModel `json:"targetModels,omitempty"`
 	// Reference to the InferencePool that the model registers to. It must exist in the same namespace.
-	PoolRef string `json:"poolRef,omitempty"`
+	PoolRef LocalObjectReference `json:"poolRef,omitempty"`
+}
+
+// LocalObjectReference identifies an API object within the namespace of the
+// referrer.
+type LocalObjectReference struct {
+	// Group is the group of the referent.
+	Group string `json:"group,omitempty"`
+
+	// Kind is kind of the referent. For example "InferencePool".
+	Kind string `json:"kind,omitempty"`
+
+	// Name is the name of the referent.
+	Name string `json:"name,omitempty"`
 }
 
 // Defines how important it is to serve the model compared to other models.

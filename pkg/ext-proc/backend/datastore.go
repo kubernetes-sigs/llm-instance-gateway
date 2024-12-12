@@ -97,7 +97,7 @@ func RandomWeightedDraw(model *v1alpha1.InferenceModel, seed int64) string {
 	return ""
 }
 
-func ModelHasObjective(model *v1alpha1.InferenceModel) bool {
+func IsCritical(model *v1alpha1.InferenceModel) bool {
 	if model.Spec.Criticality != nil && *model.Spec.Criticality == v1alpha1.Critical {
 		return true
 	}

@@ -34,7 +34,7 @@ func (c *EndpointSliceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	endpointSlice := &discoveryv1.EndpointSlice{}
 	if err := c.Get(ctx, req.NamespacedName, endpointSlice); err != nil {
-		klog.Error(err, "unable to get InferencePool")
+		klog.Errorf("unable to get EndpointSlice: %v", err)
 		return ctrl.Result{}, err
 	}
 

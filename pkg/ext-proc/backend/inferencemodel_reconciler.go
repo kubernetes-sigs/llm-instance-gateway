@@ -43,8 +43,7 @@ func (c *InferenceModelReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (c *InferenceModelReconciler) updateDatastore(infModel *v1alpha1.InferenceModel) {
-
-	if infModel.Spec.PoolRef == c.ServerPoolName {
+	if infModel.Spec.PoolRef.Name == c.ServerPoolName {
 		klog.Infof("Incoming pool ref %v, server pool name: %v", infModel.Spec.PoolRef, c.ServerPoolName)
 		klog.Infof("Adding/Updating inference model: %v", infModel.Spec.ModelName)
 		c.Datastore.InferenceModels.Store(infModel.Spec.ModelName, infModel)

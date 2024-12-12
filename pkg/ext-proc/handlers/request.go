@@ -52,7 +52,7 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 	llmReq := &scheduling.LLMRequest{
 		Model:               model,
 		ResolvedTargetModel: modelName,
-		Critical:            backend.ModelHasObjective(modelObj),
+		Critical:            backend.IsCritical(modelObj),
 	}
 	klog.V(3).Infof("LLM Request: %+v", llmReq)
 

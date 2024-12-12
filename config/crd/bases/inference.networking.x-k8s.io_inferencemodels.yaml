@@ -74,7 +74,17 @@ spec:
               poolRef:
                 description: Reference to the InferencePool that the model registers
                   to. It must exist in the same namespace.
-                type: string
+                properties:
+                  group:
+                    description: Group is the group of the referent.
+                    type: string
+                  kind:
+                    description: Kind is kind of the referent. For example "InferencePool".
+                    type: string
+                  name:
+                    description: Name is the name of the referent.
+                    type: string
+                type: object
               targetModels:
                 description: |-
                   Optional.
