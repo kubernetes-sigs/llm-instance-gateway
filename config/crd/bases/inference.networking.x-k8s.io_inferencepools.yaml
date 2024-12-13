@@ -39,17 +39,16 @@ spec:
           spec:
             description: InferencePoolSpec defines the desired state of InferencePool
             properties:
-              modelServerSelector:
+              selector:
                 additionalProperties:
                   type: string
                 description: |-
-                  ModelServerSelector uses a map of label to watch model server pods
+                  Selector uses a map of label to watch model server pods
                   that should be included in the InferencePool. ModelServers should not
                   be with any other Service or InferencePool, that behavior is not supported
                   and will result in sub-optimal utilization.
-                  Due to this selector being translated to a service a simple map is used instead
-                  of: https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#LabelSelector
-                  To avoid footshoot errors when the https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#LabelSelectorAsMap would be used.
+                  In some cases, implementations may translate this to a Service selector, so this matches the simple
+                  map used for Service selectors instead of the full Kubernetes LabelSelector type.
                 type: object
               targetPort:
                 description: |-
@@ -57,6 +56,8 @@ spec:
                   to recieve traffic from.
                   This maps to the TargetPort in: https://pkg.go.dev/k8s.io/api/core/v1#ServicePort
                 format: int32
+                maximum: 65535
+                minimum: 0
                 type: integer
             type: object
           status:

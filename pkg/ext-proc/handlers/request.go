@@ -43,7 +43,7 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 	if modelObj == nil {
 		return nil, fmt.Errorf("error finding a model object in LLMService for input model %v", model)
 	}
-	if modelObj != nil && len(modelObj.Spec.TargetModels) > 0 {
+	if len(modelObj.Spec.TargetModels) > 0 {
 		modelName = backend.RandomWeightedDraw(modelObj, 0)
 		if modelName == "" {
 			return nil, fmt.Errorf("error getting target model name for model %v", modelObj.Name)

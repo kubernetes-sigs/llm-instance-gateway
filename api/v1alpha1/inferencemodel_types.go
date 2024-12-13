@@ -22,19 +22,18 @@ import (
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// InferenceModelSpec represents a set of Models/Adapters that are multiplexed onto one
-// or more backend pools. This resource is managed by the "Inference Workload Owner"
-// persona. The Inference Workload Owner persona is: a team that trains, verifies, and
+// InferenceModelSpec represents a specific usecase model. This resource is
+// managed by the "Inference Workload Owner" persona.
+//
+// The Inference Workload Owner persona is: a team that trains, verifies, and
 // leverages a large language model from a model frontend, drives the lifecycle
 // and rollout of new versions of those models, and defines the specific
 // performance and latency goals for the model. These workloads are
 // expected to operate within an InferencePool sharing compute capacity with other
-// InferenceModels, defined by the Inference Platform Admin. We allow a user who
-// has multiple InferenceModels across multiple pools (with the same config) to
-// specify the configuration exactly once, and deploy to many pools
-// simultaneously. Enabling a simpler config and single source of truth
-// for a given user. InferenceModel names are unique for a given InferencePool,
-// if the name is reused, an error will be  shown on the status of a
+// InferenceModels, defined by the Inference Platform Admin.
+//
+// InferenceModel's modelName (not the ObjectMeta name) are unique for a given InferencePool,
+// if the name is reused, an error will be shown on the status of a
 // InferenceModel that attempted to reuse. The oldest InferenceModel, based on
 // creation timestamp, will be selected to remain valid. In the event of a race
 // condition, one will be selected at random.
@@ -47,16 +46,19 @@ type InferenceModelSpec struct {
 	// Names can be reserved without implementing an actual model in the pool.
 	// This can be done by specifying a target model and setting the weight to zero,
 	// an error will be returned specifying that no valid target model is found.
+	//
+	// +optional
+	// +kubebuilder:validation:MaxLength=128
 	ModelName string `json:"modelName,omitempty"`
-	// Optional
 	// Defines how important it is to serve the model compared to other models referencing the same pool.
+	// +optional
 	Criticality *Criticality `json:"criticality,omitempty"`
-	// Optional.
 	// Allow multiple versions of a model for traffic splitting.
 	// If not specified, the target model name is defaulted to the modelName parameter.
 	// modelName is often in reference to a LoRA adapter.
+	// +optional
 	TargetModels []TargetModel `json:"targetModels,omitempty"`
-	// Reference to the InferencePool that the model registers to. It must exist in the same namespace.
+	// Reference to the poolIt must exist in the same namespace.
 	PoolRef LocalObjectReference `json:"poolRef,omitempty"`
 }
 
@@ -74,6 +76,7 @@ type LocalObjectReference struct {
 }
 
 // Defines how important it is to serve the model compared to other models.
+// +kubebuilder:validation:Enum=Critical;Default;Sheddable
 type Criticality string
 
 const (
@@ -81,6 +84,7 @@ const (
 	Critical Criticality = "Critical"
 	// More important than Sheddable, less important than Critical.
 	// Requests in this band will be shed before critical traffic.
+	// +kubebuilder:default=Default
 	Default Criticality = "Default"
 	// Least important. Requests to this band will be shed before all other bands.
 	Sheddable Criticality = "Sheddable"
@@ -95,9 +99,17 @@ const (
 // and then emitted on the appropriate InferenceModel object.
 type TargetModel struct {
 	// The name of the adapter as expected by the ModelServer.
+	//
+	// +optional
+	// +kubebuilder:validation:MaxLength=128
 	Name string `json:"name,omitempty"`
-	// Weight is used to determine the percentage of traffic that should be
+	// Weight is used to determine the proportion of traffic that should be
 	// sent to this target model when multiple versions of the model are specified.
+	//
+	// +optional
+	// +kubebuilder:default=1
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=1000000
 	Weight int `json:"weight,omitempty"`
 }
 

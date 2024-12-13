@@ -44,12 +44,12 @@ func (c *InferenceModelReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func (c *InferenceModelReconciler) updateDatastore(infModel *v1alpha1.InferenceModel) {
 	if infModel.Spec.PoolRef.Name == c.ServerPoolName {
-		klog.Infof("Incoming pool ref %v, server pool name: %v", infModel.Spec.PoolRef, c.ServerPoolName)
-		klog.Infof("Adding/Updating inference model: %v", infModel.Spec.ModelName)
+		klog.V(1).Infof("Incoming pool ref %v, server pool name: %v", infModel.Spec.PoolRef, c.ServerPoolName)
+		klog.V(1).Infof("Adding/Updating inference model: %v", infModel.Spec.ModelName)
 		c.Datastore.InferenceModels.Store(infModel.Spec.ModelName, infModel)
 		return
 	}
 	klog.V(2).Infof("Removing/Not adding inference model: %v", infModel.Spec.ModelName)
-	// If we get here. The service is not relevant to this pool, remove.
+	// If we get here. The model is not relevant to this pool, remove.
 	c.Datastore.InferenceModels.Delete(infModel.Spec.ModelName)
 }

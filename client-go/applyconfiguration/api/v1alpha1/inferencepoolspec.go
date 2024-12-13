@@ -20,8 +20,8 @@ package v1alpha1
 // InferencePoolSpecApplyConfiguration represents a declarative configuration of the InferencePoolSpec type for use
 // with apply.
 type InferencePoolSpecApplyConfiguration struct {
-	ModelServerSelector map[string]string `json:"modelServerSelector,omitempty"`
-	TargetPort          *int32            `json:"targetPort,omitempty"`
+	Selector   map[string]string `json:"selector,omitempty"`
+	TargetPort *int32            `json:"targetPort,omitempty"`
 }
 
 // InferencePoolSpecApplyConfiguration constructs a declarative configuration of the InferencePoolSpec type for use with
@@ -30,16 +30,16 @@ func InferencePoolSpec() *InferencePoolSpecApplyConfiguration {
 	return &InferencePoolSpecApplyConfiguration{}
 }
 
-// WithModelServerSelector puts the entries into the ModelServerSelector field in the declarative configuration
+// WithSelector puts the entries into the Selector field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
-// If called multiple times, the entries provided by each call will be put on the ModelServerSelector field,
-// overwriting an existing map entries in ModelServerSelector field with the same key.
-func (b *InferencePoolSpecApplyConfiguration) WithModelServerSelector(entries map[string]string) *InferencePoolSpecApplyConfiguration {
-	if b.ModelServerSelector == nil && len(entries) > 0 {
-		b.ModelServerSelector = make(map[string]string, len(entries))
+// If called multiple times, the entries provided by each call will be put on the Selector field,
+// overwriting an existing map entries in Selector field with the same key.
+func (b *InferencePoolSpecApplyConfiguration) WithSelector(entries map[string]string) *InferencePoolSpecApplyConfiguration {
+	if b.Selector == nil && len(entries) > 0 {
+		b.Selector = make(map[string]string, len(entries))
 	}
 	for k, v := range entries {
-		b.ModelServerSelector[k] = v
+		b.Selector[k] = v
 	}
 	return b
 }

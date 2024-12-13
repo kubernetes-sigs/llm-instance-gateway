@@ -25,18 +25,19 @@ import (
 // InferencePoolSpec defines the desired state of InferencePool
 type InferencePoolSpec struct {
 
-	// ModelServerSelector uses a map of label to watch model server pods
+	// Selector uses a map of label to watch model server pods
 	// that should be included in the InferencePool. ModelServers should not
 	// be with any other Service or InferencePool, that behavior is not supported
 	// and will result in sub-optimal utilization.
-	// Due to this selector being translated to a service a simple map is used instead
-	// of: https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#LabelSelector
-	// To avoid footshoot errors when the https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#LabelSelectorAsMap would be used.
-	ModelServerSelector map[string]string `json:"modelServerSelector,omitempty"`
+	// In some cases, implementations may translate this to a Service selector, so this matches the simple
+	// map used for Service selectors instead of the full Kubernetes LabelSelector type.
+	Selector map[string]string `json:"selector,omitempty"`
 
 	// TargetPort is the port number that the model servers within the pool expect
 	// to recieve traffic from.
 	// This maps to the TargetPort in: https://pkg.go.dev/k8s.io/api/core/v1#ServicePort
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=65535
 	TargetPort int32 `json:"targetPort,omitempty"`
 }
 

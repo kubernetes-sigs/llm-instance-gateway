@@ -48,7 +48,7 @@ func (c *InferencePoolReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 func (c *InferencePoolReconciler) updateDatastore(serverPool *v1alpha1.InferencePool) {
 	if c.Datastore.InferencePool == nil || serverPool.ObjectMeta.ResourceVersion != c.Datastore.InferencePool.ObjectMeta.ResourceVersion {
-		c.Datastore.InferencePool = serverPool
+		c.Datastore.setInferencePool(serverPool)
 	}
 }
 
