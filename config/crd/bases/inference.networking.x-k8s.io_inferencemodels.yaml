@@ -38,7 +38,7 @@ spec:
             type: object
           spec:
             description: |-
-              InferenceModelSpec represents a specific usecase model. This resource is
+              InferenceModelSpec represents a specific model use case. This resource is
               managed by the "Inference Workload Owner" persona.
 
               The Inference Workload Owner persona is: a team that trains, verifies, and
@@ -48,7 +48,7 @@ spec:
               expected to operate within an InferencePool sharing compute capacity with other
               InferenceModels, defined by the Inference Platform Admin.
 
-              InferenceModel's modelName (not the ObjectMeta name) are unique for a given InferencePool,
+              InferenceModel's modelName (not the ObjectMeta name) is unique for a given InferencePool,
               if the name is reused, an error will be shown on the status of a
               InferenceModel that attempted to reuse. The oldest InferenceModel, based on
               creation timestamp, will be selected to remain valid. In the event of a race
@@ -72,19 +72,28 @@ spec:
                   Names can be reserved without implementing an actual model in the pool.
                   This can be done by specifying a target model and setting the weight to zero,
                   an error will be returned specifying that no valid target model is found.
-                maxLength: 128
+                maxLength: 253
                 type: string
               poolRef:
                 description: Reference to the poolIt must exist in the same namespace.
                 properties:
                   group:
+                    default: inference.networking.x-k8s.io
                     description: Group is the group of the referent.
+                    maxLength: 253
+                    pattern: ^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
                     type: string
                   kind:
+                    default: LLMServerPool
                     description: Kind is kind of the referent. For example "InferencePool".
+                    maxLength: 63
+                    minLength: 1
+                    pattern: ^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
                     type: string
                   name:
                     description: Name is the name of the referent.
+                    maxLength: 253
+                    minLength: 1
                     type: string
                 type: object
               targetModels:
@@ -104,7 +113,7 @@ spec:
                   properties:
                     name:
                       description: The name of the adapter as expected by the ModelServer.
-                      maxLength: 128
+                      maxLength: 253
                       type: string
                     weight:
                       default: 1

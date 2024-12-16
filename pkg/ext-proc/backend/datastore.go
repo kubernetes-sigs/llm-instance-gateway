@@ -26,7 +26,7 @@ func NewK8sDataStore(options ...K8sDatastoreOption) *K8sDatastore {
 type K8sDatastore struct {
 	// poolMu is used to synchronize access to the inferencePool.
 	poolMu          sync.RWMutex
-	InferencePool   *v1alpha1.InferencePool
+	inferencePool   *v1alpha1.InferencePool
 	InferenceModels *sync.Map
 	pods            *sync.Map
 }
@@ -46,16 +46,16 @@ func WithPods(pods []*PodMetrics) K8sDatastoreOption {
 func (ds *K8sDatastore) setInferencePool(pool *v1alpha1.InferencePool) {
 	ds.poolMu.Lock()
 	defer ds.poolMu.Unlock()
-	ds.InferencePool = pool
+	ds.inferencePool = pool
 }
 
 func (ds *K8sDatastore) getInferencePool() (*v1alpha1.InferencePool, error) {
 	ds.poolMu.RLock()
 	defer ds.poolMu.RUnlock()
-	if ds.InferencePool == nil {
+	if ds.inferencePool == nil {
 		return nil, fmt.Errorf("InferencePool hasn't been initialized yet")
 	}
-	return ds.InferencePool, nil
+	return ds.inferencePool, nil
 }
 
 func (ds *K8sDatastore) GetPodIPs() []string {

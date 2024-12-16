@@ -200,7 +200,7 @@ func (in *InferencePoolSpec) DeepCopyInto(out *InferencePoolSpec) {
 	*out = *in
 	if in.Selector != nil {
 		in, out := &in.Selector, &out.Selector
-		*out = make(map[string]string, len(*in))
+		*out = make(map[LabelString]LabelString, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
 		}

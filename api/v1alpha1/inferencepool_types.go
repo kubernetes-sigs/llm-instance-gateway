@@ -31,7 +31,7 @@ type InferencePoolSpec struct {
 	// and will result in sub-optimal utilization.
 	// In some cases, implementations may translate this to a Service selector, so this matches the simple
 	// map used for Service selectors instead of the full Kubernetes LabelSelector type.
-	Selector map[string]string `json:"selector,omitempty"`
+	Selector map[LabelString]LabelString `json:"selector,omitempty"`
 
 	// TargetPort is the port number that the model servers within the pool expect
 	// to recieve traffic from.
@@ -47,6 +47,12 @@ type InferencePoolStatus struct {
 	// Conditions track the state of the InferencePool.
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
+
+// This indirection allows us to validate this type, since there is not native map validation support
+//
+// +kubebuilder:validation:MinLength=1
+// +kubebuilder:validation:MaxLength=63
+type LabelString string
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status

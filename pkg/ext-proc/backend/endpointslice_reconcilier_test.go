@@ -26,7 +26,7 @@ func TestUpdateDatastore_EndpointSliceReconciler(t *testing.T) {
 			name: "Add new pod",
 			datastore: &K8sDatastore{
 				pods: populateMap(basePod1, basePod2),
-				InferencePool: &v1alpha1.InferencePool{
+				inferencePool: &v1alpha1.InferencePool{
 					Spec: v1alpha1.InferencePoolSpec{
 						TargetPort: int32(8000),
 					},
@@ -72,7 +72,7 @@ func TestUpdateDatastore_EndpointSliceReconciler(t *testing.T) {
 			name: "New pod, but its not ready yet. Do not add.",
 			datastore: &K8sDatastore{
 				pods: populateMap(basePod1, basePod2),
-				InferencePool: &v1alpha1.InferencePool{
+				inferencePool: &v1alpha1.InferencePool{
 					Spec: v1alpha1.InferencePoolSpec{
 						TargetPort: int32(8000),
 					},
@@ -118,7 +118,7 @@ func TestUpdateDatastore_EndpointSliceReconciler(t *testing.T) {
 			name: "Existing pod not ready, new pod added, and is ready",
 			datastore: &K8sDatastore{
 				pods: populateMap(basePod1, basePod2),
-				InferencePool: &v1alpha1.InferencePool{
+				inferencePool: &v1alpha1.InferencePool{
 					Spec: v1alpha1.InferencePoolSpec{
 						TargetPort: int32(8000),
 					},
@@ -164,7 +164,7 @@ func TestUpdateDatastore_EndpointSliceReconciler(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			endpointSliceReconciler := &EndpointSliceReconciler{Datastore: test.datastore, Zone: ""}
-			endpointSliceReconciler.updateDatastore(test.incomingSlice)
+			endpointSliceReconciler.updateDatastore(test.incomingSlice, test.datastore.inferencePool)
 
 			if mapsEqual(endpointSliceReconciler.Datastore.pods, test.wantPods) {
 				t.Errorf("Unexpected output pod mismatch. \n Got %v \n Want: %v \n", endpointSliceReconciler.Datastore.pods, test.wantPods)

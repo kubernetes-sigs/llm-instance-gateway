@@ -22,7 +22,7 @@ import (
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// InferenceModelSpec represents a specific usecase model. This resource is
+// InferenceModelSpec represents a specific model use case. This resource is
 // managed by the "Inference Workload Owner" persona.
 //
 // The Inference Workload Owner persona is: a team that trains, verifies, and
@@ -32,7 +32,7 @@ import (
 // expected to operate within an InferencePool sharing compute capacity with other
 // InferenceModels, defined by the Inference Platform Admin.
 //
-// InferenceModel's modelName (not the ObjectMeta name) are unique for a given InferencePool,
+// InferenceModel's modelName (not the ObjectMeta name) is unique for a given InferencePool,
 // if the name is reused, an error will be shown on the status of a
 // InferenceModel that attempted to reuse. The oldest InferenceModel, based on
 // creation timestamp, will be selected to remain valid. In the event of a race
@@ -48,7 +48,7 @@ type InferenceModelSpec struct {
 	// an error will be returned specifying that no valid target model is found.
 	//
 	// +optional
-	// +kubebuilder:validation:MaxLength=128
+	// +kubebuilder:validation:MaxLength=253
 	ModelName string `json:"modelName,omitempty"`
 	// Defines how important it is to serve the model compared to other models referencing the same pool.
 	// +optional
@@ -59,19 +59,32 @@ type InferenceModelSpec struct {
 	// +optional
 	TargetModels []TargetModel `json:"targetModels,omitempty"`
 	// Reference to the poolIt must exist in the same namespace.
-	PoolRef LocalObjectReference `json:"poolRef,omitempty"`
+	PoolRef *LocalObjectReference `json:"poolRef,omitempty"`
 }
 
 // LocalObjectReference identifies an API object within the namespace of the
 // referrer.
 type LocalObjectReference struct {
 	// Group is the group of the referent.
+	//
+	// +optional
+	// +kubebuilder:default="inference.networking.x-k8s.io"
+	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:Pattern=`^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`
 	Group string `json:"group,omitempty"`
 
 	// Kind is kind of the referent. For example "InferencePool".
+	// +optional
+	// +kubebuilder:default="LLMServerPool"
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=63
+	// +kubebuilder:validation:Pattern=`^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$`
 	Kind string `json:"kind,omitempty"`
 
 	// Name is the name of the referent.
+	//
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
 	Name string `json:"name,omitempty"`
 }
 
@@ -101,7 +114,7 @@ type TargetModel struct {
 	// The name of the adapter as expected by the ModelServer.
 	//
 	// +optional
-	// +kubebuilder:validation:MaxLength=128
+	// +kubebuilder:validation:MaxLength=253
 	Name string `json:"name,omitempty"`
 	// Weight is used to determine the proportion of traffic that should be
 	// sent to this target model when multiple versions of the model are specified.

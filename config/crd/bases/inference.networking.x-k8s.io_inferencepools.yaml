@@ -41,6 +41,10 @@ spec:
             properties:
               selector:
                 additionalProperties:
+                  description: This indirection allows us to validate this type, since
+                    there is not native map validation support
+                  maxLength: 63
+                  minLength: 1
                   type: string
                 description: |-
                   Selector uses a map of label to watch model server pods

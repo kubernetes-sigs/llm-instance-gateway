@@ -48,9 +48,9 @@ func TestUpdateDatastore_InferenceModelReconciler(t *testing.T) {
 		{
 			name: "No Services registered; valid, new service incoming.",
 			datastore: &K8sDatastore{
-				InferencePool: &v1alpha1.InferencePool{
+				inferencePool: &v1alpha1.InferencePool{
 					Spec: v1alpha1.InferencePoolSpec{
-						ModelServerSelector: map[string]string{"app": "vllm"},
+						Selector: map[v1alpha1.LabelString]v1alpha1.LabelString{"app": "vllm"},
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:            "test-pool",
@@ -65,9 +65,9 @@ func TestUpdateDatastore_InferenceModelReconciler(t *testing.T) {
 		{
 			name: "Removing existing service.",
 			datastore: &K8sDatastore{
-				InferencePool: &v1alpha1.InferencePool{
+				inferencePool: &v1alpha1.InferencePool{
 					Spec: v1alpha1.InferencePoolSpec{
-						ModelServerSelector: map[string]string{"app": "vllm"},
+						Selector: map[v1alpha1.LabelString]v1alpha1.LabelString{"app": "vllm"},
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:            "test-pool",
@@ -82,9 +82,9 @@ func TestUpdateDatastore_InferenceModelReconciler(t *testing.T) {
 		{
 			name: "Unrelated service, do nothing.",
 			datastore: &K8sDatastore{
-				InferencePool: &v1alpha1.InferencePool{
+				inferencePool: &v1alpha1.InferencePool{
 					Spec: v1alpha1.InferencePoolSpec{
-						ModelServerSelector: map[string]string{"app": "vllm"},
+						Selector: map[v1alpha1.LabelString]v1alpha1.LabelString{"app": "vllm"},
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:            "test-pool",
@@ -107,9 +107,9 @@ func TestUpdateDatastore_InferenceModelReconciler(t *testing.T) {
 		{
 			name: "Add to existing",
 			datastore: &K8sDatastore{
-				InferencePool: &v1alpha1.InferencePool{
+				inferencePool: &v1alpha1.InferencePool{
 					Spec: v1alpha1.InferencePoolSpec{
-						ModelServerSelector: map[string]string{"app": "vllm"},
+						Selector: map[v1alpha1.LabelString]v1alpha1.LabelString{"app": "vllm"},
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:            "test-pool",
@@ -124,7 +124,7 @@ func TestUpdateDatastore_InferenceModelReconciler(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			InferenceModelReconciler := &InferenceModelReconciler{Datastore: test.datastore, ServerPoolName: test.datastore.InferencePool.Name}
+			InferenceModelReconciler := &InferenceModelReconciler{Datastore: test.datastore, ServerPoolName: test.datastore.inferencePool.Name}
 			InferenceModelReconciler.updateDatastore(test.incomingService)
 
 			if ok := mapsEqual(InferenceModelReconciler.Datastore.InferenceModels, test.wantInferenceModels); !ok {
