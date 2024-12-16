@@ -75,7 +75,7 @@ type LocalObjectReference struct {
 
 	// Kind is kind of the referent. For example "InferencePool".
 	// +optional
-	// +kubebuilder:default="LLMServerPool"
+	// +kubebuilder:default="InferencePool"
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=63
 	// +kubebuilder:validation:Pattern=`^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$`

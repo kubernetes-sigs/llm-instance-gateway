@@ -41,7 +41,7 @@ func (s *Server) HandleRequestBody(reqCtx *RequestContext, req *extProcPb.Proces
 	// are able to be requested by using their distinct name.
 	modelObj := s.datastore.FetchModelData(model)
 	if modelObj == nil {
-		return nil, fmt.Errorf("error finding a model object in LLMService for input model %v", model)
+		return nil, fmt.Errorf("error finding a model object in InferenceModel for input %v", model)
 	}
 	if len(modelObj.Spec.TargetModels) > 0 {
 		modelName = backend.RandomWeightedDraw(modelObj, 0)

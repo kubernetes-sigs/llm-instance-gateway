@@ -84,7 +84,7 @@ spec:
                     pattern: ^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
                     type: string
                   kind:
-                    default: LLMServerPool
+                    default: InferencePool
                     description: Kind is kind of the referent. For example "InferencePool".
                     maxLength: 63
                     minLength: 1

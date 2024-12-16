@@ -20,7 +20,7 @@ spec:
   criticality: Critical
   poolRef:
     # this is the default val:
-    group: inference.networking.x-k8s.io/v1alpha1
+    group: inference.networking.x-k8s.io
     # this is the default val:
     kind: InferencePool
     name: vllm-llama2-7b-pool

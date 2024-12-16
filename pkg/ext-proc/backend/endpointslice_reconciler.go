@@ -74,10 +74,10 @@ func (c *EndpointSliceReconciler) updateDatastore(slice *discoveryv1.EndpointSli
 }
 
 func (c *EndpointSliceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	llmServerPoolAvailable := func(object client.Object) bool {
+	inferencePoolAvailable := func(object client.Object) bool {
 		_, err := c.Datastore.getInferencePool()
 		if err != nil {
-			klog.Warningf("Skipping reconciling EndpointSlice because LLMServerPool is not available yet: %v", err)
+			klog.Warningf("Skipping reconciling EndpointSlice because the InferencePool is not available yet: %v", err)
 		}
 		return err == nil
 	}
@@ -93,7 +93,7 @@ func (c *EndpointSliceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&discoveryv1.EndpointSlice{}, builder.WithPredicates(predicate.NewPredicateFuncs(llmServerPoolAvailable), predicate.NewPredicateFuncs(ownsEndPointSlice))).
+		For(&discoveryv1.EndpointSlice{}, builder.WithPredicates(predicate.NewPredicateFuncs(inferencePoolAvailable), predicate.NewPredicateFuncs(ownsEndPointSlice))).
 		Complete(c)
 }
 
