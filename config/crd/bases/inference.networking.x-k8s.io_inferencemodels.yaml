@@ -55,6 +55,7 @@ spec:
               condition, one will be selected at random.
             properties:
               criticality:
+                default: Default
                 description: Defines how important it is to serve the model compared
                   to other models referencing the same pool.
                 enum:
@@ -124,7 +125,11 @@ spec:
                       minimum: 0
                       type: integer
                   type: object
+                maxItems: 10
+                minItems: 1
                 type: array
+            required:
+            - poolRef
             type: object
           status:
             description: InferenceModelStatus defines the observed state of InferenceModel

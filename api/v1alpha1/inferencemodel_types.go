@@ -51,14 +51,21 @@ type InferenceModelSpec struct {
 	// +kubebuilder:validation:MaxLength=253
 	ModelName string `json:"modelName,omitempty"`
 	// Defines how important it is to serve the model compared to other models referencing the same pool.
+	//
 	// +optional
+	// +kubebuilder:default="Default"
 	Criticality *Criticality `json:"criticality,omitempty"`
 	// Allow multiple versions of a model for traffic splitting.
 	// If not specified, the target model name is defaulted to the modelName parameter.
 	// modelName is often in reference to a LoRA adapter.
+	//
 	// +optional
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=10
 	TargetModels []TargetModel `json:"targetModels,omitempty"`
 	// Reference to the poolIt must exist in the same namespace.
+	//
+	// +kubebuilder:validation:Required
 	PoolRef *LocalObjectReference `json:"poolRef,omitempty"`
 }
 
@@ -74,6 +81,7 @@ type LocalObjectReference struct {
 	Group string `json:"group,omitempty"`
 
 	// Kind is kind of the referent. For example "InferencePool".
+	//
 	// +optional
 	// +kubebuilder:default="InferencePool"
 	// +kubebuilder:validation:MinLength=1

@@ -31,13 +31,17 @@ type InferencePoolSpec struct {
 	// and will result in sub-optimal utilization.
 	// In some cases, implementations may translate this to a Service selector, so this matches the simple
 	// map used for Service selectors instead of the full Kubernetes LabelSelector type.
+	//
+	// +kubebuilder:validation:Required
 	Selector map[LabelString]LabelString `json:"selector,omitempty"`
 
 	// TargetPort is the port number that the model servers within the pool expect
 	// to recieve traffic from.
 	// This maps to the TargetPort in: https://pkg.go.dev/k8s.io/api/core/v1#ServicePort
+	//
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Maximum=65535
+	// +kubebuilder:validation:Required
 	TargetPort int32 `json:"targetPort,omitempty"`
 }
 

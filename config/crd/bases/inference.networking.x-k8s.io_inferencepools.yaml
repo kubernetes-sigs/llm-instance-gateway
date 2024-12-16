@@ -63,6 +63,9 @@ spec:
                 maximum: 65535
                 minimum: 0
                 type: integer
+            required:
+            - selector
+            - targetPort
             type: object
           status:
             description: InferencePoolStatus defines the observed state of InferencePool
