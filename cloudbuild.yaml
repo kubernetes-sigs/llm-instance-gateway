@@ -2,7 +2,7 @@ steps:
   - name: gcr.io/cloud-builders/docker
     args:
     - build
-    - --tag=us-central1-docker.pkg.dev/k8s-staging-images/llm-instance-gateway:$_GIT_TAG
+    - --tag=us-central1-docker.pkg.dev/k8s-staging-images/llm-instance-gateway/epp:$_GIT_TAG
     - .
 substitutions:
   _GIT_TAG: '12345'
@@ -12,4 +12,4 @@ options:
   substitution_option: ALLOW_LOOSE
 # this will push these images, or cause the build to fail if they weren't built.
 images:
-  - 'us-central1-docker.pkg.dev/k8s-staging-images/llm-instance-gateway:$_GIT_TAG'
+  - 'us-central1-docker.pkg.dev/k8s-staging-images/llm-instance-gateway/epp:$_GIT_TAG'
