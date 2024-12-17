@@ -63,7 +63,7 @@ type InferenceModelSpec struct {
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=10
 	TargetModels []TargetModel `json:"targetModels,omitempty"`
-	// Reference to the poolIt must exist in the same namespace.
+	// Reference to the inference pool, the pool must exist in the same namespace.
 	//
 	// +kubebuilder:validation:Required
 	PoolRef *PoolObjectReference `json:"poolRef,omitempty"`
