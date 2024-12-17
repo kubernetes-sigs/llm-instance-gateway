@@ -66,12 +66,12 @@ type InferenceModelSpec struct {
 	// Reference to the poolIt must exist in the same namespace.
 	//
 	// +kubebuilder:validation:Required
-	PoolRef *LocalObjectReference `json:"poolRef,omitempty"`
+	PoolRef *PoolObjectReference `json:"poolRef,omitempty"`
 }
 
-// LocalObjectReference identifies an API object within the namespace of the
+// PoolObjectReference identifies an API object within the namespace of the
 // referrer.
-type LocalObjectReference struct {
+type PoolObjectReference struct {
 	// Group is the group of the referent.
 	//
 	// +optional
@@ -93,6 +93,7 @@ type LocalObjectReference struct {
 	//
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:Required
 	Name string `json:"name,omitempty"`
 }
 

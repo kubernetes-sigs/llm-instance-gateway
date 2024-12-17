@@ -12,7 +12,7 @@ var (
 	service1 = &v1alpha1.InferenceModel{
 		Spec: v1alpha1.InferenceModelSpec{
 			ModelName: "fake model1",
-			PoolRef:   &v1alpha1.LocalObjectReference{Name: "test-pool"},
+			PoolRef:   &v1alpha1.PoolObjectReference{Name: "test-pool"},
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-service",
@@ -21,7 +21,7 @@ var (
 	service1Modified = &v1alpha1.InferenceModel{
 		Spec: v1alpha1.InferenceModelSpec{
 			ModelName: "fake model1",
-			PoolRef:   &v1alpha1.LocalObjectReference{Name: "test-poolio"},
+			PoolRef:   &v1alpha1.PoolObjectReference{Name: "test-poolio"},
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-service",
@@ -30,7 +30,7 @@ var (
 	service2 = &v1alpha1.InferenceModel{
 		Spec: v1alpha1.InferenceModelSpec{
 			ModelName: "fake model",
-			PoolRef:   &v1alpha1.LocalObjectReference{Name: "test-pool"},
+			PoolRef:   &v1alpha1.PoolObjectReference{Name: "test-pool"},
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-service-2",
@@ -96,7 +96,7 @@ func TestUpdateDatastore_InferenceModelReconciler(t *testing.T) {
 			incomingService: &v1alpha1.InferenceModel{
 				Spec: v1alpha1.InferenceModelSpec{
 					ModelName: "fake model",
-					PoolRef:   &v1alpha1.LocalObjectReference{Name: "test-poolio"},
+					PoolRef:   &v1alpha1.PoolObjectReference{Name: "test-poolio"},
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "unrelated-service",
