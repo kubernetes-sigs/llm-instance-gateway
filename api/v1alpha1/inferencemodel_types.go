@@ -60,7 +60,6 @@ type InferenceModelSpec struct {
 	// modelName is often in reference to a LoRA adapter.
 	//
 	// +optional
-	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=10
 	TargetModels []TargetModel `json:"targetModels,omitempty"`
 	// Reference to the inference pool, the pool must exist in the same namespace.
@@ -132,7 +131,7 @@ type TargetModel struct {
 	// +kubebuilder:default=1
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Maximum=1000000
-	Weight int `json:"weight,omitempty"`
+	Weight int32 `json:"weight,omitempty"`
 }
 
 // InferenceModelStatus defines the observed state of InferenceModel

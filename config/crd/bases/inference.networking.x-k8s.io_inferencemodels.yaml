@@ -76,7 +76,8 @@ spec:
                 maxLength: 253
                 type: string
               poolRef:
-                description: Reference to the poolIt must exist in the same namespace.
+                description: Reference to the inference pool, the pool must exist
+                  in the same namespace.
                 properties:
                   group:
                     default: inference.networking.x-k8s.io
@@ -96,6 +97,8 @@ spec:
                     maxLength: 253
                     minLength: 1
                     type: string
+                required:
+                - name
                 type: object
               targetModels:
                 description: |-
@@ -121,12 +124,12 @@ spec:
                       description: |-
                         Weight is used to determine the proportion of traffic that should be
                         sent to this target model when multiple versions of the model are specified.
+                      format: int32
                       maximum: 1000000
                       minimum: 0
                       type: integer
                   type: object
                 maxItems: 10
-                minItems: 1
                 type: array
             required:
             - poolRef

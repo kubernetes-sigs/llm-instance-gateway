@@ -17,24 +17,24 @@ limitations under the License.
 
 package v1alpha1
 
-// LocalObjectReferenceApplyConfiguration represents a declarative configuration of the LocalObjectReference type for use
+// PoolObjectReferenceApplyConfiguration represents a declarative configuration of the PoolObjectReference type for use
 // with apply.
-type LocalObjectReferenceApplyConfiguration struct {
+type PoolObjectReferenceApplyConfiguration struct {
 	Group *string `json:"group,omitempty"`
 	Kind  *string `json:"kind,omitempty"`
 	Name  *string `json:"name,omitempty"`
 }
 
-// LocalObjectReferenceApplyConfiguration constructs a declarative configuration of the LocalObjectReference type for use with
+// PoolObjectReferenceApplyConfiguration constructs a declarative configuration of the PoolObjectReference type for use with
 // apply.
-func LocalObjectReference() *LocalObjectReferenceApplyConfiguration {
-	return &LocalObjectReferenceApplyConfiguration{}
+func PoolObjectReference() *PoolObjectReferenceApplyConfiguration {
+	return &PoolObjectReferenceApplyConfiguration{}
 }
 
 // WithGroup sets the Group field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Group field is set to the value of the last call.
-func (b *LocalObjectReferenceApplyConfiguration) WithGroup(value string) *LocalObjectReferenceApplyConfiguration {
+func (b *PoolObjectReferenceApplyConfiguration) WithGroup(value string) *PoolObjectReferenceApplyConfiguration {
 	b.Group = &value
 	return b
 }
@@ -42,7 +42,7 @@ func (b *LocalObjectReferenceApplyConfiguration) WithGroup(value string) *LocalO
 // WithKind sets the Kind field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Kind field is set to the value of the last call.
-func (b *LocalObjectReferenceApplyConfiguration) WithKind(value string) *LocalObjectReferenceApplyConfiguration {
+func (b *PoolObjectReferenceApplyConfiguration) WithKind(value string) *PoolObjectReferenceApplyConfiguration {
 	b.Kind = &value
 	return b
 }
@@ -50,7 +50,7 @@ func (b *LocalObjectReferenceApplyConfiguration) WithKind(value string) *LocalOb
 // WithName sets the Name field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Name field is set to the value of the last call.
-func (b *LocalObjectReferenceApplyConfiguration) WithName(value string) *LocalObjectReferenceApplyConfiguration {
+func (b *PoolObjectReferenceApplyConfiguration) WithName(value string) *PoolObjectReferenceApplyConfiguration {
 	b.Name = &value
 	return b
 }
