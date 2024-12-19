@@ -38,6 +38,9 @@ func (s *Server) HandleResponseHeaders(reqCtx *RequestContext, req *extProcPb.Pr
 }
 
 // HandleResponseBody parses response body to update information such as number of completion tokens.
+// NOTE: The current implementation only supports Buffered mode, which is not enabled by default. To
+// use it, you need to configure EnvoyExtensionPolicy to have response body in Buffered mode.
+// https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/http/ext_proc/v3/processing_mode.proto#envoy-v3-api-msg-extensions-filters-http-ext-proc-v3-processingmode
 // Example response
 /*
 {
