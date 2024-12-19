@@ -17,6 +17,6 @@ limitations under the License.
 
 package v1alpha1
 
-type LLMServerPoolExpansion interface{}
+type InferenceModelExpansion interface{}
 
-type LLMServiceExpansion interface{}
+type InferencePoolExpansion interface{}

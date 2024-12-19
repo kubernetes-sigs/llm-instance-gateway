@@ -18,7 +18,7 @@ import (
 	"inference.networking.x-k8s.io/llm-instance-gateway/pkg/ext-proc/scheduling"
 )
 
-func StartExtProc(port int, refreshPodsInterval, refreshMetricsInterval time.Duration, pods []*backend.PodMetrics, models map[string]*v1alpha1.Model) *grpc.Server {
+func StartExtProc(port int, refreshPodsInterval, refreshMetricsInterval time.Duration, pods []*backend.PodMetrics, models map[string]*v1alpha1.InferenceModel) *grpc.Server {
 	ps := make(backend.PodSet)
 	pms := make(map[backend.Pod]*backend.PodMetrics)
 	for _, pod := range pods {
@@ -34,7 +34,7 @@ func StartExtProc(port int, refreshPodsInterval, refreshMetricsInterval time.Dur
 }
 
 // startExtProc starts an extProc server with fake pods.
-func startExtProc(port int, pp *backend.Provider, models map[string]*v1alpha1.Model) *grpc.Server {
+func startExtProc(port int, pp *backend.Provider, models map[string]*v1alpha1.InferenceModel) *grpc.Server {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		klog.Fatalf("failed to listen: %v", err)

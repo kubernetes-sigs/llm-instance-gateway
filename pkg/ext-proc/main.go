@@ -86,26 +86,26 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := (&backend.LLMServerPoolReconciler{
+	if err := (&backend.InferencePoolReconciler{
 		Datastore:      datastore,
 		Scheme:         mgr.GetScheme(),
 		Client:         mgr.GetClient(),
 		ServerPoolName: *serverPoolName,
 		Namespace:      *namespace,
-		Record:         mgr.GetEventRecorderFor("llmserverpool"),
+		Record:         mgr.GetEventRecorderFor("InferencePool"),
 	}).SetupWithManager(mgr); err != nil {
-		klog.Error(err, "Error setting up LLMServerPoolReconciler")
+		klog.Error(err, "Error setting up InferencePoolReconciler")
 	}
 
-	if err := (&backend.LLMServiceReconciler{
+	if err := (&backend.InferenceModelReconciler{
 		Datastore:      datastore,
 		Scheme:         mgr.GetScheme(),
 		Client:         mgr.GetClient(),
 		ServerPoolName: *serverPoolName,
 		Namespace:      *namespace,
-		Record:         mgr.GetEventRecorderFor("llmservice"),
+		Record:         mgr.GetEventRecorderFor("InferenceModel"),
 	}).SetupWithManager(mgr); err != nil {
-		klog.Error(err, "Error setting up LLMServiceReconciler")
+		klog.Error(err, "Error setting up InferenceModelReconciler")
 	}
 
 	if err := (&backend.EndpointSliceReconciler{

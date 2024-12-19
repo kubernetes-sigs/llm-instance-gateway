@@ -9,9 +9,9 @@ The current manifests rely on Envoy Gateway [v1.2.1](https://gateway.envoyproxy.
 
    A sample vLLM deployment with the proper protocol to work with LLM Instance Gateway can be found [here](https://github.com/kubernetes-sigs/llm-instance-gateway/tree/main/examples/poc/manifests/vllm/vllm-lora-deployment.yaml#L18).
 
-1. **Deploy LLM Service and LLMServerPool**
+1. **Deploy InferenceModel and InferencePool**
 
-   You can find a sample LLM service and LLMServerPool configuration, based on the vLLM deployments mentioned above, [here](https://github.com/kubernetes-sigs/llm-instance-gateway/tree/main/examples/poc/manifests/llmservice.yaml).
+   You can find a sample InferenceModel and InferencePool configuration, based on the vLLM deployments mentioned above, [here](https://github.com/kubernetes-sigs/llm-instance-gateway/tree/main/examples/poc/manifests/inferencepool-with-model.yaml).
 
 
 1. **Update Envoy Gateway Config to enable Patch Policy**

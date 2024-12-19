@@ -1,5 +1,5 @@
 apiVersion: inference.networking.x-k8s.io/v1alpha1
-kind: LLMServerPool
+kind: InferencePool
 metadata:
   labels:
     app.kubernetes.io/name: api

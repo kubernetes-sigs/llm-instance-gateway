@@ -4,20 +4,20 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.1
-  name: llmserverpools.inference.networking.x-k8s.io
+  name: inferencepools.inference.networking.x-k8s.io
 spec:
   group: inference.networking.x-k8s.io
   names:
     kind: InferencePool
     listKind: InferencePoolList
-    plural: llmserverpools
-    singular: llmserverpool
+    plural: inferencepools
+    singular: inferencepool
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: InferencePool is the Schema for the llmserverpools API
+        description: InferencePool is the Schema for the Inferencepools API
         properties:
           apiVersion:
             description: |-
@@ -39,25 +39,44 @@ spec:
           spec:
             description: InferencePoolSpec defines the desired state of InferencePool
             properties:
-              modelServerSelector:
+              selector:
                 additionalProperties:
+                  description: |-
+                    LabelValue is the value of a label. This is used for validation
+                    of maps. This matches the Kubernetes label validation rules:
+                    * must be 63 characters or less (can be empty),
+                    * unless empty, must begin and end with an alphanumeric character ([a-z0-9A-Z]),
+                    * could contain dashes (-), underscores (_), dots (.), and alphanumerics between.
+
+                    Valid values include:
+
+                    * MyValue
+                    * my.name
+                    * 123-my-value
+                  maxLength: 63
+                  minLength: 0
+                  pattern: ^(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$
                   type: string
                 description: |-
-                  ModelServerSelector uses a map of label to watch model server pods
+                  Selector uses a map of label to watch model server pods
                   that should be included in the InferencePool. ModelServers should not
                   be with any other Service or InferencePool, that behavior is not supported
                   and will result in sub-optimal utilization.
-                  Due to this selector being translated to a service a simple map is used instead
-                  of: https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#LabelSelector
-                  To avoid footshoot errors when the https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#LabelSelectorAsMap would be used.
+                  In some cases, implementations may translate this to a Service selector, so this matches the simple
+                  map used for Service selectors instead of the full Kubernetes LabelSelector type.
                 type: object
-              targetPort:
+              targetPortNumber:
                 description: |-
                   TargetPort is the port number that the model servers within the pool expect
                   to recieve traffic from.
                   This maps to the TargetPort in: https://pkg.go.dev/k8s.io/api/core/v1#ServicePort
                 format: int32
+                maximum: 65535
+                minimum: 0
                 type: integer
+            required:
+            - selector
+            - targetPortNumber
             type: object
           status:
             description: InferencePoolStatus defines the observed state of InferencePool
