@@ -77,7 +77,6 @@ func (s *K8sDatastore) FetchModelData(modelName string) (returnModel *v1alpha1.I
 
 func RandomWeightedDraw(model *v1alpha1.InferenceModel, seed int64) string {
 	var weights int32
-	weights = 0
 
 	source := rand.NewSource(rand.Int63())
 	if seed > 0 {
