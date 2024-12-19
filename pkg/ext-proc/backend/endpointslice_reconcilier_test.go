@@ -167,7 +167,9 @@ func TestUpdateDatastore_EndpointSliceReconciler(t *testing.T) {
 			endpointSliceReconciler.updateDatastore(test.incomingSlice, test.datastore.inferencePool)
 
 			if mapsEqual(endpointSliceReconciler.Datastore.pods, test.wantPods) {
-				t.Errorf("Unexpected output pod mismatch. \n Got %v \n Want: %v \n", endpointSliceReconciler.Datastore.pods, test.wantPods)
+				t.Errorf("Unexpected output pod mismatch. \n Got %v \n Want: %v \n",
+					endpointSliceReconciler.Datastore.pods,
+					test.wantPods)
 			}
 		})
 	}

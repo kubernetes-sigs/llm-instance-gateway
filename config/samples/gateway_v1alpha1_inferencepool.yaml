@@ -4,7 +4,7 @@ metadata:
   labels:
     app.kubernetes.io/name: api
     app.kubernetes.io/managed-by: kustomize
-  name: llmserverpool-sample
+  name: inferencepool-sample
 spec:
   serviceRefs:
   - gemini-jetstream-tpu-v5e-service
