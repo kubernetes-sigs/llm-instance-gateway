@@ -69,6 +69,14 @@ code-generator:
 fmt: ## Run go fmt against code.
 	go fmt ./...
 
+.PHONY: fmt-verify
+fmt-verify:
+	@out=`gofmt -w -l -d $$(find . -name '*.go')`; \
+	if [ -n "$$out" ]; then \
+	    echo "$$out"; \
+	    exit 1; \
+	fi
+
 .PHONY: vet
 vet: ## Run go vet against code.
 	go vet ./...
@@ -89,6 +97,14 @@ lint: golangci-lint ## Run golangci-lint linter
 .PHONY: lint-fix
 lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes
 	$(GOLANGCI_LINT) run --fix
+
+.PHONY: ci-lint
+ci-lint: golangci-lint
+	$(GOLANGCI_LINT) run --timeout 15m0s
+
+.PHONY: verify
+verify: vet fmt-verify ci-lint manifests generate
+	git --no-pager diff --exit-code config api client-go
 
 ##@ Build
 
