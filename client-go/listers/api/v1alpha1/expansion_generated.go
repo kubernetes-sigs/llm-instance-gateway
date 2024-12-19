@@ -17,18 +17,18 @@ limitations under the License.
 
 package v1alpha1
 
-// LLMServerPoolListerExpansion allows custom methods to be added to
-// LLMServerPoolLister.
-type LLMServerPoolListerExpansion interface{}
+// InferenceModelListerExpansion allows custom methods to be added to
+// InferenceModelLister.
+type InferenceModelListerExpansion interface{}
 
-// LLMServerPoolNamespaceListerExpansion allows custom methods to be added to
-// LLMServerPoolNamespaceLister.
-type LLMServerPoolNamespaceListerExpansion interface{}
+// InferenceModelNamespaceListerExpansion allows custom methods to be added to
+// InferenceModelNamespaceLister.
+type InferenceModelNamespaceListerExpansion interface{}
 
-// LLMServiceListerExpansion allows custom methods to be added to
-// LLMServiceLister.
-type LLMServiceListerExpansion interface{}
+// InferencePoolListerExpansion allows custom methods to be added to
+// InferencePoolLister.
+type InferencePoolListerExpansion interface{}
 
-// LLMServiceNamespaceListerExpansion allows custom methods to be added to
-// LLMServiceNamespaceLister.
-type LLMServiceNamespaceListerExpansion interface{}
+// InferencePoolNamespaceListerExpansion allows custom methods to be added to
+// InferencePoolNamespaceLister.
+type InferencePoolNamespaceListerExpansion interface{}

@@ -11,20 +11,22 @@ var ()
 func TestRandomWeightedDraw(t *testing.T) {
 	tests := []struct {
 		name  string
-		model *v1alpha1.Model
+		model *v1alpha1.InferenceModel
 		want  string
 	}{
 		{
 			name: "'random' distribution",
-			model: &v1alpha1.Model{
-				TargetModels: []v1alpha1.TargetModel{
-					{
-						Name:   "canary",
-						Weight: 50,
-					},
-					{
-						Name:   "v1",
-						Weight: 50,
+			model: &v1alpha1.InferenceModel{
+				Spec: v1alpha1.InferenceModelSpec{
+					TargetModels: []v1alpha1.TargetModel{
+						{
+							Name:   "canary",
+							Weight: 50,
+						},
+						{
+							Name:   "v1",
+							Weight: 50,
+						},
 					},
 				},
 			},
@@ -32,19 +34,21 @@ func TestRandomWeightedDraw(t *testing.T) {
 		},
 		{
 			name: "'random' distribution",
-			model: &v1alpha1.Model{
-				TargetModels: []v1alpha1.TargetModel{
-					{
-						Name:   "canary",
-						Weight: 25,
-					},
-					{
-						Name:   "v1.1",
-						Weight: 55,
-					},
-					{
-						Name:   "v1",
-						Weight: 50,
+			model: &v1alpha1.InferenceModel{
+				Spec: v1alpha1.InferenceModelSpec{
+					TargetModels: []v1alpha1.TargetModel{
+						{
+							Name:   "canary",
+							Weight: 25,
+						},
+						{
+							Name:   "v1.1",
+							Weight: 55,
+						},
+						{
+							Name:   "v1",
+							Weight: 50,
+						},
 					},
 				},
 			},
@@ -52,19 +56,21 @@ func TestRandomWeightedDraw(t *testing.T) {
 		},
 		{
 			name: "'random' distribution",
-			model: &v1alpha1.Model{
-				TargetModels: []v1alpha1.TargetModel{
-					{
-						Name:   "canary",
-						Weight: 20,
-					},
-					{
-						Name:   "v1.1",
-						Weight: 20,
-					},
-					{
-						Name:   "v1",
-						Weight: 10,
+			model: &v1alpha1.InferenceModel{
+				Spec: v1alpha1.InferenceModelSpec{
+					TargetModels: []v1alpha1.TargetModel{
+						{
+							Name:   "canary",
+							Weight: 20,
+						},
+						{
+							Name:   "v1.1",
+							Weight: 20,
+						},
+						{
+							Name:   "v1",
+							Weight: 10,
+						},
 					},
 				},
 			},

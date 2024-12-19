@@ -21,7 +21,7 @@ package v1alpha1
 // with apply.
 type TargetModelApplyConfiguration struct {
 	Name   *string `json:"name,omitempty"`
-	Weight *int    `json:"weight,omitempty"`
+	Weight *int32  `json:"weight,omitempty"`
 }
 
 // TargetModelApplyConfiguration constructs a declarative configuration of the TargetModel type for use with
@@ -41,7 +41,7 @@ func (b *TargetModelApplyConfiguration) WithName(value string) *TargetModelApply
 // WithWeight sets the Weight field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Weight field is set to the value of the last call.
-func (b *TargetModelApplyConfiguration) WithWeight(value int) *TargetModelApplyConfiguration {
+func (b *TargetModelApplyConfiguration) WithWeight(value int32) *TargetModelApplyConfiguration {
 	b.Weight = &value
 	return b
 }

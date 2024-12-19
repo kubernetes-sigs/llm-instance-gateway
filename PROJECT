@@ -13,7 +13,7 @@ resources:
     namespaced: true
   domain: x-k8s.io
   group: inference
-  kind: LLMServerPool
+  kind: InferencePool
   path: sigs.k8s.io/llm-instance-gateway/api/v1alpha1
   version: v1alpha1
 - api:
@@ -21,7 +21,7 @@ resources:
     namespaced: true
   domain: x-k8s.io
   group: inference
-  kind: LLMService
+  kind: InferenceModel
   path: sigs.k8s.io/llm-instance-gateway/api/v1alpha1
   version: v1alpha1
 version: "3"

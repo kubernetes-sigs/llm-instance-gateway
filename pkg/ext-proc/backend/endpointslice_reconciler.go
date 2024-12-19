@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -37,18 +38,22 @@ func (c *EndpointSliceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		klog.Errorf("Unable to get EndpointSlice: %v", err)
 		return ctrl.Result{}, err
 	}
-
-	c.updateDatastore(endpointSlice)
+	inferencePool, err := c.Datastore.getInferencePool()
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	c.updateDatastore(endpointSlice, inferencePool)
 
 	return ctrl.Result{}, nil
 }
 
-func (c *EndpointSliceReconciler) updateDatastore(slice *discoveryv1.EndpointSlice) {
+func (c *EndpointSliceReconciler) updateDatastore(slice *discoveryv1.EndpointSlice, inferencePool *v1alpha1.InferencePool) {
 	podMap := make(map[Pod]bool)
+
 	for _, endpoint := range slice.Endpoints {
 		klog.V(4).Infof("Zone: %v \n endpoint: %+v \n", c.Zone, endpoint)
 		if c.validPod(endpoint) {
-			pod := Pod{Name: *&endpoint.TargetRef.Name, Address: endpoint.Addresses[0] + ":" + fmt.Sprint(c.Datastore.llmServerPool.Spec.TargetPort)}
+			pod := Pod{Name: *&endpoint.TargetRef.Name, Address: endpoint.Addresses[0] + ":" + fmt.Sprint(inferencePool.Spec.TargetPort)}
 			podMap[pod] = true
 			c.Datastore.pods.Store(pod, true)
 		}
@@ -69,10 +74,10 @@ func (c *EndpointSliceReconciler) updateDatastore(slice *discoveryv1.EndpointSli
 }
 
 func (c *EndpointSliceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	llmServerPoolAvailable := func(object client.Object) bool {
-		_, err := c.Datastore.getLLMServerPool()
+	inferencePoolAvailable := func(object client.Object) bool {
+		_, err := c.Datastore.getInferencePool()
 		if err != nil {
-			klog.Warningf("Skipping reconciling EndpointSlice because LLMServerPool is not available yet: %v", err)
+			klog.Warningf("Skipping reconciling EndpointSlice because the InferencePool is not available yet: %v", err)
 		}
 		return err == nil
 	}
@@ -88,7 +93,7 @@ func (c *EndpointSliceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&discoveryv1.EndpointSlice{}, builder.WithPredicates(predicate.NewPredicateFuncs(llmServerPoolAvailable), predicate.NewPredicateFuncs(ownsEndPointSlice))).
+		For(&discoveryv1.EndpointSlice{}, builder.WithPredicates(predicate.NewPredicateFuncs(inferencePoolAvailable), predicate.NewPredicateFuncs(ownsEndPointSlice))).
 		Complete(c)
 }
 

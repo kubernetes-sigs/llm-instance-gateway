@@ -29,7 +29,7 @@ func TestHandleRequestBody(t *testing.T) {
 		name        string
 		req         *extProcPb.ProcessingRequest
 		pods        []*backend.PodMetrics
-		models      map[string]*v1alpha1.Model
+		models      map[string]*v1alpha1.InferenceModel
 		wantHeaders []*configPb.HeaderValueOption
 		wantBody    []byte
 		wantErr     bool
@@ -37,13 +37,15 @@ func TestHandleRequestBody(t *testing.T) {
 		{
 			name: "success",
 			req:  GenerateRequest("my-model"),
-			models: map[string]*v1alpha1.Model{
-				"my-model": {
-					Name: "my-model",
-					TargetModels: []v1alpha1.TargetModel{
-						{
-							Name:   "my-model-v1",
-							Weight: 100,
+			models: map[string]*v1alpha1.InferenceModel{
+				"my-model": &v1alpha1.InferenceModel{
+					Spec: v1alpha1.InferenceModelSpec{
+						ModelName: "my-model",
+						TargetModels: []v1alpha1.TargetModel{
+							{
+								Name:   "my-model-v1",
+								Weight: 100,
+							},
 						},
 					},
 				},
@@ -136,7 +138,7 @@ func TestHandleRequestBody(t *testing.T) {
 
 }
 
-func setUpServer(t *testing.T, pods []*backend.PodMetrics, models map[string]*v1alpha1.Model) (client extProcPb.ExternalProcessor_ProcessClient, cleanup func()) {
+func setUpServer(t *testing.T, pods []*backend.PodMetrics, models map[string]*v1alpha1.InferenceModel) (client extProcPb.ExternalProcessor_ProcessClient, cleanup func()) {
 	server := StartExtProc(port, time.Second, time.Second, pods, models)
 
 	address := fmt.Sprintf("localhost:%v", port)

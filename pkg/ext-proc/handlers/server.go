@@ -45,7 +45,7 @@ type PodProvider interface {
 }
 
 type ModelDataStore interface {
-	FetchModelData(modelName string) (returnModel *v1alpha1.Model)
+	FetchModelData(modelName string) (returnModel *v1alpha1.InferenceModel)
 }
 
 func (s *Server) Process(srv extProcPb.ExternalProcessor_ProcessServer) error {

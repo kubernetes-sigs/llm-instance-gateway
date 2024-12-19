@@ -31,59 +31,59 @@ import (
 	cache "k8s.io/client-go/tools/cache"
 )
 
-// LLMServerPoolInformer provides access to a shared informer and lister for
-// LLMServerPools.
-type LLMServerPoolInformer interface {
+// InferencePoolInformer provides access to a shared informer and lister for
+// InferencePools.
+type InferencePoolInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.LLMServerPoolLister
+	Lister() v1alpha1.InferencePoolLister
 }
 
-type lLMServerPoolInformer struct {
+type inferencePoolInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
 	namespace        string
 }
 
-// NewLLMServerPoolInformer constructs a new informer for LLMServerPool type.
+// NewInferencePoolInformer constructs a new informer for InferencePool type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewLLMServerPoolInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredLLMServerPoolInformer(client, namespace, resyncPeriod, indexers, nil)
+func NewInferencePoolInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
+	return NewFilteredInferencePoolInformer(client, namespace, resyncPeriod, indexers, nil)
 }
 
-// NewFilteredLLMServerPoolInformer constructs a new informer for LLMServerPool type.
+// NewFilteredInferencePoolInformer constructs a new informer for InferencePool type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewFilteredLLMServerPoolInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
+func NewFilteredInferencePoolInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ApiV1alpha1().LLMServerPools(namespace).List(context.TODO(), options)
+				return client.ApiV1alpha1().InferencePools(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ApiV1alpha1().LLMServerPools(namespace).Watch(context.TODO(), options)
+				return client.ApiV1alpha1().InferencePools(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&apiv1alpha1.LLMServerPool{},
+		&apiv1alpha1.InferencePool{},
 		resyncPeriod,
 		indexers,
 	)
 }
 
-func (f *lLMServerPoolInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredLLMServerPoolInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+func (f *inferencePoolInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
+	return NewFilteredInferencePoolInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
-func (f *lLMServerPoolInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&apiv1alpha1.LLMServerPool{}, f.defaultInformer)
+func (f *inferencePoolInformer) Informer() cache.SharedIndexInformer {
+	return f.factory.InformerFor(&apiv1alpha1.InferencePool{}, f.defaultInformer)
 }
 
-func (f *lLMServerPoolInformer) Lister() v1alpha1.LLMServerPoolLister {
-	return v1alpha1.NewLLMServerPoolLister(f.Informer().GetIndexer())
+func (f *inferencePoolInformer) Lister() v1alpha1.InferencePoolLister {
+	return v1alpha1.NewInferencePoolLister(f.Informer().GetIndexer())
 }

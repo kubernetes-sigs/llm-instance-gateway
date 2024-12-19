@@ -21,9 +21,9 @@ func (f *FakePodMetricsClient) FetchMetrics(ctx context.Context, pod Pod, existi
 }
 
 type FakeDataStore struct {
-	Res map[string]*v1alpha1.Model
+	Res map[string]*v1alpha1.InferenceModel
 }
 
-func (fds *FakeDataStore) FetchModelData(modelName string) (returnModel *v1alpha1.Model) {
+func (fds *FakeDataStore) FetchModelData(modelName string) (returnModel *v1alpha1.InferenceModel) {
 	return fds.Res[modelName]
 }

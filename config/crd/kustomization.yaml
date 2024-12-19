@@ -3,7 +3,7 @@
 # It should be run by config/default
 resources:
 - bases/inference.networking.x-k8s.io_llmserverpools.yaml
-- bases/inference.networking.x-k8s.io_llmservices.yaml
+- bases/inference.networking.x-k8s.io_inferencemodels.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patches:
@@ -14,7 +14,7 @@ patches:
 # [CERTMANAGER] To enable cert-manager, uncomment all the sections with [CERTMANAGER] prefix.
 # patches here are for enabling the CA injection for each CRD
 #- path: patches/cainjection_in_llmserverpools.yaml
-#- path: patches/cainjection_in_llmservices.yaml
+#- path: patches/cainjection_in_inferencemodels.yaml
 # +kubebuilder:scaffold:crdkustomizecainjectionpatch
 
 # [WEBHOOK] To enable webhook, uncomment the following section

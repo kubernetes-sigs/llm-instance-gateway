@@ -1,16 +1,16 @@
-# permissions for end users to view llmservices.
+# permissions for end users to view inferencemodels.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/name: api
     app.kubernetes.io/managed-by: kustomize
-  name: llmservice-viewer-role
+  name: inferencemodel-viewer-role
 rules:
 - apiGroups:
   - inference.networking.x-k8s.io
   resources:
-  - llmservices
+  - inferencemodels
   verbs:
   - get
   - list
@@ -18,6 +18,6 @@ rules:
 - apiGroups:
   - inference.networking.x-k8s.io
   resources:
-  - llmservices/status
+  - inferencemodels/status
   verbs:
   - get

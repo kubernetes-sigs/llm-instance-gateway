@@ -1,5 +1,5 @@
 ## Append samples of your project ##
 resources:
 - gateway_v1alpha1_llmserverpool.yaml
-- gateway_v1alpha1_llmservice.yaml
+- gateway_v1alpha1_inferencemodel.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples

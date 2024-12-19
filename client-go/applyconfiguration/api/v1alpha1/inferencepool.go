@@ -23,22 +23,22 @@ import (
 	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
-// LLMServerPoolApplyConfiguration represents a declarative configuration of the LLMServerPool type for use
+// InferencePoolApplyConfiguration represents a declarative configuration of the InferencePool type for use
 // with apply.
-type LLMServerPoolApplyConfiguration struct {
+type InferencePoolApplyConfiguration struct {
 	v1.TypeMetaApplyConfiguration    `json:",inline"`
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
-	Spec                             *LLMServerPoolSpecApplyConfiguration   `json:"spec,omitempty"`
-	Status                           *LLMServerPoolStatusApplyConfiguration `json:"status,omitempty"`
+	Spec                             *InferencePoolSpecApplyConfiguration   `json:"spec,omitempty"`
+	Status                           *InferencePoolStatusApplyConfiguration `json:"status,omitempty"`
 }
 
-// LLMServerPool constructs a declarative configuration of the LLMServerPool type for use with
+// InferencePool constructs a declarative configuration of the InferencePool type for use with
 // apply.
-func LLMServerPool(name, namespace string) *LLMServerPoolApplyConfiguration {
-	b := &LLMServerPoolApplyConfiguration{}
+func InferencePool(name, namespace string) *InferencePoolApplyConfiguration {
+	b := &InferencePoolApplyConfiguration{}
 	b.WithName(name)
 	b.WithNamespace(namespace)
-	b.WithKind("LLMServerPool")
+	b.WithKind("InferencePool")
 	b.WithAPIVersion("api/v1alpha1")
 	return b
 }
@@ -46,7 +46,7 @@ func LLMServerPool(name, namespace string) *LLMServerPoolApplyConfiguration {
 // WithKind sets the Kind field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Kind field is set to the value of the last call.
-func (b *LLMServerPoolApplyConfiguration) WithKind(value string) *LLMServerPoolApplyConfiguration {
+func (b *InferencePoolApplyConfiguration) WithKind(value string) *InferencePoolApplyConfiguration {
 	b.Kind = &value
 	return b
 }
@@ -54,7 +54,7 @@ func (b *LLMServerPoolApplyConfiguration) WithKind(value string) *LLMServerPoolA
 // WithAPIVersion sets the APIVersion field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the APIVersion field is set to the value of the last call.
-func (b *LLMServerPoolApplyConfiguration) WithAPIVersion(value string) *LLMServerPoolApplyConfiguration {
+func (b *InferencePoolApplyConfiguration) WithAPIVersion(value string) *InferencePoolApplyConfiguration {
 	b.APIVersion = &value
 	return b
 }
@@ -62,7 +62,7 @@ func (b *LLMServerPoolApplyConfiguration) WithAPIVersion(value string) *LLMServe
 // WithName sets the Name field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Name field is set to the value of the last call.
-func (b *LLMServerPoolApplyConfiguration) WithName(value string) *LLMServerPoolApplyConfiguration {
+func (b *InferencePoolApplyConfiguration) WithName(value string) *InferencePoolApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	b.Name = &value
 	return b
@@ -71,7 +71,7 @@ func (b *LLMServerPoolApplyConfiguration) WithName(value string) *LLMServerPoolA
 // WithGenerateName sets the GenerateName field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the GenerateName field is set to the value of the last call.
-func (b *LLMServerPoolApplyConfiguration) WithGenerateName(value string) *LLMServerPoolApplyConfiguration {
+func (b *InferencePoolApplyConfiguration) WithGenerateName(value string) *InferencePoolApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	b.GenerateName = &value
 	return b
@@ -80,7 +80,7 @@ func (b *LLMServerPoolApplyConfiguration) WithGenerateName(value string) *LLMSer
 // WithNamespace sets the Namespace field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Namespace field is set to the value of the last call.
-func (b *LLMServerPoolApplyConfiguration) WithNamespace(value string) *LLMServerPoolApplyConfiguration {
+func (b *InferencePoolApplyConfiguration) WithNamespace(value string) *InferencePoolApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	b.Namespace = &value
 	return b
@@ -89,7 +89,7 @@ func (b *LLMServerPoolApplyConfiguration) WithNamespace(value string) *LLMServer
 // WithUID sets the UID field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the UID field is set to the value of the last call.
-func (b *LLMServerPoolApplyConfiguration) WithUID(value types.UID) *LLMServerPoolApplyConfiguration {
+func (b *InferencePoolApplyConfiguration) WithUID(value types.UID) *InferencePoolApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	b.UID = &value
 	return b
@@ -98,7 +98,7 @@ func (b *LLMServerPoolApplyConfiguration) WithUID(value types.UID) *LLMServerPoo
 // WithResourceVersion sets the ResourceVersion field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the ResourceVersion field is set to the value of the last call.
-func (b *LLMServerPoolApplyConfiguration) WithResourceVersion(value string) *LLMServerPoolApplyConfiguration {
+func (b *InferencePoolApplyConfiguration) WithResourceVersion(value string) *InferencePoolApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	b.ResourceVersion = &value
 	return b
@@ -107,7 +107,7 @@ func (b *LLMServerPoolApplyConfiguration) WithResourceVersion(value string) *LLM
 // WithGeneration sets the Generation field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Generation field is set to the value of the last call.
-func (b *LLMServerPoolApplyConfiguration) WithGeneration(value int64) *LLMServerPoolApplyConfiguration {
+func (b *InferencePoolApplyConfiguration) WithGeneration(value int64) *InferencePoolApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	b.Generation = &value
 	return b
@@ -116,7 +116,7 @@ func (b *LLMServerPoolApplyConfiguration) WithGeneration(value int64) *LLMServer
 // WithCreationTimestamp sets the CreationTimestamp field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the CreationTimestamp field is set to the value of the last call.
-func (b *LLMServerPoolApplyConfiguration) WithCreationTimestamp(value metav1.Time) *LLMServerPoolApplyConfiguration {
+func (b *InferencePoolApplyConfiguration) WithCreationTimestamp(value metav1.Time) *InferencePoolApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	b.CreationTimestamp = &value
 	return b
@@ -125,7 +125,7 @@ func (b *LLMServerPoolApplyConfiguration) WithCreationTimestamp(value metav1.Tim
 // WithDeletionTimestamp sets the DeletionTimestamp field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the DeletionTimestamp field is set to the value of the last call.
-func (b *LLMServerPoolApplyConfiguration) WithDeletionTimestamp(value metav1.Time) *LLMServerPoolApplyConfiguration {
+func (b *InferencePoolApplyConfiguration) WithDeletionTimestamp(value metav1.Time) *InferencePoolApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	b.DeletionTimestamp = &value
 	return b
@@ -134,7 +134,7 @@ func (b *LLMServerPoolApplyConfiguration) WithDeletionTimestamp(value metav1.Tim
 // WithDeletionGracePeriodSeconds sets the DeletionGracePeriodSeconds field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the DeletionGracePeriodSeconds field is set to the value of the last call.
-func (b *LLMServerPoolApplyConfiguration) WithDeletionGracePeriodSeconds(value int64) *LLMServerPoolApplyConfiguration {
+func (b *InferencePoolApplyConfiguration) WithDeletionGracePeriodSeconds(value int64) *InferencePoolApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	b.DeletionGracePeriodSeconds = &value
 	return b
@@ -144,7 +144,7 @@ func (b *LLMServerPoolApplyConfiguration) WithDeletionGracePeriodSeconds(value i
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, the entries provided by each call will be put on the Labels field,
 // overwriting an existing map entries in Labels field with the same key.
-func (b *LLMServerPoolApplyConfiguration) WithLabels(entries map[string]string) *LLMServerPoolApplyConfiguration {
+func (b *InferencePoolApplyConfiguration) WithLabels(entries map[string]string) *InferencePoolApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	if b.Labels == nil && len(entries) > 0 {
 		b.Labels = make(map[string]string, len(entries))
@@ -159,7 +159,7 @@ func (b *LLMServerPoolApplyConfiguration) WithLabels(entries map[string]string) 
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, the entries provided by each call will be put on the Annotations field,
 // overwriting an existing map entries in Annotations field with the same key.
-func (b *LLMServerPoolApplyConfiguration) WithAnnotations(entries map[string]string) *LLMServerPoolApplyConfiguration {
+func (b *InferencePoolApplyConfiguration) WithAnnotations(entries map[string]string) *InferencePoolApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	if b.Annotations == nil && len(entries) > 0 {
 		b.Annotations = make(map[string]string, len(entries))
@@ -173,7 +173,7 @@ func (b *LLMServerPoolApplyConfiguration) WithAnnotations(entries map[string]str
 // WithOwnerReferences adds the given value to the OwnerReferences field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the OwnerReferences field.
-func (b *LLMServerPoolApplyConfiguration) WithOwnerReferences(values ...*v1.OwnerReferenceApplyConfiguration) *LLMServerPoolApplyConfiguration {
+func (b *InferencePoolApplyConfiguration) WithOwnerReferences(values ...*v1.OwnerReferenceApplyConfiguration) *InferencePoolApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	for i := range values {
 		if values[i] == nil {
@@ -187,7 +187,7 @@ func (b *LLMServerPoolApplyConfiguration) WithOwnerReferences(values ...*v1.Owne
 // WithFinalizers adds the given value to the Finalizers field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Finalizers field.
-func (b *LLMServerPoolApplyConfiguration) WithFinalizers(values ...string) *LLMServerPoolApplyConfiguration {
+func (b *InferencePoolApplyConfiguration) WithFinalizers(values ...string) *InferencePoolApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	for i := range values {
 		b.Finalizers = append(b.Finalizers, values[i])
@@ -195,7 +195,7 @@ func (b *LLMServerPoolApplyConfiguration) WithFinalizers(values ...string) *LLMS
 	return b
 }
 
-func (b *LLMServerPoolApplyConfiguration) ensureObjectMetaApplyConfigurationExists() {
+func (b *InferencePoolApplyConfiguration) ensureObjectMetaApplyConfigurationExists() {
 	if b.ObjectMetaApplyConfiguration == nil {
 		b.ObjectMetaApplyConfiguration = &v1.ObjectMetaApplyConfiguration{}
 	}
@@ -204,7 +204,7 @@ func (b *LLMServerPoolApplyConfiguration) ensureObjectMetaApplyConfigurationExis
 // WithSpec sets the Spec field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Spec field is set to the value of the last call.
-func (b *LLMServerPoolApplyConfiguration) WithSpec(value *LLMServerPoolSpecApplyConfiguration) *LLMServerPoolApplyConfiguration {
+func (b *InferencePoolApplyConfiguration) WithSpec(value *InferencePoolSpecApplyConfiguration) *InferencePoolApplyConfiguration {
 	b.Spec = value
 	return b
 }
@@ -212,13 +212,13 @@ func (b *LLMServerPoolApplyConfiguration) WithSpec(value *LLMServerPoolSpecApply
 // WithStatus sets the Status field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Status field is set to the value of the last call.
-func (b *LLMServerPoolApplyConfiguration) WithStatus(value *LLMServerPoolStatusApplyConfiguration) *LLMServerPoolApplyConfiguration {
+func (b *InferencePoolApplyConfiguration) WithStatus(value *InferencePoolStatusApplyConfiguration) *InferencePoolApplyConfiguration {
 	b.Status = value
 	return b
 }
 
 // GetName retrieves the value of the Name field in the declarative configuration.
-func (b *LLMServerPoolApplyConfiguration) GetName() *string {
+func (b *InferencePoolApplyConfiguration) GetName() *string {
 	b.ensureObjectMetaApplyConfigurationExists()
 	return b.Name
 }

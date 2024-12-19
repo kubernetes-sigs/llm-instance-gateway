@@ -23,22 +23,22 @@ import (
 	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
-// LLMServiceApplyConfiguration represents a declarative configuration of the LLMService type for use
+// InferenceModelApplyConfiguration represents a declarative configuration of the InferenceModel type for use
 // with apply.
-type LLMServiceApplyConfiguration struct {
+type InferenceModelApplyConfiguration struct {
 	v1.TypeMetaApplyConfiguration    `json:",inline"`
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
-	Spec                             *LLMServiceSpecApplyConfiguration   `json:"spec,omitempty"`
-	Status                           *LLMServiceStatusApplyConfiguration `json:"status,omitempty"`
+	Spec                             *InferenceModelSpecApplyConfiguration   `json:"spec,omitempty"`
+	Status                           *InferenceModelStatusApplyConfiguration `json:"status,omitempty"`
 }
 
-// LLMService constructs a declarative configuration of the LLMService type for use with
+// InferenceModel constructs a declarative configuration of the InferenceModel type for use with
 // apply.
-func LLMService(name, namespace string) *LLMServiceApplyConfiguration {
-	b := &LLMServiceApplyConfiguration{}
+func InferenceModel(name, namespace string) *InferenceModelApplyConfiguration {
+	b := &InferenceModelApplyConfiguration{}
 	b.WithName(name)
 	b.WithNamespace(namespace)
-	b.WithKind("LLMService")
+	b.WithKind("InferenceModel")
 	b.WithAPIVersion("api/v1alpha1")
 	return b
 }
@@ -46,7 +46,7 @@ func LLMService(name, namespace string) *LLMServiceApplyConfiguration {
 // WithKind sets the Kind field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Kind field is set to the value of the last call.
-func (b *LLMServiceApplyConfiguration) WithKind(value string) *LLMServiceApplyConfiguration {
+func (b *InferenceModelApplyConfiguration) WithKind(value string) *InferenceModelApplyConfiguration {
 	b.Kind = &value
 	return b
 }
@@ -54,7 +54,7 @@ func (b *LLMServiceApplyConfiguration) WithKind(value string) *LLMServiceApplyCo
 // WithAPIVersion sets the APIVersion field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the APIVersion field is set to the value of the last call.
-func (b *LLMServiceApplyConfiguration) WithAPIVersion(value string) *LLMServiceApplyConfiguration {
+func (b *InferenceModelApplyConfiguration) WithAPIVersion(value string) *InferenceModelApplyConfiguration {
 	b.APIVersion = &value
 	return b
 }
@@ -62,7 +62,7 @@ func (b *LLMServiceApplyConfiguration) WithAPIVersion(value string) *LLMServiceA
 // WithName sets the Name field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Name field is set to the value of the last call.
-func (b *LLMServiceApplyConfiguration) WithName(value string) *LLMServiceApplyConfiguration {
+func (b *InferenceModelApplyConfiguration) WithName(value string) *InferenceModelApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	b.Name = &value
 	return b
@@ -71,7 +71,7 @@ func (b *LLMServiceApplyConfiguration) WithName(value string) *LLMServiceApplyCo
 // WithGenerateName sets the GenerateName field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the GenerateName field is set to the value of the last call.
-func (b *LLMServiceApplyConfiguration) WithGenerateName(value string) *LLMServiceApplyConfiguration {
+func (b *InferenceModelApplyConfiguration) WithGenerateName(value string) *InferenceModelApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	b.GenerateName = &value
 	return b
@@ -80,7 +80,7 @@ func (b *LLMServiceApplyConfiguration) WithGenerateName(value string) *LLMServic
 // WithNamespace sets the Namespace field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Namespace field is set to the value of the last call.
-func (b *LLMServiceApplyConfiguration) WithNamespace(value string) *LLMServiceApplyConfiguration {
+func (b *InferenceModelApplyConfiguration) WithNamespace(value string) *InferenceModelApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	b.Namespace = &value
 	return b
@@ -89,7 +89,7 @@ func (b *LLMServiceApplyConfiguration) WithNamespace(value string) *LLMServiceAp
 // WithUID sets the UID field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the UID field is set to the value of the last call.
-func (b *LLMServiceApplyConfiguration) WithUID(value types.UID) *LLMServiceApplyConfiguration {
+func (b *InferenceModelApplyConfiguration) WithUID(value types.UID) *InferenceModelApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	b.UID = &value
 	return b
@@ -98,7 +98,7 @@ func (b *LLMServiceApplyConfiguration) WithUID(value types.UID) *LLMServiceApply
 // WithResourceVersion sets the ResourceVersion field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the ResourceVersion field is set to the value of the last call.
-func (b *LLMServiceApplyConfiguration) WithResourceVersion(value string) *LLMServiceApplyConfiguration {
+func (b *InferenceModelApplyConfiguration) WithResourceVersion(value string) *InferenceModelApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	b.ResourceVersion = &value
 	return b
@@ -107,7 +107,7 @@ func (b *LLMServiceApplyConfiguration) WithResourceVersion(value string) *LLMSer
 // WithGeneration sets the Generation field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Generation field is set to the value of the last call.
-func (b *LLMServiceApplyConfiguration) WithGeneration(value int64) *LLMServiceApplyConfiguration {
+func (b *InferenceModelApplyConfiguration) WithGeneration(value int64) *InferenceModelApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	b.Generation = &value
 	return b
@@ -116,7 +116,7 @@ func (b *LLMServiceApplyConfiguration) WithGeneration(value int64) *LLMServiceAp
 // WithCreationTimestamp sets the CreationTimestamp field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the CreationTimestamp field is set to the value of the last call.
-func (b *LLMServiceApplyConfiguration) WithCreationTimestamp(value metav1.Time) *LLMServiceApplyConfiguration {
+func (b *InferenceModelApplyConfiguration) WithCreationTimestamp(value metav1.Time) *InferenceModelApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	b.CreationTimestamp = &value
 	return b
@@ -125,7 +125,7 @@ func (b *LLMServiceApplyConfiguration) WithCreationTimestamp(value metav1.Time) 
 // WithDeletionTimestamp sets the DeletionTimestamp field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the DeletionTimestamp field is set to the value of the last call.
-func (b *LLMServiceApplyConfiguration) WithDeletionTimestamp(value metav1.Time) *LLMServiceApplyConfiguration {
+func (b *InferenceModelApplyConfiguration) WithDeletionTimestamp(value metav1.Time) *InferenceModelApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	b.DeletionTimestamp = &value
 	return b
@@ -134,7 +134,7 @@ func (b *LLMServiceApplyConfiguration) WithDeletionTimestamp(value metav1.Time) 
 // WithDeletionGracePeriodSeconds sets the DeletionGracePeriodSeconds field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the DeletionGracePeriodSeconds field is set to the value of the last call.
-func (b *LLMServiceApplyConfiguration) WithDeletionGracePeriodSeconds(value int64) *LLMServiceApplyConfiguration {
+func (b *InferenceModelApplyConfiguration) WithDeletionGracePeriodSeconds(value int64) *InferenceModelApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	b.DeletionGracePeriodSeconds = &value
 	return b
@@ -144,7 +144,7 @@ func (b *LLMServiceApplyConfiguration) WithDeletionGracePeriodSeconds(value int6
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, the entries provided by each call will be put on the Labels field,
 // overwriting an existing map entries in Labels field with the same key.
-func (b *LLMServiceApplyConfiguration) WithLabels(entries map[string]string) *LLMServiceApplyConfiguration {
+func (b *InferenceModelApplyConfiguration) WithLabels(entries map[string]string) *InferenceModelApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	if b.Labels == nil && len(entries) > 0 {
 		b.Labels = make(map[string]string, len(entries))
@@ -159,7 +159,7 @@ func (b *LLMServiceApplyConfiguration) WithLabels(entries map[string]string) *LL
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, the entries provided by each call will be put on the Annotations field,
 // overwriting an existing map entries in Annotations field with the same key.
-func (b *LLMServiceApplyConfiguration) WithAnnotations(entries map[string]string) *LLMServiceApplyConfiguration {
+func (b *InferenceModelApplyConfiguration) WithAnnotations(entries map[string]string) *InferenceModelApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	if b.Annotations == nil && len(entries) > 0 {
 		b.Annotations = make(map[string]string, len(entries))
@@ -173,7 +173,7 @@ func (b *LLMServiceApplyConfiguration) WithAnnotations(entries map[string]string
 // WithOwnerReferences adds the given value to the OwnerReferences field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the OwnerReferences field.
-func (b *LLMServiceApplyConfiguration) WithOwnerReferences(values ...*v1.OwnerReferenceApplyConfiguration) *LLMServiceApplyConfiguration {
+func (b *InferenceModelApplyConfiguration) WithOwnerReferences(values ...*v1.OwnerReferenceApplyConfiguration) *InferenceModelApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	for i := range values {
 		if values[i] == nil {
@@ -187,7 +187,7 @@ func (b *LLMServiceApplyConfiguration) WithOwnerReferences(values ...*v1.OwnerRe
 // WithFinalizers adds the given value to the Finalizers field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Finalizers field.
-func (b *LLMServiceApplyConfiguration) WithFinalizers(values ...string) *LLMServiceApplyConfiguration {
+func (b *InferenceModelApplyConfiguration) WithFinalizers(values ...string) *InferenceModelApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	for i := range values {
 		b.Finalizers = append(b.Finalizers, values[i])
@@ -195,7 +195,7 @@ func (b *LLMServiceApplyConfiguration) WithFinalizers(values ...string) *LLMServ
 	return b
 }
 
-func (b *LLMServiceApplyConfiguration) ensureObjectMetaApplyConfigurationExists() {
+func (b *InferenceModelApplyConfiguration) ensureObjectMetaApplyConfigurationExists() {
 	if b.ObjectMetaApplyConfiguration == nil {
 		b.ObjectMetaApplyConfiguration = &v1.ObjectMetaApplyConfiguration{}
 	}
@@ -204,7 +204,7 @@ func (b *LLMServiceApplyConfiguration) ensureObjectMetaApplyConfigurationExists(
 // WithSpec sets the Spec field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Spec field is set to the value of the last call.
-func (b *LLMServiceApplyConfiguration) WithSpec(value *LLMServiceSpecApplyConfiguration) *LLMServiceApplyConfiguration {
+func (b *InferenceModelApplyConfiguration) WithSpec(value *InferenceModelSpecApplyConfiguration) *InferenceModelApplyConfiguration {
 	b.Spec = value
 	return b
 }
@@ -212,13 +212,13 @@ func (b *LLMServiceApplyConfiguration) WithSpec(value *LLMServiceSpecApplyConfig
 // WithStatus sets the Status field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Status field is set to the value of the last call.
-func (b *LLMServiceApplyConfiguration) WithStatus(value *LLMServiceStatusApplyConfiguration) *LLMServiceApplyConfiguration {
+func (b *InferenceModelApplyConfiguration) WithStatus(value *InferenceModelStatusApplyConfiguration) *InferenceModelApplyConfiguration {
 	b.Status = value
 	return b
 }
 
 // GetName retrieves the value of the Name field in the declarative configuration.
-func (b *LLMServiceApplyConfiguration) GetName() *string {
+func (b *InferenceModelApplyConfiguration) GetName() *string {
 	b.ensureObjectMetaApplyConfigurationExists()
 	return b.Name
 }

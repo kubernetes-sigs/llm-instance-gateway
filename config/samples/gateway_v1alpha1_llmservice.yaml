@@ -1,12 +1,12 @@
 apiVersion: inference.networking.x-k8s.io/v1alpha1
-kind: LLMService
+kind: InferenceModel
 metadata:
   labels:
     app.kubernetes.io/name: api
     app.kubernetes.io/managed-by: kustomize
-  name: llmservice-sample
+  name: inferencemodel-sample
 spec:
-  LLMServices:
+  InferenceModels:
   - modelName: sql-code-assist
   - modelName: npc-bot
     objective: 
