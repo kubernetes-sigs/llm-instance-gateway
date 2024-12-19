@@ -24,6 +24,6 @@ resources:
 # if you do not want those helpers be installed with your Project.
 - inferencemodel_editor_role.yaml
 - inferencemodel_viewer_role.yaml
-- llmserverpool_editor_role.yaml
-- llmserverpool_viewer_role.yaml
+- inferencepool_editor_role.yaml
+- inferencepool_viewer_role.yaml
 

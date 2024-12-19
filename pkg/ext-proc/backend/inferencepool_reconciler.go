@@ -12,10 +12,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-const (
-	reconcilerNamePrefix = "instance-gateway-"
-)
-
 // InferencePoolReconciler utilizes the controller runtime to reconcile Instance Gateway resources
 // This implementation is just used for reading & maintaining data sync. The Gateway implementation
 // will have the proper controller that will create/manage objects on behalf of the server pool.
@@ -47,7 +43,8 @@ func (c *InferencePoolReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 }
 
 func (c *InferencePoolReconciler) updateDatastore(serverPool *v1alpha1.InferencePool) {
-	if c.Datastore.inferencePool == nil || serverPool.ObjectMeta.ResourceVersion != c.Datastore.inferencePool.ObjectMeta.ResourceVersion {
+	if c.Datastore.inferencePool == nil ||
+		serverPool.ObjectMeta.ResourceVersion != c.Datastore.inferencePool.ObjectMeta.ResourceVersion {
 		c.Datastore.setInferencePool(serverPool)
 	}
 }

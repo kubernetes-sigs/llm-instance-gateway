@@ -47,13 +47,18 @@ func (c *EndpointSliceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	return ctrl.Result{}, nil
 }
 
-func (c *EndpointSliceReconciler) updateDatastore(slice *discoveryv1.EndpointSlice, inferencePool *v1alpha1.InferencePool) {
+func (c *EndpointSliceReconciler) updateDatastore(
+	slice *discoveryv1.EndpointSlice,
+	inferencePool *v1alpha1.InferencePool) {
 	podMap := make(map[Pod]bool)
 
 	for _, endpoint := range slice.Endpoints {
 		klog.V(4).Infof("Zone: %v \n endpoint: %+v \n", c.Zone, endpoint)
 		if c.validPod(endpoint) {
-			pod := Pod{Name: *&endpoint.TargetRef.Name, Address: endpoint.Addresses[0] + ":" + fmt.Sprint(inferencePool.Spec.TargetPort)}
+			pod := Pod{
+				Name:    endpoint.TargetRef.Name,
+				Address: endpoint.Addresses[0] + ":" + fmt.Sprint(inferencePool.Spec.TargetPortNumber),
+			}
 			podMap[pod] = true
 			c.Datastore.pods.Store(pod, true)
 		}
@@ -93,12 +98,14 @@ func (c *EndpointSliceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&discoveryv1.EndpointSlice{}, builder.WithPredicates(predicate.NewPredicateFuncs(inferencePoolAvailable), predicate.NewPredicateFuncs(ownsEndPointSlice))).
+		For(&discoveryv1.EndpointSlice{},
+			builder.WithPredicates(predicate.NewPredicateFuncs(inferencePoolAvailable),
+				predicate.NewPredicateFuncs(ownsEndPointSlice))).
 		Complete(c)
 }
 
 func (c *EndpointSliceReconciler) validPod(endpoint discoveryv1.Endpoint) bool {
 	validZone := c.Zone == "" || c.Zone != "" && *endpoint.Zone == c.Zone
-	return validZone && *endpoint.Conditions.Ready == true
+	return validZone && *endpoint.Conditions.Ready
 
 }

@@ -35,7 +35,11 @@ type PodMetricsClientImpl struct {
 }
 
 // FetchMetrics fetches metrics from a given pod.
-func (p *PodMetricsClientImpl) FetchMetrics(ctx context.Context, pod backend.Pod, existing *backend.PodMetrics) (*backend.PodMetrics, error) {
+func (p *PodMetricsClientImpl) FetchMetrics(
+	ctx context.Context,
+	pod backend.Pod,
+	existing *backend.PodMetrics,
+) (*backend.PodMetrics, error) {
 	// Currently the metrics endpoint is hard-coded, which works with vLLM.
 	// TODO(https://github.com/kubernetes-sigs/llm-instance-gateway/issues/16): Consume this from InferencePool config.
 	url := fmt.Sprintf("http://%s/metrics", pod.Address)
@@ -66,7 +70,10 @@ func (p *PodMetricsClientImpl) FetchMetrics(ctx context.Context, pod backend.Pod
 // promToPodMetrics updates internal pod metrics with scraped prometheus metrics.
 // A combined error is returned if errors occur in one or more metric processing.
 // it returns a new PodMetrics pointer which can be used to atomically update the pod metrics map.
-func promToPodMetrics(metricFamilies map[string]*dto.MetricFamily, existing *backend.PodMetrics) (*backend.PodMetrics, error) {
+func promToPodMetrics(
+	metricFamilies map[string]*dto.MetricFamily,
+	existing *backend.PodMetrics,
+) (*backend.PodMetrics, error) {
 	var errs error
 	updated := existing.Clone()
 	runningQueueSize, _, err := getLatestMetric(metricFamilies, RunningQueueSizeMetricName)

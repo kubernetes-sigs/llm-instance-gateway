@@ -6,8 +6,6 @@ import (
 	"inference.networking.x-k8s.io/llm-instance-gateway/api/v1alpha1"
 )
 
-var ()
-
 func TestRandomWeightedDraw(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -77,8 +75,7 @@ func TestRandomWeightedDraw(t *testing.T) {
 			want: "v1.1",
 		},
 	}
-	var seedVal int64
-	seedVal = 420
+	var seedVal int64 = 420
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			for range 10000 {

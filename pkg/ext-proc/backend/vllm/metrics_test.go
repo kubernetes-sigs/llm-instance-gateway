@@ -178,7 +178,7 @@ func TestPromToPodMetrics(t *testing.T) {
 									Value: proto.String("lora3,lora4"),
 								},
 								{
-									Name:  proto.String(LoraRequestInfoRunningAdaptersMetricName),
+									Name:  proto.String(LoraRequestInfoMaxAdaptersMetricName),
 									Value: proto.String("2a"),
 								},
 							},
